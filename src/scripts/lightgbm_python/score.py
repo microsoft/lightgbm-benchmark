@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 from lightgbm import Booster, Dataset
+import numpy
 
 # let's add the right PYTHONPATH for common module
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -55,12 +56,11 @@ def run(args, other_args=[]):
     print(f"Loading model from {args.model}")
     booster = Booster(model_file=args.model)
 
-    print(f"Running .predict() on data in {args.data}")
+    print(f"Loading data from {args.data}")
     with LogTimeBlock("lightgbm_inferencing_data_loading", methods=['print']):
-        # NOTE: this is bad
-        data = Dataset(args.data, free_raw_data=False).construct()
-        raw_data = data.get_data()
+        raw_data = numpy.loadtxt(args.data, delimiter=",")
 
+    print(f"Running .predict()")
     with LogTimeBlock("lightgbm_inferencing", methods=['print']):
         booster.predict(raw_data)
 

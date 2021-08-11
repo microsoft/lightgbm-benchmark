@@ -41,7 +41,9 @@ def get_arg_parser(parser=None):
 
     group_params = parser.add_argument_group("Synthesis params")
     group_params.add_argument("--type", required=True, type=str, choices=['classification', 'regression'])
-    group_params.add_argument("--n_samples", required=True, type=int)
+    group_params.add_argument("--train_samples", required=True, type=int)
+    group_params.add_argument("--test_samples", required=True, type=int)
+    group_params.add_argument("--inferencing_samples", required=True, type=int)
     group_params.add_argument("--n_features", required=True, type=int)
     group_params.add_argument("--n_informative", required=True, type=int)
     group_params.add_argument("--n_redundant", required=False, type=int)
@@ -61,13 +63,14 @@ def run(args, other_args=[]):
         unknown_args (list[str]): list of arguments not known
     """
     # create sub dir
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+    os.makedirs(args.output, exist_ok=True)
 
     # record a metric    
     with LogTimeBlock("data_generation", methods=['print']):
+        total_samples = args.train_samples + args.test_samples + args.inferencing_samples
         if args.type == "classification":
             X, y = make_classification(
-                n_samples=args.n_samples,
+                n_samples=total_samples,
                 n_features=args.n_features,
                 n_informative=args.n_informative,
                 n_redundant=args.n_redundant,
@@ -75,7 +78,7 @@ def run(args, other_args=[]):
             )
         elif args.type == "regression":
             X, y = make_regression(
-                n_samples=args.n_samples,
+                n_samples=total_samples,
                 n_features=args.n_features,
                 n_informative=args.n_informative,
                 random_state=args.random_state
@@ -86,15 +89,24 @@ def run(args, other_args=[]):
         # target as one column
         y = numpy.reshape(y, (y.shape[0], 1))
 
-    # some debugging
-    print(f"X shape: {X.shape}")
-    print(f"Y shape: {y.shape}")
-    output_data = numpy.hstack((y, X)) # keep target as column 0
-    print(f"Output data shape: {output_data.shape}")
+        train_X = X[0:args.train_samples]
+        train_y = y[0:args.train_samples]
+        train_data = numpy.hstack((train_y, train_X)) # keep target as column 0
+        print(f"Train data shape: {train_data.shape}")
+
+        test_X = X[args.train_samples:args.train_samples+args.test_samples]
+        test_y = y[args.train_samples:args.train_samples+args.test_samples]
+        test_data = numpy.hstack((test_X, test_y)) # keep target as column 0
+        print(f"Test data shape: {test_data.shape}")
+        
+        inference_data = X[args.train_samples+args.test_samples:]
+        print(f"Inference data shape: {inference_data.shape}")
 
     # save as CSV
-    numpy.savetxt(args.output, output_data, delimiter=",", newline="\n", fmt='%1.3f')
-
+    with LogTimeBlock("data_saving", methods=['print']):
+        numpy.savetxt(os.path.join(args.output, "train.txt"), train_data, delimiter=",", newline="\n", fmt='%1.3f')
+        numpy.savetxt(os.path.join(args.output, "test.txt"), test_data, delimiter=",", newline="\n", fmt='%1.3f')
+        numpy.savetxt(os.path.join(args.output, "inference.txt"), inference_data, delimiter=",", newline="\n", fmt='%1.3f')
 
 
 def main(cli_args=None):
