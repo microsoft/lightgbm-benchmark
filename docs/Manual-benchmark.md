@@ -30,9 +30,9 @@ To generate a synthetic dataset based on sklearn:
 
 ```ps
 python src/scripts/generate_data/generate.py `
-    --train_samples 1000 `
-    --test_samples 100 `
-    --inferencing_samples 10000 `
+    --train_samples 100000 `
+    --test_samples 10000 `
+    --inferencing_samples 100000 `
     --n_features 4000 `
     --n_informative 400 `
     --random_state 5 `
