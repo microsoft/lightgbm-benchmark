@@ -65,8 +65,11 @@ def run(args, other_args=[]):
     # create sub dir
     os.makedirs(args.output, exist_ok=True)
 
+    metric_tags = { 'task':'generate' }
+
     # record a metric    
-    with LogTimeBlock("data_generation", methods=['print']):
+    print(f"Generating data in memory.")
+    with LogTimeBlock("data_generation", methods=['print'], tags=metric_tags):
         total_samples = args.train_samples + args.test_samples + args.inferencing_samples
         if args.type == "classification":
             X, y = make_classification(
@@ -103,7 +106,8 @@ def run(args, other_args=[]):
         print(f"Inference data shape: {inference_data.shape}")
 
     # save as CSV
-    with LogTimeBlock("data_saving", methods=['print']):
+    print(f"Saving data in {args.output}")
+    with LogTimeBlock("data_saving", methods=['print'], tags=metric_tags):
         numpy.savetxt(os.path.join(args.output, "train.txt"), train_data, delimiter=",", newline="\n", fmt='%1.3f')
         numpy.savetxt(os.path.join(args.output, "test.txt"), test_data, delimiter=",", newline="\n", fmt='%1.3f')
         numpy.savetxt(os.path.join(args.output, "inference.txt"), inference_data, delimiter=",", newline="\n", fmt='%1.3f')
