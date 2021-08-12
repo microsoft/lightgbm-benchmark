@@ -60,7 +60,7 @@ def run(args, other_args=[]):
         os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
     print(f"Loading model from {args.model}")
-    booster = Booster(model_file=args.model)
+    booster = lightgbm.Booster(model_file=args.model)
 
     metric_tags = {'framework':'lightgbm_python','task':'score','lightgbm_version':lightgbm.__version__}
 
