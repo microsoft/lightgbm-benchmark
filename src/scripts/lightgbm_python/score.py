@@ -62,9 +62,15 @@ def run(args, other_args=[]):
     print(f"Loading model from {args.model}")
     booster = Booster(model_file=args.model)
 
+    metric_tags = {'framework':'lightgbm_python','task':'score'}
+
+    print(f"Loading data for inferencing")
+    with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
+        raw_data = numpy.loadtxt(args.data, delimiter=",")
+
     print(f"Running .predict()")
-    with LogTimeBlock("lightgbm_inferencing", methods=['print'], tags={'framework':'lightgbm_python'}):
-        booster.predict(data=args.data)
+    with LogTimeBlock("inferencing", methods=['print'], tags=metric_tags):
+        booster.predict(data=raw_data)
 
 
 def main(cli_args=None):

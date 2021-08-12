@@ -75,8 +75,10 @@ def run(args, other_args=[]):
     if args.output:
         lightgbm_cli_command.append(f"output_result={args.output}")
 
+    metric_tags = {'framework':'lightgbm_cli','task':'score'}
+
     print(f"Running .predict()")
-    with LogTimeBlock("lightgbm_inferencing", methods=['print'], tags={'framework':'lightgbm_cli'}):
+    with LogTimeBlock("inferencing", methods=['print'], tags=metric_tags):
         lightgbm_cli_call = subprocess_run(
             " ".join(lightgbm_cli_command),
             stdout=PIPE,

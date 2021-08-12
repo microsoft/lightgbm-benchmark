@@ -80,11 +80,13 @@ def run(args, other_args=[]):
     lgbm_params = vars(args)
     print(f"Training LightGBM with parameters: {lgbm_params}")
 
-    with LogTimeBlock("lightgbm_data_loading", methods=['print'], tags={'framework':'lightgbm_python'}):
+    metric_tags = {'framework':'lightgbm_python','task':'train'}
+
+    with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
         train_data = Dataset(args.train, params=lgbm_params).construct()
         val_data = train_data.create_valid(args.test)
 
-    with LogTimeBlock("lightgbm_training", methods=['print'], tags=lgbm_params):
+    with LogTimeBlock("training", methods=['print'], tags=metric_tags):
         booster = train(
             lgbm_params,
             train_data,
