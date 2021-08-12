@@ -78,14 +78,14 @@ def run(args, other_args=[]):
     os.makedirs(os.path.dirname(args.export_model), exist_ok=True)
 
     lgbm_params = vars(args)
-    print(f"Training LightGBM with parameters: {lgbm_params}")
-
     metric_tags = {'framework':'lightgbm_python','task':'train'}
 
+    print(f"Loading data for training")
     with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
         train_data = Dataset(args.train, params=lgbm_params).construct()
         val_data = train_data.create_valid(args.test)
 
+    print(f"Training LightGBM with parameters: {lgbm_params}")
     with LogTimeBlock("training", methods=['print'], tags=metric_tags):
         booster = train(
             lgbm_params,
