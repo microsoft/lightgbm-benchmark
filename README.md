@@ -1,14 +1,13 @@
-# Project
+# LightGBM benchmarking suite
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+> WARNING: this repository is in a very early stage.
 
-As the maintainer of this project, please make a few updates:
+This repository provides code for running a consistent and automated benchmarking of lightgbm releases against public and synthetic datasets.
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+## Documentation
+
+Current documentation is in the [`docs/` folder](./docs):
+- [How to run the benchmark scripts manually](./docs/Manual-benchmark.md)
 
 ## Contributing
 
