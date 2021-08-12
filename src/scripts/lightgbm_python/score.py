@@ -7,7 +7,7 @@ LightGBM/Python inferencing script
 import os
 import sys
 import argparse
-from lightgbm import Booster, Dataset
+import lightgbm
 import numpy
 
 # let's add the right PYTHONPATH for common module
@@ -62,7 +62,7 @@ def run(args, other_args=[]):
     print(f"Loading model from {args.model}")
     booster = Booster(model_file=args.model)
 
-    metric_tags = {'framework':'lightgbm_python','task':'score'}
+    metric_tags = {'framework':'lightgbm_python','task':'score','lightgbm_version':lightgbm.__VERSION__}
 
     print(f"Loading data for inferencing")
     with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):

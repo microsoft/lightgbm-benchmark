@@ -9,7 +9,7 @@ import sys
 import argparse
 from distutils.util import strtobool
 
-from lightgbm import train, Dataset
+import lightgbm
 
 # let's add the right PYTHONPATH for common module
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -78,16 +78,16 @@ def run(args, other_args=[]):
     os.makedirs(os.path.dirname(args.export_model), exist_ok=True)
 
     lgbm_params = vars(args)
-    metric_tags = {'framework':'lightgbm_python','task':'train'}
+    metric_tags = {'framework':'lightgbm_python','task':'train','lightgbm_version':lightgbm.__VERSION__}
 
     print(f"Loading data for training")
     with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
-        train_data = Dataset(args.train, params=lgbm_params).construct()
+        train_data = lightgbm.Dataset(args.train, params=lgbm_params).construct()
         val_data = train_data.create_valid(args.test)
 
     print(f"Training LightGBM with parameters: {lgbm_params}")
     with LogTimeBlock("training", methods=['print'], tags=metric_tags):
-        booster = train(
+        booster = lightgbm.train(
             lgbm_params,
             train_data,
             valid_sets = val_data,

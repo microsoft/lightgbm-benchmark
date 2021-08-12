@@ -65,7 +65,7 @@ def run(args, other_args=[]):
     # create sub dir
     os.makedirs(args.output, exist_ok=True)
 
-    metric_tags = { 'task':'generate' }
+    metric_tags = {'task':'generate'}
 
     # record a metric    
     print(f"Generating data in memory.")
