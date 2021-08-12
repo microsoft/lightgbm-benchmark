@@ -78,7 +78,7 @@ def run(args, other_args=[]):
     os.makedirs(os.path.dirname(args.export_model), exist_ok=True)
 
     lgbm_params = vars(args)
-    metric_tags = {'framework':'lightgbm_python','task':'train','lightgbm_version':lightgbm.__VERSION__}
+    metric_tags = {'framework':'lightgbm_python','task':'train','lightgbm_version':lightgbm.__version__}
 
     print(f"Loading data for training")
     with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
