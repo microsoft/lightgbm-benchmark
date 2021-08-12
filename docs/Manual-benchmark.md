@@ -37,7 +37,7 @@ python src/scripts/generate_data/generate.py `
 python src/scripts/lightgbm_python/train.py `
     --train ./data/synthetic/train.txt `
     --test ./data/synthetic/train.txt `
-    --export_model ./data/models/synthetic-150.txt `
+    --export_model ./data/models/synthetic-1200.txt `
     --objective regression `
     --boosting_type gbdt `
     --tree_learner serial `
@@ -55,5 +55,14 @@ python src/scripts/lightgbm_python/train.py `
 ```ps
 python src/scripts/lightgbm_python/score.py `
     --data ./data/synthetic/inference.txt `
-    --model ./data/models/synthetic-150.txt
+    --model ./data/models/synthetic-1200.txt `
+    --output ./data/outputs/predictions-1200-py.txt
+```
+
+```ps
+python src/scripts/lightgbm_cli/score.py `
+    --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe `
+    --data ./data/synthetic/inference.txt `
+    --model ./data/models/synthetic-1200.txt `
+    --output ./data/outputs/predictions-1200-cli.txt
 ```

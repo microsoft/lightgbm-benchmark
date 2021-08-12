@@ -40,16 +40,16 @@ def get_arg_parser(parser=None):
 
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--train",
-        required=True, default="*", type=str, help="Training data location (directory or file)")
+        required=True, default="*", type=str, help="Training data location (file path)")
     group_i.add_argument("--test",
-        required=True, default="*", type=str, help="Training data location (directory or file)")
+        required=True, default="*", type=str, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--query_column", required=False, default=None, type=str)
 
     group_o = parser.add_argument_group("Outputs")
     group_o.add_argument("--export_model",
-        required=False, type=str, help="Export the model in this location (directory)")
+        required=False, type=str, help="Export the model in this location (file path)")
     
     # learner params
     group_lgbm = parser.add_argument_group("LightGBM learning parameters")
@@ -80,7 +80,7 @@ def run(args, other_args=[]):
     lgbm_params = vars(args)
     print(f"Training LightGBM with parameters: {lgbm_params}")
 
-    with LogTimeBlock("lightgbm_data_loading", methods=['print']):
+    with LogTimeBlock("lightgbm_data_loading", methods=['print'], tags={'framework':'lightgbm_python'}):
         train_data = Dataset(args.train, params=lgbm_params).construct()
         val_data = train_data.create_valid(args.test)
 

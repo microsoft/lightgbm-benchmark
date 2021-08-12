@@ -8,7 +8,9 @@ import os
 import sys
 import argparse
 from lightgbm import Booster, Dataset
-import numpy
+from subprocess import PIPE
+from subprocess import run as subprocess_run
+from subprocess import TimeoutExpired
 
 # let's add the right PYTHONPATH for common module
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -38,10 +40,12 @@ def get_arg_parser(parser=None):
         parser = argparse.ArgumentParser(__doc__)
 
     group_i = parser.add_argument_group("Input Data")
+    group_i.add_argument("--lightgbm_exec",
+        required=True, type=str, help="Path to lightgbm.exe (file path)")
     group_i.add_argument("--data",
         required=True, type=str, help="Inferencing data location (file path)")
     group_i.add_argument("--model",
-        required=False, type=str, help="Exported model location (file path)")
+        required=False, type=str, help="Exported model location")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
@@ -59,12 +63,31 @@ def run(args, other_args=[]):
     if args.output:
         os.makedirs(os.path.dirname(args.output), exist_ok=True)
 
-    print(f"Loading model from {args.model}")
-    booster = Booster(model_file=args.model)
+    if not os.path.isfile(args.lightgbm_exec):
+        raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")
+
+    lightgbm_cli_command = [
+        args.lightgbm_exec,
+        "task=prediction",
+        f"data={args.data}",
+        f"input_model={args.model}"
+    ]
+    if args.output:
+        lightgbm_cli_command.append(f"output_result={args.output}")
 
     print(f"Running .predict()")
-    with LogTimeBlock("lightgbm_inferencing", methods=['print'], tags={'framework':'lightgbm_python'}):
-        booster.predict(data=args.data)
+    with LogTimeBlock("lightgbm_inferencing", methods=['print'], tags={'framework':'lightgbm_cli'}):
+        lightgbm_cli_call = subprocess_run(
+            " ".join(lightgbm_cli_command),
+            stdout=PIPE,
+            stderr=PIPE,
+            universal_newlines=True,
+            check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
+            timeout=None
+        )
+        print(f"LightGBM stdout: {lightgbm_cli_call.stdout}")
+        print(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
+        print(f"LightGBM return code: {lightgbm_cli_call.returncode}")
 
 
 def main(cli_args=None):

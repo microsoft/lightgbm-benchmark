@@ -50,7 +50,7 @@ def get_arg_parser(parser=None):
     group_params.add_argument("--random_state", required=True, type=int)
 
     group_o = parser.add_argument_group("Outputs")
-    group_o.add_argument("--output", required=True, default="*", type=str, help="Output data location")
+    group_o.add_argument("--output", required=True, default="*", type=str, help="Output data location (directory)")
 
     return parser
 
