@@ -1,0 +1,37 @@
+name: lightgbm_benchmark_pipeline
+type: pipeline_job
+
+# <inputs_and_outputs>
+inputs:
+  benchmark_data:
+    # using reference to an existing AzureML dataset
+    data: azureml:synthetic_inference_4000col
+  benchmark_model:
+    # using reference to an existing AzureML dataset
+    data: azureml:model_4000col_100000train_synthetic
+outputs:
+  predictions:
+    # register the output as another dataset
+    data: azureml:benchmark_predictions
+
+# default settings that apply to all jobs
+defaults:
+  component_job:
+    datastore: azureml:workspaceblobstore
+    compute:
+      target: azureml:linux-d14v2
+
+# <jobs>
+jobs:
+  benchmark_score_job:
+    type: component_job
+
+    # to use below, module must have been registered before
+    component: azureml:lightgbm_python_score
+
+    inputs:
+      data: ${{inputs.benchmark_data}}
+      model: ${{inputs.benchmark_model}}
+
+    outputs:
+      predictions: ${{outputs.predictions}}

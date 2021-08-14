@@ -14,12 +14,12 @@ inputs:
 outputs:
   predictions:
     type: path
-
+    
 code:
-  local_path: ../../
+  local_path: ../../../src/
 
-environment: 
-  conda_file: file:./conda.yml
+environment:
+  conda_file: file:../../../src/scripts/lightgbm_python/conda.yml
   docker: 
     image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
 
@@ -27,4 +27,4 @@ command: >-
   python scripts/lightgbm_python/score.py
     --data ${{inputs.data}}
     --model ${{inputs.model}}
-    --output ${{outputs.predictions}}
+    --output ${{inputs.predictions}}
