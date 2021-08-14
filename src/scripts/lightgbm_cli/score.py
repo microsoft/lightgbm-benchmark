@@ -21,7 +21,7 @@ if COMMON_ROOT not in sys.path:
 
 # before doing local import
 from common.metrics import LogTimeBlock
-
+from common.io import input_file_path
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -43,9 +43,9 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--lightgbm_exec",
         required=True, type=str, help="Path to lightgbm.exe (file path)")
     group_i.add_argument("--data",
-        required=True, type=str, help="Inferencing data location (file path)")
+        required=True, type=input_file_path, help="Inferencing data location (file path)")
     group_i.add_argument("--model",
-        required=False, type=str, help="Exported model location")
+        required=False, type=input_file_path, help="Exported model location")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     

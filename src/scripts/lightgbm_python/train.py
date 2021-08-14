@@ -20,6 +20,7 @@ if COMMON_ROOT not in sys.path:
 
 # before doing local import
 from common.metrics import LogTimeBlock
+from common.io import input_file_path
 
 
 def get_arg_parser(parser=None):
@@ -40,9 +41,9 @@ def get_arg_parser(parser=None):
 
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--train",
-        required=True, default="*", type=str, help="Training data location (file path)")
+        required=True, default="*", type=input_file_path, help="Training data location (file path)")
     group_i.add_argument("--test",
-        required=True, default="*", type=str, help="Testing data location (file path)")
+        required=True, default="*", type=input_file_path, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--query_column", required=False, default=None, type=str)

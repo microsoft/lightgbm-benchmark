@@ -1,0 +1,26 @@
+name: lightgbm_benchmark_pipeline
+type: pipeline_job
+
+# <inputs_and_outputs>
+inputs:
+  benchmark_data: #using dataset, can use datastore + datapath also
+    data: 
+      local_path: ../../data/synthetic-sample/inference.txt
+  benchmark_model: #using dataset, can use datastore + datapath also
+    data: 
+      local_path: ../../data/models/synthetic-150.txt
+
+# <jobs>
+defaults:
+  component_job:
+    datastore: azureml:workspaceblobstore
+    compute:
+      target: azureml:linux-d14v2
+
+jobs:
+  hello_python_world_job:
+    type: component_job
+    component: file:../../src/scripts/lightgbm_python/score_component.yml
+    inputs:
+      data: ${{inputs.benchmark_data}}
+      model: ${{inputs.benchmark_model}}

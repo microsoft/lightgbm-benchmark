@@ -1,0 +1,30 @@
+type: command_component
+
+name: lightgbm_python_score
+display_name: "LightGBM Inferencing (python)"
+version: 1
+
+inputs:
+  data:
+    type: path
+    description: "TODO"
+  model:
+    type: path
+    description: "TODO"
+outputs:
+  predictions:
+    type: path
+
+code:
+  local_path: ../../
+
+environment: 
+  conda_file: file:./conda.yml
+  docker: 
+    image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
+
+command: >-
+  python scripts/lightgbm_python/score.py
+    --data ${{inputs.data}}
+    --model ${{inputs.model}}
+    --output ${{outputs.predictions}}
