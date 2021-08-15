@@ -1,4 +1,4 @@
-name: lightgbm_benchmark_pipeline_local
+name: lightgbm_python_benchmark_pipeline
 type: pipeline_job
 
 # <inputs_and_outputs>
