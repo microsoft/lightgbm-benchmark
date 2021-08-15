@@ -78,6 +78,6 @@ def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
     metrics_logger = MetricsLogger()
 
     with metrics_logger.log_time_block("foo_metric"):
-        time.sleep(1)
+        time.sleep(0.01)
 
     mlflow_log_metric_mock.assert_called_once()
