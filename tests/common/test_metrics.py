@@ -38,6 +38,7 @@ def test_metrics_logger_set_properties(mlflow_set_tags_mock):
         { 'key1' : "foo", 'key2' : 0.45 }
     )
 
+
 @patch('mlflow.log_params')
 def test_metrics_logger_set_properties(mlflow_log_params_mock):
     """ Tests MetricsLogger().log_parameters() """
@@ -50,6 +51,7 @@ def test_metrics_logger_set_properties(mlflow_log_params_mock):
     mlflow_log_params_mock.assert_called_with(
         { 'key1' : "foo", 'key2' : 0.45 }
     )
+
 
 @patch('mlflow.log_metric')
 def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
