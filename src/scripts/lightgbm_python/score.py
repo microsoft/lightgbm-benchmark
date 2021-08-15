@@ -57,7 +57,7 @@ def run(args, other_args=[]):
     """
     # create sub dir
     if args.output:
-        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        os.makedirs(args.output, exist_ok=True)
 
     print(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)
