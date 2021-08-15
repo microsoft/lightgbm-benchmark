@@ -23,13 +23,20 @@ class MetricsLogger():
     """
     _initialized = False
     _instance = None
+    _session_name = None
 
-    def __new__(cls):
+    def __new__(cls, session_name=None):
         """ Create a new instance of the Singleton if necessary """
         if cls._instance is None:
             # if this is the first time we're initializing
             cls._instance = super(MetricsLogger, cls).__new__(cls)
-            print("Initializing MLFLOW")
+            if not cls._session_name:
+                # if no previously recorded session name
+                cls._session_name = session_name
+            elif session_name:
+                # if new session name specified, overwrite
+                cls._session_name = session_name
+            print(f"Initializing MLFLOW [session='{cls._session_name}']")
             mlflow.start_run()
         else:
             # if this is not the first time
@@ -37,12 +44,32 @@ class MetricsLogger():
 
         return cls._instance
 
+    def close(self):
+        print(f"Finalizing MLFLOW [session='{self._session_name}']")
+        mlflow.end_run()
+
     def log_metric(self, key, value):
-        print(f"mlflow.log_metric({key},{value})")
+        print(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
         if len(key) > 45:
             key = key[:45]
         mlflow.log_metric(key, value)
+
+    def set_properties(self, **kwargs):
+        """ Set properties/tags for the session """
+        print(f"mlflow[session={self._session_name}].set_tags({kwargs})")
+        mlflow.set_tags(kwargs)
+
+    def log_parameters(self, **kwargs):
+        """ Set parameters for the session """
+        print(f"mlflow[session={self._session_name}].log_params({kwargs})")
+        mlflow.log_params(kwargs)
+
+    def log_time_block(self, metric_name):
+        """ [Proxy] Records time of execution for block of code """
+        # see class below with proper __enter__ and __exit__
+        return LogTimeBlock(metric_name)
+
 
 
 ########################
@@ -91,7 +118,6 @@ class LogTimeBlock(object):
         # internal variables
         self.name = name
         self.start_time = None
-        self.metrics_logger = MetricsLogger()
 
     def __enter__(self):
         """ Starts the timer, gets triggered at beginning of code block """
@@ -107,7 +133,7 @@ class LogTimeBlock(object):
             if method == "print":
                 # just prints nicely
                 print(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
-                self.metrics_logger.log_metric(self.name, run_time)
+                MetricsLogger().log_metric(self.name, run_time)
             else:
                 # Place holder for mlflow
                 raise NotImplementedError("Nothing else exists at this point")
@@ -128,7 +154,7 @@ def log_time_function(func):
         run_time = time.time() - start_time
 
         print("--- time elapsed: {} = {:2f} s".format(log_name, run_time))
-        self.metrics_logger.log_metric(log_name, run_time)
+        MetricsLogger().log_metric(log_name, run_time)
 
         return output
     return perf_wrapper

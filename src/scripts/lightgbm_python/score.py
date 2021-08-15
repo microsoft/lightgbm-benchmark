@@ -18,8 +18,9 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # before doing local import
-from common.metrics import LogTimeBlock
+from common.metrics import MetricsLogger
 from common.io import input_file_path
+
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -60,18 +61,35 @@ def run(args, other_args=[]):
         os.makedirs(args.output, exist_ok=True)
         args.output = os.path.join(args.output, "predictions.txt")
 
+    # initializes reporting of metrics
+    metrics_logger = MetricsLogger("lightgbm_python.score")
+
+    # add some properties to the session
+    metrics_logger.set_properties(
+        framework = 'lightgbm_python',
+        task = 'score',
+        lightgbm_version = lightgbm.__version__
+    )
+
     print(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)
 
-    metric_tags = {'framework':'lightgbm_python','task':'score','lightgbm_version':lightgbm.__version__}
-
     print(f"Loading data for inferencing")
-    with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
+    with metrics_logger.log_time_block("data_loading"):
         raw_data = numpy.loadtxt(args.data, delimiter=",")
 
+    # capture data shape as property
+    metrics_logger.set_properties(
+        inference_data_length = raw_data.shape[0],
+        inference_data_width = raw_data.shape[1]
+    )
+
     print(f"Running .predict()")
-    with LogTimeBlock("inferencing", methods=['print'], tags=metric_tags):
+    with metrics_logger.log_time_block("inferencing"):
         booster.predict(data=raw_data)
+
+    # optional: close logging session
+    metrics_logger.close()
 
 
 def main(cli_args=None):

@@ -7,4 +7,4 @@ dependencies:
   - pip:
     - lightgbm==3.2.1
     - mlflow==1.19.0
-    - azureml-defaults==1.33.0
+    - azureml-mlflow==1.33.0
