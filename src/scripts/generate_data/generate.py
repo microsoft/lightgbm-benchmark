@@ -7,7 +7,6 @@ Generate synthetic data for LightGBM training/inferencing
 import os
 import sys
 import argparse
-from distutils.util import strtobool
 
 import numpy
 from lightgbm import train, Dataset
@@ -22,6 +21,7 @@ if COMMON_ROOT not in sys.path:
 
 # before doing local import
 from common.metrics import LogTimeBlock
+
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -50,7 +50,9 @@ def get_arg_parser(parser=None):
     group_params.add_argument("--random_state", required=True, type=int)
 
     group_o = parser.add_argument_group("Outputs")
-    group_o.add_argument("--output", required=True, default="*", type=str, help="Output data location (directory)")
+    group_o.add_argument("--output_train", required=True, type=str, help="Output data location (directory)")
+    group_o.add_argument("--output_test", required=True, type=str, help="Output data location (directory)")
+    group_o.add_argument("--output_inference", required=True, type=str, help="Output data location (directory)")
 
     return parser
 
@@ -63,7 +65,9 @@ def run(args, other_args=[]):
         unknown_args (list[str]): list of arguments not known
     """
     # create sub dir
-    os.makedirs(args.output, exist_ok=True)
+    os.makedirs(args.output_train, exist_ok=True)
+    os.makedirs(args.output_test, exist_ok=True)
+    os.makedirs(args.output_inference, exist_ok=True)
 
     metric_tags = {'task':'generate'}
 
@@ -106,11 +110,11 @@ def run(args, other_args=[]):
         print(f"Inference data shape: {inference_data.shape}")
 
     # save as CSV
-    print(f"Saving data in {args.output}")
+    print(f"Saving data...")
     with LogTimeBlock("data_saving", methods=['print'], tags=metric_tags):
-        numpy.savetxt(os.path.join(args.output, "train.txt"), train_data, delimiter=",", newline="\n", fmt='%1.3f')
-        numpy.savetxt(os.path.join(args.output, "test.txt"), test_data, delimiter=",", newline="\n", fmt='%1.3f')
-        numpy.savetxt(os.path.join(args.output, "inference.txt"), inference_data, delimiter=",", newline="\n", fmt='%1.3f')
+        numpy.savetxt(os.path.join(args.output_train, "train.txt"), train_data, delimiter=",", newline="\n", fmt='%1.3f')
+        numpy.savetxt(os.path.join(args.output_test, "test.txt"), test_data, delimiter=",", newline="\n", fmt='%1.3f')
+        numpy.savetxt(os.path.join(args.output_inference, "inference.txt"), inference_data, delimiter=",", newline="\n", fmt='%1.3f')
 
 
 def main(cli_args=None):

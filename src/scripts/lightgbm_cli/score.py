@@ -21,7 +21,7 @@ if COMMON_ROOT not in sys.path:
 
 # before doing local import
 from common.metrics import LogTimeBlock
-
+from common.io import input_file_path
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -43,9 +43,9 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--lightgbm_exec",
         required=True, type=str, help="Path to lightgbm.exe (file path)")
     group_i.add_argument("--data",
-        required=True, type=str, help="Inferencing data location (file path)")
+        required=True, type=input_file_path, help="Inferencing data location (file path)")
     group_i.add_argument("--model",
-        required=False, type=str, help="Exported model location")
+        required=False, type=input_file_path, help="Exported model location")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
@@ -59,9 +59,10 @@ def run(args, other_args=[]):
         args (argparse.namespace): command line arguments provided to script
         unknown_args (list[str]): list of arguments not known
     """
-    # create sub dir
+    # create sub dir and output file
     if args.output:
-        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        os.makedirs(args.output, exist_ok=True)
+        args.output = os.path.join(args.output, "predictions.txt")
 
     if not os.path.isfile(args.lightgbm_exec):
         raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")
