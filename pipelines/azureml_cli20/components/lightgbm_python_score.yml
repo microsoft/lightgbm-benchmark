@@ -7,13 +7,14 @@ version: 1
 inputs:
   data:
     type: path
-    description: "TODO"
+    description: "Inference data (compatible with LightGBM model)"
   model:
     type: path
-    description: "TODO"
+    description: "LightGBM model exported from training (.txt)"
 outputs:
   predictions:
     type: path
+    description: "Predictions from LightGBM model"
 
 code:
   local_path: ../../../src/
