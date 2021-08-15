@@ -36,7 +36,9 @@ python src/scripts/generate_data/generate.py \
     --n_features 4000 \
     --n_informative 400 \
     --random_state 5 \
-    --output ./data/synthetic/ \
+    --output_train ./data/synthetic/train/ \
+    --output_test ./data/synthetic/test/ \
+    --output_inference ./data/synthetic/inference/ \
     --type regression
 ```
 
@@ -44,9 +46,9 @@ python src/scripts/generate_data/generate.py \
 
 ```sh
 python src/scripts/lightgbm_python/train.py \
-    --train ./data/synthetic/train.txt \
-    --test ./data/synthetic/train.txt \
-    --export_model ./data/models/synthetic-1200.txt \
+    --train ./data/synthetic/train/ \
+    --test ./data/synthetic/test/ \
+    --export_model ./data/models/synthetic-1200/ \
     --objective regression \
     --boosting_type gbdt \
     --tree_learner serial \
@@ -63,17 +65,17 @@ python src/scripts/lightgbm_python/train.py \
 
 ```sh
 python src/scripts/lightgbm_python/score.py \
-    --data ./data/synthetic/inference.txt \
-    --model ./data/models/synthetic-1200.txt \
-    --output ./data/outputs/predictions-1200-py.txt
+    --data ./data/synthetic/inference/ \
+    --model ./data/models/synthetic-1200/ \
+    --output ./data/outputs/predictions/
 ```
 
 ```sh
 python src/scripts/lightgbm_cli/score.py \
     --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe \
-    --data ./data/synthetic/inference.txt \
-    --model ./data/models/synthetic-1200.txt \
-    --output ./data/outputs/predictions-1200-cli.txt
+    --data ./data/synthetic/inference/ \
+    --model ./data/models/synthetic-1200/ \
+    --output ./data/outputs/predictions/
 ```
 
 # Results on specific setup
