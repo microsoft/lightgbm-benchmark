@@ -10,6 +10,7 @@ import argparse
 
 import numpy
 from lightgbm import train, Dataset
+import sklearn
 from sklearn.datasets import make_classification, make_regression
 
 # let's add the right PYTHONPATH for common module
@@ -20,7 +21,7 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # before doing local import
-from common.metrics import LogTimeBlock
+from common.metrics import MetricsLogger
 
 
 def get_arg_parser(parser=None):
@@ -69,11 +70,27 @@ def run(args, other_args=[]):
     os.makedirs(args.output_test, exist_ok=True)
     os.makedirs(args.output_inference, exist_ok=True)
 
-    metric_tags = {'task':'generate'}
+    # initializes reporting of metrics
+    metrics_logger = MetricsLogger("lightgbm_python.score")
+
+    # add some properties to the session
+    metrics_logger.set_properties(
+        task = 'generate',
+        sklean_version = sklearn.__version__
+    )
+    metrics_logger.log_parameters(
+        train_samples = args.train_samples,
+        test_samples = args.test_samples,
+        inferencing_samples = args.inferencing_samples,
+        n_features = args.n_features,
+        n_informative = args.n_informative,
+        n_redundant = args.n_redundant,
+        random_state = args.random_state
+    )
 
     # record a metric    
     print(f"Generating data in memory.")
-    with LogTimeBlock("data_generation", methods=['print'], tags=metric_tags):
+    with metrics_logger.log_time_block("data_generation"):
         total_samples = args.train_samples + args.test_samples + args.inferencing_samples
         if args.type == "classification":
             X, y = make_classification(
@@ -111,11 +128,13 @@ def run(args, other_args=[]):
 
     # save as CSV
     print(f"Saving data...")
-    with LogTimeBlock("data_saving", methods=['print'], tags=metric_tags):
+    with metrics_logger.log_time_block("data_saving"):
         numpy.savetxt(os.path.join(args.output_train, "train.txt"), train_data, delimiter=",", newline="\n", fmt='%1.3f')
         numpy.savetxt(os.path.join(args.output_test, "test.txt"), test_data, delimiter=",", newline="\n", fmt='%1.3f')
         numpy.savetxt(os.path.join(args.output_inference, "inference.txt"), inference_data, delimiter=",", newline="\n", fmt='%1.3f')
 
+    # optional: close logging session
+    metrics_logger.close()
 
 def main(cli_args=None):
     """ Component main function, parses arguments and executes run() function.
