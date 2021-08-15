@@ -6,7 +6,7 @@ These classes provide some tools to automate wall time compute and logging
 """
 import os
 import time
-
+from functools import wraps
 
 ########################
 ### CODE BLOCK TIMER ###

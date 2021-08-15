@@ -55,10 +55,10 @@ def run(args, other_args=[]):
         args (argparse.namespace): command line arguments provided to script
         unknown_args (list[str]): list of arguments not known
     """
-    # create sub dir
+    # create sub dir and output file
     if args.output:
         os.makedirs(args.output, exist_ok=True)
-        args.output = args.output + "/test.out"
+        args.output = os.path.join(args.output, "predictions.txt")
 
     print(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)

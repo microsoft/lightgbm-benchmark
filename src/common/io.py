@@ -2,13 +2,15 @@ import os
 import argparse
 
 def input_file_path(path):
-    """ Resolve input path from AzureML
+    """ Resolve input path from AzureML.
+    Given input path can be either a file, or a directory.
+    If it's a directory, this returns the path to the unique file it contains.
 
     Args:
-        path (str)
+        path (str): either file or directory path
     
     Returns:
-        str
+        str: path to file, or to unique file in directory
     """
     if os.path.isfile(path):
         print(f"Found INPUT file {path}")

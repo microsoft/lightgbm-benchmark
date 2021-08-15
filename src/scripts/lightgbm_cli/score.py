@@ -59,9 +59,10 @@ def run(args, other_args=[]):
         args (argparse.namespace): command line arguments provided to script
         unknown_args (list[str]): list of arguments not known
     """
-    # create sub dir
+    # create sub dir and output file
     if args.output:
-        os.makedirs(os.path.dirname(args.output), exist_ok=True)
+        os.makedirs(args.output, exist_ok=True)
+        args.output = os.path.join(args.output, "predictions.txt")
 
     if not os.path.isfile(args.lightgbm_exec):
         raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")

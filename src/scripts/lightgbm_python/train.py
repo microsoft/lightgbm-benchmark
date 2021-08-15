@@ -41,9 +41,9 @@ def get_arg_parser(parser=None):
 
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--train",
-        required=True, default="*", type=input_file_path, help="Training data location (file path)")
+        required=True, type=input_file_path, help="Training data location (file path)")
     group_i.add_argument("--test",
-        required=True, default="*", type=input_file_path, help="Testing data location (file path)")
+        required=True, type=input_file_path, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--query_column", required=False, default=None, type=str)
@@ -75,8 +75,10 @@ def run(args, other_args=[]):
         args (argparse.namespace): command line arguments provided to script
         unknown_args (list[str]): list of arguments not known
     """
-    # create sub dir
-    os.makedirs(os.path.dirname(args.export_model), exist_ok=True)
+    # create sub dir and output file
+    if args.export_model:
+        os.makedirs(args.export_model, exist_ok=True)
+        args.export_model = os.path.join(args.export_model, "model.txt")
 
     lgbm_params = vars(args)
     metric_tags = {'framework':'lightgbm_python','task':'train','lightgbm_version':lightgbm.__version__}
