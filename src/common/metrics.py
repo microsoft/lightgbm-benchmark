@@ -51,8 +51,8 @@ class MetricsLogger():
     def log_metric(self, key, value):
         print(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
-        if len(key) > 45:
-            key = key[:45]
+        if len(key) > 50:
+            key = key[:50]
         mlflow.log_metric(key, value)
 
     def set_properties(self, **kwargs):

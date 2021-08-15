@@ -25,6 +25,25 @@ def test_metrics_logger_log_metric(mlflow_log_metric_mock):
     )
 
 
+@patch('mlflow.log_metric')
+def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
+    """ Tests MetricsLogger().log_metric() """
+    metrics_logger = MetricsLogger()
+
+    metric_key = "x" * 250
+    assert len(metric_key), 250
+
+    short_metric_key = "x" * 50
+    assert len(short_metric_key), 50
+
+    metrics_logger.log_metric(
+        metric_key, "bar"
+    )
+    mlflow_log_metric_mock.assert_called_with(
+        short_metric_key, "bar"
+    )
+
+
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_properties(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties() """
