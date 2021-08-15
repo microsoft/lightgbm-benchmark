@@ -1,4 +1,4 @@
-name: lightgbm_benchmark_pipeline
+name: lightgbm_benchmark_pipeline_local
 type: pipeline_job
 
 # <inputs_and_outputs>
@@ -12,7 +12,8 @@ inputs:
 outputs:
   predictions:
     # register the output as another dataset
-    data: azureml:benchmark_predictions
+    data:
+      datastore: azureml:workspaceblobstore
 
 # default settings that apply to all jobs
 defaults:
@@ -23,11 +24,11 @@ defaults:
 
 # <jobs>
 jobs:
-  benchmark_score_job:
+  benchmark_job:
     type: component_job
 
     # to use below, module must have been registered before
-    component: azureml:lightgbm_python_score
+    component: file:./components/lightgbm_python_score.yml
 
     inputs:
       data: ${{inputs.benchmark_data}}
