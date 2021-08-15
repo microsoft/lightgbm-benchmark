@@ -1,4 +1,7 @@
-"""Tests src/scripts/ end-to-end LightGBM manual benchmark"""
+"""
+Executes the series of scripts end-to-end
+to test LightGBM (python) manual benchmark
+"""
 import os
 import sys
 import tempfile
@@ -12,6 +15,7 @@ from scripts.lightgbm_python import score
 
 def generate_data(output_train, output_test, output_inference, task_type):
     """Tests src/scripts/generate_data/generate.py"""
+    # create test arguments for the script
     script_args = [
         "generate.py",
         "--train_samples", "100",
@@ -32,6 +36,7 @@ def generate_data(output_train, output_test, output_inference, task_type):
     with patch.object(sys, "argv", script_args):
         generate.main()
 
+    # test expected outputs
     assert os.path.isfile(
         os.path.join(output_train, "train.txt")
     ), "Script generate.py should generate train.txt under --output dir but did not"
@@ -45,12 +50,20 @@ def generate_data(output_train, output_test, output_inference, task_type):
 
 def lightgbm_python_train(train_dir, test_dir, model_dir, task_type):
     """Tests src/scripts/lightgbm_python/train.py"""
+    # create test arguments for the script
+    if task_type == "regression":
+        objective_argument = "regression"
+    elif task_type == "classification":
+        objective_argument = "binary"
+    else:
+        raise NotImplementedError("task_type is not supported in those unit tests (yet)")
+
     script_args = [
         "train.py",
         "--train", train_dir,
         "--test", test_dir,
         "--export_model", model_dir,
-        "--objective", task_type,
+        "--objective", objective_argument,
         "--boosting_type", "gbdt",
         "--tree_learner", "serial",
         "--metric", "rmse",
@@ -66,6 +79,7 @@ def lightgbm_python_train(train_dir, test_dir, model_dir, task_type):
     with patch.object(sys, "argv", script_args):
         train.main()
 
+    # test expected outputs
     assert os.path.isfile(
         os.path.join(model_dir, "model.txt")
     ), "Script train.py should generate a model.txt output file but did not"
@@ -73,6 +87,7 @@ def lightgbm_python_train(train_dir, test_dir, model_dir, task_type):
 
 def lightgbm_python_score(inference_dir, model_dir, predictions_dir):
     """Tests src/scripts/lightgbm_python/score.py"""
+    # create test arguments for the script
     script_args = [
         "score.py",
         "--data", inference_dir,
@@ -84,19 +99,21 @@ def lightgbm_python_score(inference_dir, model_dir, predictions_dir):
     with patch.object(sys, "argv", script_args):
         score.main()
 
+    # test expected outputs
+    # NOTE: work in progress
     #assert os.path.isfile(
     #    predictions_path
     #), "Script score.py should generate a predictions output file but did not"
 
-
-def test_end_to_end_lightgbm_python(temporary_dir):
+@pytest.mark.parametrize("task_type", ["regression", "classification"])
+def test_end_to_end_lightgbm_python(temporary_dir, task_type):
+    """ Tests each script in a sequence """
+    # create a directory for each i/o of the pipeline
     train_dir = os.path.join(temporary_dir, "train")
     test_dir = os.path.join(temporary_dir, "test")
     inference_dir = os.path.join(temporary_dir, "inference")
     model_dir = os.path.join(temporary_dir, "model")
     predictions_dir = os.path.join(temporary_dir, "predictions")
-
-    task_type = "regression"
 
     generate_data(
         output_train = train_dir,
