@@ -10,26 +10,20 @@ from scripts.lightgbm_python import train
 from scripts.lightgbm_python import score
 
 
-def generate_data(output_dir, task_type):
+def generate_data(output_train, output_test, output_inference, task_type):
     """Tests src/scripts/generate_data/generate.py"""
     script_args = [
         "generate.py",
-        "--train_samples",
-        "100",
-        "--test_samples",
-        "10",
-        "--inferencing_samples",
-        "100",
-        "--n_features",
-        "40",
-        "--n_informative",
-        "10",
-        "--random_state",
-        "5",
-        "--output",
-        output_dir,
-        "--type",
-        "regression",
+        "--train_samples", "100",
+        "--test_samples", "10",
+        "--inferencing_samples", "100",
+        "--n_features", "40",
+        "--n_informative", "10",
+        "--random_state", "5",
+        "--output_train", output_train,
+        "--output_test", output_test,
+        "--output_inference", output_inference,
+        "--type", "regression",
     ]
     if task_type == "classification":
         script_args.extend(["--n_redundant", "5"])
@@ -39,22 +33,23 @@ def generate_data(output_dir, task_type):
         generate.main()
 
     assert os.path.isfile(
-        os.path.join(output_dir, "inference.txt")
-    ), "Script generate.py should generate inference.txt under --output dir but did not"
-    assert os.path.isfile(
-        os.path.join(output_dir, "train.txt")
+        os.path.join(output_train, "train.txt")
     ), "Script generate.py should generate train.txt under --output dir but did not"
     assert os.path.isfile(
-        os.path.join(output_dir, "test.txt")
+        os.path.join(output_test, "test.txt")
     ), "Script generate.py should generate test.txt under --output dir but did not"
+    assert os.path.isfile(
+        os.path.join(output_inference, "inference.txt")
+    ), "Script generate.py should generate inference.txt under --output dir but did not"
 
-def lightgbm_python_train(train_path, test_path, model_path, task_type):
+
+def lightgbm_python_train(train_dir, test_dir, model_dir, task_type):
     """Tests src/scripts/lightgbm_python/train.py"""
     script_args = [
         "train.py",
-        "--train", train_path,
-        "--test", test_path,
-        "--export_model", model_path,
+        "--train", train_dir,
+        "--test", test_dir,
+        "--export_model", model_dir,
         "--objective", task_type,
         "--boosting_type", "gbdt",
         "--tree_learner", "serial",
@@ -72,17 +67,17 @@ def lightgbm_python_train(train_path, test_path, model_path, task_type):
         train.main()
 
     assert os.path.isfile(
-        model_path
-    ), "Script train.py should generate a model output file but did not"
+        os.path.join(model_dir, "model.txt")
+    ), "Script train.py should generate a model.txt output file but did not"
 
 
-def lightgbm_python_score(data_path, model_path, predictions_path):
+def lightgbm_python_score(inference_dir, model_dir, predictions_dir):
     """Tests src/scripts/lightgbm_python/score.py"""
     script_args = [
         "score.py",
-        "--data", data_path,
-        "--model", model_path,
-        #"--output", predictions_path
+        "--data", inference_dir,
+        "--model", model_dir,
+        "--output", predictions_dir
     ]
 
     # replaces sys.argv with test arguments and run main
@@ -95,21 +90,30 @@ def lightgbm_python_score(data_path, model_path, predictions_path):
 
 
 def test_end_to_end_lightgbm_python(temporary_dir):
-    data_dir = os.path.join(temporary_dir, "data")
+    train_dir = os.path.join(temporary_dir, "train")
+    test_dir = os.path.join(temporary_dir, "test")
+    inference_dir = os.path.join(temporary_dir, "inference")
+    model_dir = os.path.join(temporary_dir, "model")
+    predictions_dir = os.path.join(temporary_dir, "predictions")
+
     task_type = "regression"
 
-    generate_data(data_dir, task_type)
+    generate_data(
+        output_train = train_dir,
+        output_test = test_dir,
+        output_inference = inference_dir,
+        task_type = task_type
+    )
 
-    model_dir = os.path.join(temporary_dir, "model")
     lightgbm_python_train(
-        train_path = os.path.join(data_dir, "train.txt"),
-        test_path = os.path.join(data_dir, "test.txt"),
-        model_path = model_dir,
+        train_dir = train_dir,
+        test_dir = test_dir,
+        model_dir = model_dir, # creates model.txt file inside model_dir
         task_type = task_type
     )
 
     lightgbm_python_score(
-        data_path = os.path.join(data_dir, "inference.txt"),
-        model_path = model_dir,
-        predictions_path = os.path.join(data_dir, "predictions.txt")
+        inference_dir = inference_dir,
+        model_dir = model_dir,
+        predictions_dir = predictions_dir
     )
