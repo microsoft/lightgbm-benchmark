@@ -27,6 +27,9 @@ class MetricsLogger():
 
     @classmethod
     def _initialize_azureml_mlflow_client(cls):
+        if cls._initialized:
+            return
+        print(f"Initializing MLFLOW [session='{cls._session_name}']")
         try:
             # if any of that fails, fall back to normal
             from azureml.core.run import Run
@@ -55,8 +58,7 @@ class MetricsLogger():
             elif session_name:
                 # if new session name specified, overwrite
                 cls._session_name = session_name
-            print(f"Initializing MLFLOW [session='{cls._session_name}']")
-            cls._init_azureml_mlflow_client()
+            cls._initialize_azureml_mlflow_client()
         else:
             # if this is not the first time
             pass
