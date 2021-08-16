@@ -10,23 +10,6 @@ from functools import wraps
 import mlflow
 
 
-def _init_azureml_mlflow_client():
-    try:
-        # if any of that fails, fall back to normal
-        from azureml.core.run import Run
-
-        azureml_run = Run.get_context()
-        if "_OfflineRun" not in str(azureml_run):
-            # if we're running this script REMOTELY, get aml and compute args from run context
-            ws = azureml_run.experiment.workspace
-            mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
-        else:
-            # if we're running this script LOCALLY, add your own +aml=X +compute=X arguments
-            return
-    except:
-        print(f"Failed at AzureML initialization for some reason.")
-
-
 class MetricsLogger():
     """
     Class for handling metrics logging in a singleton
@@ -68,8 +51,8 @@ class MetricsLogger():
     def log_metric(self, key, value):
         print(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
-        if len(key) > 45:
-            key = key[:45]
+        if len(key) > 50:
+            key = key[:50]
         mlflow.log_metric(key, value)
 
     def set_properties(self, **kwargs):
@@ -103,12 +86,10 @@ class LogTimeBlock(object):
 
     Example
     -------
-    >>> job_profile = {}
-    >>> with LogTimeBlock("my_perf_metric_name", methods=['print']):
+    >>> with LogTimeBlock("my_perf_metric_name"):
             print("(((sleeping for 1 second)))")
             time.sleep(1)
     --- time elapsted my_perf_metric_name : 1.0 s
-    >>> job_profile
     { 'my_perf_metric_name': 1.0 }
     """
 
@@ -123,13 +104,10 @@ class LogTimeBlock(object):
 
         Keyword Arguments
         -----------------
-        print: {bool}
-            prints out time with print()
         tags: {dict}
             add properties to metrics for logging as log_row()
         """
         # kwargs
-        self.methods = kwargs.get('methods', ['print'])
         self.tags = kwargs.get('tags', None)
 
         # internal variables
@@ -146,15 +124,8 @@ class LogTimeBlock(object):
         Note: arguments are by design for with statements. """
         run_time = time.time() - self.start_time # stops "timer"
 
-        for method in self.methods:
-            if method == "print":
-                # just prints nicely
-                print(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
-                MetricsLogger().log_metric(self.name, run_time)
-            else:
-                # Place holder for mlflow
-                raise NotImplementedError("Nothing else exists at this point")
-
+        print(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
+        MetricsLogger().log_metric(self.name, run_time)
 
 
 ####################
