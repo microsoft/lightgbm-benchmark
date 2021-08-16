@@ -19,7 +19,7 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # before doing local import
-from common.metrics import LogTimeBlock
+from common.metrics import MetricsLogger
 from common.io import input_file_path
 
 
@@ -80,16 +80,36 @@ def run(args, other_args=[]):
         os.makedirs(args.export_model, exist_ok=True)
         args.export_model = os.path.join(args.export_model, "model.txt")
 
+    # initializes reporting of metrics
+    metrics_logger = MetricsLogger("lightgbm_python.score")
+
+    # add some properties to the session
+    metrics_logger.set_properties(
+        framework = 'lightgbm_python',
+        task = 'score',
+        lightgbm_version = lightgbm.__version__
+    )
+    # add lgbm params to the session
     lgbm_params = vars(args)
-    metric_tags = {'framework':'lightgbm_python','task':'train','lightgbm_version':lightgbm.__version__}
+    lgbm_params['feature_pre_filter'] = False
+
+    metrics_logger.log_parameters(**lgbm_params)
 
     print(f"Loading data for training")
-    with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
+    with metrics_logger.log_time_block("data_loading"):
         train_data = lightgbm.Dataset(args.train, params=lgbm_params).construct()
-        val_data = train_data.create_valid(args.test)
+        val_data = train_data.create_valid(args.test).construct()
+
+    # capture data shape as property
+    metrics_logger.set_properties(
+        train_data_length = train_data.num_data(),
+        train_data_width = train_data.num_feature(),
+        test_data_length = val_data.num_data(),
+        test_data_width = val_data.num_feature()
+    )
 
     print(f"Training LightGBM with parameters: {lgbm_params}")
-    with LogTimeBlock("training", methods=['print'], tags=metric_tags):
+    with metrics_logger.log_time_block("training"):
         booster = lightgbm.train(
             lgbm_params,
             train_data,
@@ -100,6 +120,9 @@ def run(args, other_args=[]):
     if args.export_model:
         print(f"Writing model in {args.export_model}")
         booster.save_model(args.export_model)
+
+    # optional: close logging session
+    metrics_logger.close()
 
 
 def main(cli_args=None):
