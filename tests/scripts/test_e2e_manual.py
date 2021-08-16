@@ -13,7 +13,15 @@ from scripts.lightgbm_python import train
 from scripts.lightgbm_python import score
 
 
-def generate_data(output_train, output_test, output_inference, task_type):
+def generate_data(output_train,
+                  output_test,
+                  output_inference,
+                  task_type,
+                  mlflow_start_run_mock,
+                  mlflow_end_run_mock,
+                  mlflow_log_metric_mock,
+                  mlflow_set_tags_mock,
+                  mlflow_log_params):
     """Tests src/scripts/generate_data/generate.py"""
     # create test arguments for the script
     script_args = [
@@ -48,7 +56,15 @@ def generate_data(output_train, output_test, output_inference, task_type):
     ), "Script generate.py should generate inference.txt under --output dir but did not"
 
 
-def lightgbm_python_train(train_dir, test_dir, model_dir, task_type):
+def lightgbm_python_train(train_dir,
+                          test_dir,
+                          model_dir,
+                          task_type,
+                          mlflow_start_run_mock,
+                          mlflow_end_run_mock,
+                          mlflow_log_metric_mock,
+                          mlflow_set_tags_mock,
+                          mlflow_log_params):
     """Tests src/scripts/lightgbm_python/train.py"""
     # create test arguments for the script
     if task_type == "regression":
@@ -85,7 +101,14 @@ def lightgbm_python_train(train_dir, test_dir, model_dir, task_type):
     ), "Script train.py should generate a model.txt output file but did not"
 
 
-def lightgbm_python_score(inference_dir, model_dir, predictions_dir):
+def lightgbm_python_score(inference_dir,
+                          model_dir,
+                          predictions_dir,
+                          mlflow_start_run_mock,
+                          mlflow_end_run_mock,
+                          mlflow_log_metric_mock,
+                          mlflow_set_tags_mock,
+                          mlflow_log_params):
     """Tests src/scripts/lightgbm_python/score.py"""
     # create test arguments for the script
     script_args = [
@@ -105,8 +128,20 @@ def lightgbm_python_score(inference_dir, model_dir, predictions_dir):
     #    predictions_path
     #), "Script score.py should generate a predictions output file but did not"
 
+@patch('mlflow.start_run')
+@patch('mlflow.end_run')
+@patch('mlflow.log_metric')
+@patch('mlflow.set_tags')
+@patch('mlflow.log_params')
 @pytest.mark.parametrize("task_type", ["regression", "classification"])
-def test_end_to_end_lightgbm_python(temporary_dir, task_type):
+def test_end_to_end_lightgbm_python(mlflow_start_run_mock,
+                                    mlflow_end_run_mock,
+                                    mlflow_log_metric_mock,
+                                    mlflow_set_tags_mock,
+                                    mlflow_log_params,
+                                    temporary_dir,
+                                    task_type
+                                    ):
     """ Tests each script in a sequence """
     # create a directory for each i/o of the pipeline
     train_dir = os.path.join(temporary_dir, "train")
@@ -116,21 +151,36 @@ def test_end_to_end_lightgbm_python(temporary_dir, task_type):
     predictions_dir = os.path.join(temporary_dir, "predictions")
 
     generate_data(
-        output_train = train_dir,
-        output_test = test_dir,
-        output_inference = inference_dir,
-        task_type = task_type
+        train_dir,
+        test_dir,
+        inference_dir,
+        task_type,
+        mlflow_start_run_mock,
+        mlflow_end_run_mock,
+        mlflow_log_metric_mock,
+        mlflow_set_tags_mock,
+        mlflow_log_params
     )
 
     lightgbm_python_train(
-        train_dir = train_dir,
-        test_dir = test_dir,
-        model_dir = model_dir, # creates model.txt file inside model_dir
-        task_type = task_type
+        train_dir,
+        test_dir,
+        model_dir, # creates model.txt file inside model_dir
+        task_type,
+        mlflow_start_run_mock,
+        mlflow_end_run_mock,
+        mlflow_log_metric_mock,
+        mlflow_set_tags_mock,
+        mlflow_log_params
     )
 
     lightgbm_python_score(
-        inference_dir = inference_dir,
-        model_dir = model_dir,
-        predictions_dir = predictions_dir
+        inference_dir,
+        model_dir,
+        predictions_dir,
+        mlflow_start_run_mock,
+        mlflow_end_run_mock,
+        mlflow_log_metric_mock,
+        mlflow_set_tags_mock,
+        mlflow_log_params
     )
