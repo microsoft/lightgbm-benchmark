@@ -10,6 +10,23 @@ from functools import wraps
 import mlflow
 
 
+def _init_azureml_mlflow_client():
+    try:
+        # if any of that fails, fall back to normal
+        from azureml.core.run import Run
+
+        azureml_run = Run.get_context()
+        if "_OfflineRun" not in str(azureml_run):
+            # if we're running this script REMOTELY, get aml and compute args from run context
+            ws = azureml_run.experiment.workspace
+            mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+        else:
+            # if we're running this script LOCALLY, add your own +aml=X +compute=X arguments
+            return
+    except:
+        print(f"Failed at AzureML initialization for some reason.")
+
+
 class MetricsLogger():
     """
     Class for handling metrics logging in a singleton
