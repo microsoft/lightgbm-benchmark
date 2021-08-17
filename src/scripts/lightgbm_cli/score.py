@@ -71,7 +71,8 @@ def run(args, other_args=[]):
         args.lightgbm_exec,
         "task=prediction",
         f"data={args.data}",
-        f"input_model={args.model}"
+        f"input_model={args.model}",
+        "verbosity=2"
     ]
     if args.output:
         lightgbm_cli_command.append(f"output_result={args.output}")
