@@ -1,0 +1,10 @@
+# @package _group_
+default_compute_target: cpu-cluster # name of default target
+linux_cpu_dc_target: cpu-cluster
+linux_cpu_prod_target: cpu-cluster
+linux_gpu_dc_target: cpu-cluster
+linux_gpu_prod_target: cpu-cluster
+linux_input_mode: "mount"
+linux_output_mode: "mount"
+compliant_datastore: "workspaceblobstore" # where intermediary output is written
+noncompliant_datastore: "workspaceblobstore"

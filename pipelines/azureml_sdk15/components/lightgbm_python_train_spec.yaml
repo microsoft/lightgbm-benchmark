@@ -1,0 +1,186 @@
+$schema: http://azureml/sdk-1-5/DistributedComponent.json
+name: lightgbm_train
+version: 0.0.1
+display_name: 'Train LightGBM Model (Mpi)'
+type: DistributedComponent
+description: 'Train LightGBM Model (Mpi)'
+is_deterministic: true
+tags:
+  helpDocument: https://github.com/microsoft/lightgbm-benchmark
+
+inputs:
+  train_data_file_name:
+    default: "*"
+    type: String
+    description: "Training data file name pattern that is used to determine the file name used by the i-th node. Alternatively you may use comma separated file list. Examples: 'File_{}.txt', 'Train_{0}.txt', 'Train_0.txt,Train_2.txt'."
+  test_data_file_name:
+    default: "*"
+    type: String
+    description: "Test data file name pattern (similar to train). If a constant file name (like 'File_0.txt') is passed, only the first node nodes the test file."
+  train_data_dir:
+    optional: false
+    type: AnyDirectory
+    description: "Directory with training data files"
+  test_data_dir:
+    optional: false
+    type: AnyDirectory
+    description: "Directory with test data files"
+  num_test_chunks:
+    optional: false
+    type: Integer
+    description: "Number of test file chunks."
+  continued_training_model:
+    optional: true
+    type: AnyDirectory
+    description: "Input model file name from a previous training run"
+  parallel_tree_learner:
+    type: Enum
+    description: "Type of LightGBM parallel learning algorithm to use."
+    enum:
+      - data_parallel
+      - voting_parallel
+      #- serial
+    optional: false
+  objective:
+    optional: false
+    type: String
+    description: "Learning objective, support customize objective or standard lib objective, e.g. 'regression', 'regression_l1', 'huber', 'fair', 'poisson', 'quantile', 'mape', 'gamma', 'tweedie', 'binary', 'multiclass', 'multiclassova', 'cross_entropy', 'cross_entropy_lambda', 'lambdarank' "
+  header:
+    optional: false
+    type: String
+    description: "does data have header"
+  label_column:
+    optional: true
+    type: Integer
+    description: "Index of the label column after the label column"
+  query_column:
+    optional: false
+    type: Integer
+    description: "Index of the query column after the label column"
+  metric:
+    optional: false
+    type: String
+    description: "Metrics to report"
+  label_gain:
+    optional: false
+    type: String
+    description: "Relevant gain for labels. Used only in lambdarank."
+  num_trees:
+    optional: false
+    type: Integer
+    description: "Number of trees to train"
+  num_leaves:
+    optional: false
+    type: Integer
+    description: "Number of leaves"
+  min_data_in_leaf:
+    optional: false
+    type: Integer
+    description: "Minimum data points per leaf node"
+  learning_rate:
+    optional: false
+    type: Float
+    description: "Learning rate"
+  max_bin:
+    optional: false
+    type: Integer
+    description: "Max number of bins that feature values will be bucketed in"
+  feature_fraction:
+    optional: false
+    type: Float
+    description: "Fraction of features to use for each tree"
+  additional_lgbm_params:
+    optional: true
+    type: String
+    description: "Additional parameters to pass to LightGBM. Use NotSet if none."
+  debug:
+    optional: true
+    type: Boolean
+    description: "Enable debug mode"
+  print_files:
+    optional: true
+    type: Boolean
+    description: "Print files"
+  print_env:
+    optional: true
+    type: Boolean
+    description: "Print env variables"
+  process_poll_freq_sec:
+    optional: true
+    type: Integer
+    description: "Working directory."
+  weight_file_column:
+    optional: true
+    type: Integer
+    description: "Index of the weight column after the label column"
+  enable_hyperdrive:
+    optional: true
+    type: Boolean
+    description: "Whether enable HyperDrive"
+  enable_mlflow:
+    optional: true
+    type: Boolean
+    description: "Whether enable MLFLow"
+  mlflow_parent_run:
+    optional: true
+    type: Boolean
+    description: "Log in MLFlow parent run"
+
+outputs:
+  output_model:
+    type: AnyDirectory
+    description: "Output model location"
+  output_metrics:
+    type: AnyDirectory
+    description: "Metrics TSV location"
+  output_logs_zip:
+    type: AnyDirectory
+    description: "An output zip containing some of the logs from training."
+  output_portal_url:
+    type: AnyDirectory
+    description: "Contains the url to the AzureML experiment"
+
+environment:
+  docker:
+    build:
+      dockerfile: file:component.dockerfile
+  conda:
+    userManagedDependencies: true
+  os: Linux
+launcher:
+  type: mpi
+  additional_arguments: >-
+    python run.py
+    --train_data_file_name {inputs.train_data_file_name}
+    --test_data_file_name {inputs.test_data_file_name}
+    --train_data_dir {inputs.train_data_dir}
+    --test_data_dir {inputs.test_data_dir}
+    --num_test_chunks {inputs.num_test_chunks}
+    [--continued_training_model {inputs.continued_training_model}]
+    --parallel_tree_learner {inputs.parallel_tree_learner}
+    --objective {inputs.objective}
+    --header {inputs.header}
+    [--label_column {inputs.label_column}]
+    --query_column {inputs.query_column}
+    --metric {inputs.metric}
+    --label_gain {inputs.label_gain}
+    --num_trees {inputs.num_trees}
+    --num_leaves {inputs.num_leaves}
+    --min_data_in_leaf {inputs.min_data_in_leaf}
+    --learning_rate {inputs.learning_rate}
+    --max_bin {inputs.max_bin}
+    --feature_fraction {inputs.feature_fraction}
+    [--additional_lgbm_params {inputs.additional_lgbm_params}]
+    [--debug {inputs.debug}]
+    [--print_files {inputs.print_files}]
+    [--print_env {inputs.print_env}]
+    [--debug {inputs.debug}]
+    [--process_poll_freq_sec {inputs.process_poll_freq_sec}]
+    [--weight_file_column {inputs.weight_file_column}]
+    [--enable_hyperdrive {inputs.enable_hyperdrive}]
+    --output_model {outputs.output_model}
+    --output_metrics {outputs.output_metrics}
+    --output_logs_zip {outputs.output_logs_zip}
+    --output_portal_url {outputs.output_portal_url}
+    [--enable_mlflow {inputs.enable_mlflow}]
+    [--mlflow_parent_run {inputs.mlflow_parent_run}]
