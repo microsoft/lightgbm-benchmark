@@ -14,10 +14,15 @@ inputs:
     type: path
     description: directory to the model
     optional: false
+  predict_disable_shape_check:
+    type: Boolean
+    description: "control whether or not LightGBM raises an error when you try to predict on data with a different number of features than the training data"
+    optional: true
 command: >-
   python scripts/lightgbm_python/score.py
     --data {inputs.data}
     --model {inputs.model}
+    [--predict_disable_shape_check {inputs.predict_disable_shape_check}]
 environment:
   docker:
     build:

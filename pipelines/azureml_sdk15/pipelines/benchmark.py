@@ -41,6 +41,7 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             # INPUTS
             data: str = ""
             model: str = ""
+            predict_disable_shape_check: bool = False
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -82,7 +83,8 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             # call module with all the right arguments
             lightgbm_score_step = lightgbm_score_module(
                 data = data,
-                model = model
+                model = model,
+                predict_disable_shape_check = config.lightgbm_benchmark.predict_disable_shape_check
             )
             self.apply_smart_runsettings(lightgbm_score_step)
 
