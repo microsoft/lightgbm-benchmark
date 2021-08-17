@@ -76,17 +76,19 @@ def run(args, other_args=[]):
 
     print(f"Loading data for inferencing")
     with metrics_logger.log_time_block("data_loading"):
-        raw_data = numpy.loadtxt(args.data, delimiter=",")
+        # NOTE: this is bad, but allows for libsvm format (not just numpy)
+        inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
+        inference_raw_data = inference_data.get_data()
 
     # capture data shape as property
     metrics_logger.set_properties(
-        inference_data_length = raw_data.shape[0],
-        inference_data_width = raw_data.shape[1]
+        inference_data_length = inference_data.num_data(),
+        inference_data_width = inference_data.num_feature()
     )
 
     print(f"Running .predict()")
     with metrics_logger.log_time_block("inferencing"):
-        booster.predict(data=raw_data)
+        booster.predict(data=inference_raw_data, predict_disable_shape_check=True)
 
     # optional: close logging session
     metrics_logger.close()
