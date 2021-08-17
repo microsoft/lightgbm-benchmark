@@ -9,6 +9,7 @@ import sys
 import argparse
 import lightgbm
 import numpy
+from distutils.util import strtobool
 
 # let's add the right PYTHONPATH for common module
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -45,6 +46,10 @@ def get_arg_parser(parser=None):
         required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
+    
+    group_params = parser.add_argument_group("Scoring parameters")
+    group_params.add_argument("--predict_disable_shape_check",
+        required=False, default=False, type=strtobool, help="See LightGBM documentation")
     
     return parser
 
@@ -88,7 +93,7 @@ def run(args, other_args=[]):
 
     print(f"Running .predict()")
     with metrics_logger.log_time_block("inferencing"):
-        booster.predict(data=inference_raw_data, predict_disable_shape_check=True)
+        booster.predict(data=inference_raw_data, predict_disable_shape_check=bool(args.predict_disable_shape_check))
 
     # optional: close logging session
     metrics_logger.close()
