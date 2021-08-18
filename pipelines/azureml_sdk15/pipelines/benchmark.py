@@ -42,7 +42,7 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             data: str = ""
             model: str = ""
             predict_disable_shape_check: bool = False
-            os: "linux" # linux or windows
+            os: str = "linux" # linux or windows
 
         # return the dataclass itself
         # for helper class to construct config file
