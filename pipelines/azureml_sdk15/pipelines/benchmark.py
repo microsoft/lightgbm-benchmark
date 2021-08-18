@@ -42,6 +42,7 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             data: str = ""
             model: str = ""
             predict_disable_shape_check: bool = False
+            os: "linux" # linux or windows
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -64,7 +65,12 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             dsl.pipeline: the function to create your pipeline
         """
         # load the right module depending on config
-        lightgbm_score_module = self.module_load("lightgbm_python_score")
+        if config.lightgbm_benchmark.os.lower() == "windows":
+            lightgbm_score_module = self.module_load("lightgbm_python_score_win")
+        elif config.lightgbm_benchmark.os.lower() == "linux":
+            lightgbm_score_module = self.module_load("lightgbm_python_score")
+        else:
+            raise Exception(f"lightgbm_benchmark.os should be either linux or windows, not '{config.lightgbm_benchmark.os}'")
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="lightgbm_benchmark", # pythonic name

@@ -11,6 +11,9 @@ modules:
     - name: "lightgbm_python_score"
       version: null
       yaml: "lightgbm_python_score_spec.yaml"
+    - name: "lightgbm_python_score_win"
+      version: null
+      yaml: "lightgbm_python_score_spec_win.yaml"
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
@@ -33,3 +36,5 @@ module_loader: # module loading params
 lightgbm_benchmark:
   data: "synthetic_inference_4000col"
   model: "model_4000col_100000train_synthetic"
+  predict_disable_shape_check: true
+  os: "linux"
