@@ -42,6 +42,8 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
+    group_i.add_argument("--nthreads",
+        required=False, default = 1, type=int, help="number of threads")
     group_i.add_argument("--model",
         required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
@@ -94,6 +96,21 @@ def run(args, other_args=[]):
     print(f"Running .predict()")
     with metrics_logger.log_time_block("inferencing"):
         booster.predict(data=inference_raw_data, predict_disable_shape_check=bool(args.predict_disable_shape_check))
+
+    import pandas as pd
+    import treelite, treelite_runtime
+
+    with metrics_logger.log_time_block("pandas data loading to numpy"):
+        my_data = pd.read_csv(args.data).to_numpy()
+
+    with metrics_logger.log_time_block("treelite model converstion"):
+        model = treelite.Model.load(args.model,model_format='lightgbm')
+        model.export_lib(toolchain= 'gcc', libpath = './mymodel.so',verbose = True, params={'parallel_comp':16})
+        predictor = treelite_runtime.Predictor('./mymodel.so', verbose=True,nthread=args.nthreads)
+        dmat = treelite_runtime.DMatrix(my_data)
+
+    with metrics_logger.log_time_block("treelite prediction"):
+        predictor.predict(dmat)
 
     # optional: close logging session
     metrics_logger.close()
