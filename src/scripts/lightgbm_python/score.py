@@ -9,6 +9,7 @@ import sys
 import argparse
 import lightgbm
 import numpy
+from distutils.util import strtobool
 
 # let's add the right PYTHONPATH for common module
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -18,7 +19,7 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # before doing local import
-from common.metrics import LogTimeBlock
+from common.metrics import MetricsLogger
 from common.io import input_file_path
 
 
@@ -46,6 +47,10 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
+    group_params = parser.add_argument_group("Scoring parameters")
+    group_params.add_argument("--predict_disable_shape_check",
+        required=False, default=False, type=strtobool, help="See LightGBM documentation")
+    
     return parser
 
 
@@ -61,18 +66,37 @@ def run(args, other_args=[]):
         os.makedirs(args.output, exist_ok=True)
         args.output = os.path.join(args.output, "predictions.txt")
 
+    # initializes reporting of metrics
+    metrics_logger = MetricsLogger("lightgbm_python.score")
+
+    # add some properties to the session
+    metrics_logger.set_properties(
+        framework = 'lightgbm_python',
+        task = 'score',
+        lightgbm_version = lightgbm.__version__
+    )
+
     print(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)
 
-    metric_tags = {'framework':'lightgbm_python','task':'score','lightgbm_version':lightgbm.__version__}
-
     print(f"Loading data for inferencing")
-    with LogTimeBlock("data_loading", methods=['print'], tags=metric_tags):
-        raw_data = numpy.loadtxt(args.data, delimiter=",")
+    with metrics_logger.log_time_block("data_loading"):
+        # NOTE: this is bad, but allows for libsvm format (not just numpy)
+        inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
+        inference_raw_data = inference_data.get_data()
+
+    # capture data shape as property
+    metrics_logger.set_properties(
+        inference_data_length = inference_data.num_data(),
+        inference_data_width = inference_data.num_feature()
+    )
 
     print(f"Running .predict()")
-    with LogTimeBlock("inferencing", methods=['print'], tags=metric_tags):
-        booster.predict(data=raw_data)
+    with metrics_logger.log_time_block("inferencing"):
+        booster.predict(data=inference_raw_data, predict_disable_shape_check=bool(args.predict_disable_shape_check))
+
+    # optional: close logging session
+    metrics_logger.close()
 
 
 def main(cli_args=None):
