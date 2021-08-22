@@ -73,4 +73,15 @@ class InferencingScript(RunnableScript):
             framework = framework,
             framework_version = framework_version
         )
-        
+
+    def run(self, args, unknown_args=[]):
+        """Run script with arguments (the core of the component)
+
+        Args:
+            args (argparse.namespace): command line arguments provided to script
+            unknown_args (list[str]): list of arguments not known
+        """
+
+    @abstractmethod
+    def predict(self, inferencing_data, model):
+        pass
