@@ -10,6 +10,8 @@ import argparse
 import lightgbm
 import numpy
 from distutils.util import strtobool
+import pandas as pd
+import treelite, treelite_runtime
 
 # let's add the right PYTHONPATH for common module
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -78,8 +80,7 @@ def run(args, other_args=[]):
         lightgbm_version = lightgbm.__version__
     )
 
-    import pandas as pd
-    import treelite, treelite_runtime
+
 
     with metrics_logger.log_time_block("pandas data loading to numpy"):
         my_data = pd.read_csv(args.data).to_numpy()

@@ -42,8 +42,6 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
-    group_i.add_argument("--nthreads",
-        required=False, default = 1, type=int, help="number of threads")
     group_i.add_argument("--model",
         required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
