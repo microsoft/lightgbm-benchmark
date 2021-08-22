@@ -2,6 +2,16 @@
 
 The following document details the proposed structure for this repo, the benchmark scripts and libraries.
 
+## General design and motivations
+
+The goal of the benchmark repo is to provide scripts to compare tree-based machine learning framework on similar tasks and environment.
+
+The benchmark is made of a collection of scripts. These scripts can be run locally, or manually from within a remote VM. But these scripts will eventually be submitted as a pipeline or workflow chaining scripts in a sequence: data generation, data processing, training, inferencing.
+
+In order to do that, we need each step for benchmarking a given framework to be implemented as a single script with clear inputs, outputs and parameters. We organize those into sub-directories under `/src/scripts/`.
+
+For the benchmark to automate the analysis of the results and the production of a benchmark report, we need each script to report a common set of metrics or tags.
+
 ## Proposed structure of the repo
 
 | Directory | Content |
@@ -51,6 +61,18 @@ Here's a proposed python script template.
 
 ```python
 # <<<any imports>>>
+
+# let's add the right PYTHONPATH for common module
+# (assuming your script is located at /src/scripts/SOMETHING/foo.py)
+COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+if COMMON_ROOT not in sys.path:
+    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    sys.path.append(str(COMMON_ROOT))
+
+# before doing local import
+from common.metrics import MetricsLogger
+from common.io import input_file_path
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
