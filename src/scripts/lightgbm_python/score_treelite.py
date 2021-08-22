@@ -69,11 +69,11 @@ def run(args, other_args=[]):
         args.output = os.path.join(args.output, "predictions.txt")
 
     # initializes reporting of metrics
-    metrics_logger = MetricsLogger("lightgbm_python.score")
+    metrics_logger = MetricsLogger("treelite.score")
 
     # add some properties to the session
     metrics_logger.set_properties(
-        framework = 'lightgbm_python',
+        framework = 'treelite_python',
         task = 'score',
         lightgbm_version = lightgbm.__version__
     )
