@@ -78,24 +78,20 @@ def run(args, other_args=[]):
         lightgbm_version = lightgbm.__version__
     )
 
-    print(f"Loading model from {args.model}")
-    booster = lightgbm.Booster(model_file=args.model)
+    import pandas as pd
+    import treelite, treelite_runtime
 
-    print(f"Loading data for inferencing")
-    with metrics_logger.log_time_block("data_loading"):
-        # NOTE: this is bad, but allows for libsvm format (not just numpy)
-        inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
-        inference_raw_data = inference_data.get_data()
+    with metrics_logger.log_time_block("pandas data loading to numpy"):
+        my_data = pd.read_csv(args.data).to_numpy()
 
-    # capture data shape as property
-    metrics_logger.set_properties(
-        inference_data_length = inference_data.num_data(),
-        inference_data_width = inference_data.num_feature()
-    )
+    with metrics_logger.log_time_block("treelite model converstion"):
+        model = treelite.Model.load(args.model,model_format='lightgbm')
+        model.export_lib(toolchain= 'gcc', libpath = './mymodel.so',verbose = True, params={'parallel_comp':16})
+        predictor = treelite_runtime.Predictor('./mymodel.so', verbose=True,nthread=args.nthreads)
+        dmat = treelite_runtime.DMatrix(my_data)
 
-    print(f"Running .predict()")
-    with metrics_logger.log_time_block("inferencing"):
-        booster.predict(data=inference_raw_data, predict_disable_shape_check=bool(args.predict_disable_shape_check))
+    with metrics_logger.log_time_block("treelite prediction"):
+        predictor.predict(dmat)
 
     # optional: close logging session
     metrics_logger.close()
