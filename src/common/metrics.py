@@ -8,7 +8,7 @@ import os
 import time
 from functools import wraps
 import mlflow
-
+import json
 
 class MetricsLogger():
     """
@@ -59,6 +59,25 @@ class MetricsLogger():
         """ Set properties/tags for the session """
         print(f"mlflow[session={self._session_name}].set_tags({kwargs})")
         mlflow.set_tags(kwargs)
+
+    def set_properties_from_json(self, json_string):
+        """ Set properties/tags for the session from a json_string """
+        try:
+            json_dict = json.loads(json_string)
+        except:
+            raise Exception(f"During parsing of JSON properties '{json_string}', an exception occured: {traceback.format_exc()}")
+
+        if not isinstance(json_dict, dict):
+            raise Exception(f"Provided JSON properties should be a dict, instead it was {str(type(json_dict))}: {json_string}")
+        
+        properties_dict = dict(
+            [
+                (k, str(v)) # transform whatever as a string
+                for k,v in json_dict.items()
+            ]
+        )
+        self.set_properties(**properties_dict)
+
 
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """
