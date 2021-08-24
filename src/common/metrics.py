@@ -66,7 +66,8 @@ class MetricsLogger():
             machine=platform.machine(),
             processor=platform.processor(),
             system=platform.system(),
-            system_version=platform.version()
+            system_version=platform.version(),
+            cpu_count=os.cpu_count()
         )
 
     def log_parameters(self, **kwargs):

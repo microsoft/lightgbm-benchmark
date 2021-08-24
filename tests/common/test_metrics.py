@@ -68,10 +68,11 @@ def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
         "machine":platform.machine(),
         "processor":platform.processor(),
         "system":platform.system(),
-        "system_version":platform.version()
+        "system_version":platform.version(),
+        "cpu_count":os.cpu_count()
     }
     metrics_logger.set_platform_properties()
-    
+
     mlflow_set_tags_mock.assert_called_with(
         platform_properties
     )
