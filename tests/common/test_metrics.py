@@ -70,17 +70,21 @@ def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
         { 'key1' : "foo", 'key2' : '0.45' }
     )
 
-    with pytest.raises(Exception) as e_raised:
-        # failing json parsing
+    # test failure during json parsing
+    with pytest.raises(ValueError) as exc_info:
         metrics_logger.set_properties_from_json(
             "{ 'foo': NOTHING }"
         )
+    # making sure it's the right exception
+    assert str(exc_info.value).startswith("During parsing of JSON properties")
 
-    with pytest.raises(Exception) as e_raised:
-        # failing if dict is not provided
+    # test failure if dict is not provided
+    with pytest.raises(ValueError) as exc_info:
         metrics_logger.set_properties_from_json(
             "[\"bla\", \"foo\"]"
         )
+    # making sure it's the right exception
+    assert str(exc_info.value).startswith("Provided JSON properties should be a dict")
 
 
 @patch('mlflow.log_params')

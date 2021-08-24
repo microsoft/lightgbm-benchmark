@@ -9,6 +9,7 @@ import time
 from functools import wraps
 import mlflow
 import json
+import traceback
 
 class MetricsLogger():
     """
@@ -65,10 +66,10 @@ class MetricsLogger():
         try:
             json_dict = json.loads(json_string)
         except:
-            raise Exception(f"During parsing of JSON properties '{json_string}', an exception occured: {traceback.format_exc()}")
+            raise ValueError(f"During parsing of JSON properties '{json_string}', an exception occured: {traceback.format_exc()}")
 
         if not isinstance(json_dict, dict):
-            raise Exception(f"Provided JSON properties should be a dict, instead it was {str(type(json_dict))}: {json_string}")
+            raise ValueError(f"Provided JSON properties should be a dict, instead it was {str(type(json_dict))}: {json_string}")
         
         properties_dict = dict(
             [
