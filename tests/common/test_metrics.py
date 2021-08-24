@@ -3,6 +3,7 @@ import os
 import pytest
 from unittest.mock import Mock, patch
 import time
+import platform
 
 from common.metrics import MetricsLogger
 
@@ -55,6 +56,24 @@ def test_metrics_logger_set_properties(mlflow_set_tags_mock):
     )
     mlflow_set_tags_mock.assert_called_with(
         { 'key1' : "foo", 'key2' : 0.45 }
+    )
+
+
+@patch('mlflow.set_tags')
+def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
+    """ Tests MetricsLogger().set_properties() """
+    metrics_logger = MetricsLogger()
+
+    platform_properties = {
+        "machine":platform.machine(),
+        "processor":platform.processor(),
+        "system":platform.system(),
+        "system_version":platform.version()
+    }
+    metrics_logger.set_platform_properties()
+    
+    mlflow_set_tags_mock.assert_called_with(
+        platform_properties
     )
 
 

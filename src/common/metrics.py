@@ -8,7 +8,7 @@ import os
 import time
 from functools import wraps
 import mlflow
-
+import platform
 
 class MetricsLogger():
     """
@@ -59,6 +59,15 @@ class MetricsLogger():
         """ Set properties/tags for the session """
         print(f"mlflow[session={self._session_name}].set_tags({kwargs})")
         mlflow.set_tags(kwargs)
+
+    def set_platform_properties(self):
+        """ Capture platform sysinfo and record as properties """
+        self.set_properties(
+            machine=platform.machine(),
+            processor=platform.processor(),
+            system=platform.system(),
+            system_version=platform.version()
+        )
 
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """
