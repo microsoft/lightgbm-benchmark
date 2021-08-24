@@ -68,6 +68,13 @@ metrics_logger.set_properties(
 )
 ```
 
+Optionally, you can provide custom properties using json (for instance from CLI arguments), and report those using:
+
+```python
+# logger will parse the json
+metrics_logger.set_properties_from_json(json_string)
+```
+
 ### 3. Add any parameters
 
 Any keyword arg of log_parameters() is submitted as a parameter in mlflow.
