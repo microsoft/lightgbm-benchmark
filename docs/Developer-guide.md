@@ -2,6 +2,8 @@
 
 The following document details the proposed structure for this repo, the benchmark scripts and libraries.
 
+> Quickstart: please check out `/src/scripts/sample/sample.py` for a full sample python script implementing the recommendations below.
+
 ## General design and motivations
 
 The goal of the benchmark repo is to provide scripts to compare tree-based machine learning framework on similar tasks and environment.
@@ -54,77 +56,6 @@ We'll build common libraries under `/src/common/` to help script developers to a
 For instance:
 - mlflow metrics recording
 - managing typical arguments (ex: input/output folders with single file)
-
-## Python code template
-
-Here's a proposed python script template.
-
-```python
-# <<<any imports>>>
-
-# let's add the right PYTHONPATH for common module
-# (assuming your script is located at /src/scripts/SOMETHING/foo.py)
-COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
-    sys.path.append(str(COMMON_ROOT))
-
-# before doing local import
-from common.metrics import MetricsLogger
-from common.io import input_file_path
-
-def get_arg_parser(parser=None):
-    """Adds component/module arguments to a given argument parser.
-
-    Args:
-        parser (argparse.ArgumentParser): an argument parser instance
-
-    Returns:
-        ArgumentParser: the argument parser instance
-
-    Notes:
-        if parser is None, creates a new parser instance
-    """
-    # add arguments that are specific to the module
-    if parser is None:
-        parser = argparse.ArgumentParser(__doc__)
-
-    # <<< whatever parsing building is needed>>>
-
-    return parser
-
-
-def run(args, unknown_args=[]):
-    """Run script with arguments (the core of the component)
-
-    Args:
-        args (argparse.namespace): command line arguments provided to script, see get_arg_parser()
-        unknown_args (list[str]): list of arguments not known by parser
-    """
-    # <<<whatever needs to be implemented here>>>
-    pass
-
-
-def main(cli_args=None):
-    """ Component main function, parses arguments and executes run() function.
-
-    Args:
-        cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
-    """
-    # construct arg parser
-    parser = get_arg_parser()
- 
-    # if argument parsing fails, or if unknown arguments, will except
-    args, unknown_args = parser.parse_known_args(cli_args)
-
-    # run the actual thing
-    run(args, unknown_args)
-
-
-if __name__ == "__main__":
-    main()    
-```
 
 ## Reporting standards
 
