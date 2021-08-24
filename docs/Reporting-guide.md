@@ -15,21 +15,24 @@ The following tables details each reporting entry, with its type and description
 | Entry | Type | Description |
 | :-- | :-- | :-- |
 | `task` | property | the task of the script, picked in  ` ['generate', 'train', 'score']` |
-| `framework` | property | an identifier for the framework in the benchmark (ex: `lightgbm_python`, `treelite`). |
+| `framework` | property | an identifier for the ML algorithm being benchmarked (ex: `lightgbm_python`, `treelite`). |
 | `framework_version` | property | the version of the framework (ex: `"3.2.1"`). |
+| `environment` | property | Optional: log relevent dependencies and their version numbers as a dictionary. |
 
 To learn how to report properties, see common library below.
 
 ### Common metrics
 
+The common metrics capture various times that we'll compare accross frameworks. If possible, we'd like the training and inferencing times to be distinct from data loading. If that's not possible, then to not report any data loading time and we'll figure out how to compare those during analysis.
+
 | Entry | Type | Description |
 | :-- | :-- | :-- |
-| `data_loading` | metric | loading data before executing the task |
-| `data_generation` | metric | generating synthetic data |
-| `training` | metric | wall time for training |
-| `inferencing` | metric | wall time for inferencing |
+| `time_data_loading` | metric | time for loading the data before executing the task |
+| `time_data_generation` | metric | time for generating data (for task `generate`) |
+| `time_training` | metric | time for training on previously loaded data (for task `training`) |
+| `time_inferencing` | metric | time for inferencing on previously loaded data (for task `inferencing`) |
 
-To learn how to report metrics, see common libary below.
+To learn how to implement reporting those metrics, see common libary below.
 
 ### Parameters
 
@@ -78,7 +81,7 @@ metrics_logger.log_parameters(**lgbm_params)
 To compute wall time, the `MetricsLogger` class provide a helper method you can use within a `with` statement:
 
 ```python
-with metrics_logger.log_time_block("training"):
+with metrics_logger.log_time_block("time_training"):
     # anything within this code block will count in wall time
     booster = lightgbm.train(
         lgbm_params,
@@ -89,4 +92,4 @@ with metrics_logger.log_time_block("training"):
 # anything outside of that will not count
 ```
 
-This will record a metric `"data_loading"` measuring the time spent for the execution of this code block (only).
+This will record a metric `"time_training"` measuring the time spent for the execution of this code block (only).
