@@ -74,8 +74,8 @@ def get_arg_parser(parser=None):
     group_general.add_argument(
         "--custom_properties",
         required=False,
-        default=str,
-        type=strtobool,  # use this for bool args, do not use action_store=True
+        default=None,
+        type=str,
         help="provide custom properties as json dict",
     )
 
@@ -102,7 +102,8 @@ def run(args, unknown_args=[]):
     )
 
     # if provided some custom_properties by the outside orchestrator
-    metrics_logger.set_properties_from_json(args.custom_properties)
+    if args.custom_properties:
+        metrics_logger.set_properties_from_json(args.custom_properties)
 
     # make sure the output argument exists
     os.makedirs(args.output, exist_ok=True)
@@ -117,7 +118,7 @@ def run(args, unknown_args=[]):
 
     # to log executing time of a code block, use log_time_block()
     logger.info(f"Loading data for inferencing")
-    with metrics_logger.log_time_block("data_loading"):
+    with metrics_logger.log_time_block(metric_name="time_data_loading"):
         inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
         inference_raw_data = inference_data.get_data()
 
@@ -129,7 +130,7 @@ def run(args, unknown_args=[]):
 
     # to log executing time of a code block, use log_time_block()
     logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block("inferencing"):
+    with metrics_logger.log_time_block(metric_name="time_inferencing"):
         booster.predict(data=inference_raw_data)
 
     # CUSTOM CODE ENDS HERE
