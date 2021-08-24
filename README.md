@@ -1,12 +1,15 @@
 # LightGBM benchmarking suite
 
-> WARNING: this repository is in a very early stage.
+The LightGBM benchmark aims at providing tools and automation to compare implementations of lightgbm and other boosting-tree-based algorithms for both training and inferencing. The focus is on production use cases, and the evaluation on both model quality (validation metrics) and computing performance (training speed, compute hours, inferencing latency, etc).
 
-This repository provides code for running a consistent and automated benchmarking of lightgbm releases against public and synthetic datasets.
+The goal is to support the community of developers of LightGBM by providing tools and a methodology for evaluating new releases of LightGBM on a standard and reproducible benchmark.
+
+> WARNING: this repository is in a very early stage.
 
 ## Documentation
 
 Current documentation is in the [`docs/` folder](./docs):
+- [The goals and methodology of the LightGBM benchmark](./docs/Benchmark-project.md)
 - [How to run the benchmark scripts manually](./docs/Manual-benchmark.md)
 
 ## Contributing
