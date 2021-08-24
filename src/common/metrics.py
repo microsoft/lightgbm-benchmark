@@ -42,6 +42,28 @@ class MetricsLogger():
     _instance = None
     _session_name = None
 
+    @classmethod
+    def _initialize_azureml_mlflow_client(cls):
+        if cls._initialized:
+            return
+        print(f"Initializing MLFLOW [session='{cls._session_name}']")
+        try:
+            # if any of that fails, fall back to normal
+            from azureml.core.run import Run
+
+            azureml_run = Run.get_context()
+            if "_OfflineRun" not in str(azureml_run):
+                # if we're running this script REMOTELY, get aml and compute args from run context
+                ws = azureml_run.experiment.workspace
+                mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+                mlflow.start_run()
+                cls._initialized = True
+            else:
+                # if we're running this script LOCALLY, add your own +aml=X +compute=X arguments
+                return
+        except:
+            print(f"Failed at AzureML initialization for some reason.")
+
     def __new__(cls, session_name=None):
         """ Create a new instance of the Singleton if necessary """
         if cls._instance is None:
@@ -53,8 +75,7 @@ class MetricsLogger():
             elif session_name:
                 # if new session name specified, overwrite
                 cls._session_name = session_name
-            print(f"Initializing MLFLOW [session='{cls._session_name}']")
-            mlflow.start_run()
+            cls._initialize_azureml_mlflow_client()
         else:
             # if this is not the first time
             pass
@@ -62,8 +83,9 @@ class MetricsLogger():
         return cls._instance
 
     def close(self):
-        print(f"Finalizing MLFLOW [session='{self._session_name}']")
-        mlflow.end_run()
+        if self._initialized:
+            print(f"Finalizing MLFLOW [session='{self._session_name}']")
+            mlflow.end_run()
 
     def log_metric(self, key, value):
         print(f"mlflow[session={self._session_name}].log_metric({key},{value})")
