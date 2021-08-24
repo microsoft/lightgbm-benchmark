@@ -40,7 +40,7 @@ To allow for modularity and standardization, we propose to structure the benchma
 
 ## Benchmarking scenarios and reporting
 
-The benchmark could be use in the following comparison scenarios:
+The benchmark could be used in the following comparison scenarios:
 
 - **Training framework comparison** - Compare lightgbm versus other training (or inferencing) ML framework. This comparison will be mainly based on model quality, but also training computing performance. It will run those framework on typical public datasets.
 - **Lightgbm performance and scalability** - Compare lightgbm (stable or custom) to itself while changing compiling options, VMs and environments. This will likely use synthetic data or large public datasets. This is where allowing users to run on their own production data makes more sense.
