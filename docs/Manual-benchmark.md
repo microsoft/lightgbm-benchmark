@@ -5,24 +5,7 @@
 - generate synthetic data for running lightgbm
 - run lightgbm training and inferencing scripts to measure wall time
 
-**Requirements** - To enjoy this tutorial, you need to be able to:
-
-- Have an existing installation of `python>=3.8` ([Miniconda](https://docs.conda.io/en/latest/miniconda.html) or equivalent)
-
-## Python Setup
-
-To create a conda environment and install dependencies for this benchmark:
-
-```ps
-# create conda environment
-conda create --name lightgbmbenchmark python=3.8 -y
-
-# activate conda environment
-conda activate lightgbmbenchmark
-
-# install shrike library
-python -m pip install -r requirements.txt
-```
+**Requirements** - To enjoy this tutorial, you need to have installed python dependencies locally (see [instructions](Install.md)).
 
 ## Generate synthetic data
 
