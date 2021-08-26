@@ -8,6 +8,7 @@ import os
 import time
 from functools import wraps
 import mlflow
+import platform
 import json
 import traceback
 
@@ -61,6 +62,16 @@ class MetricsLogger():
         print(f"mlflow[session={self._session_name}].set_tags({kwargs})")
         mlflow.set_tags(kwargs)
 
+    def set_platform_properties(self):
+        """ Capture platform sysinfo and record as properties """
+        self.set_properties(
+            machine=platform.machine(),
+            processor=platform.processor(),
+            system=platform.system(),
+            system_version=platform.version(),
+            cpu_count=os.cpu_count()
+        )
+
     def set_properties_from_json(self, json_string):
         """ Set properties/tags for the session from a json_string """
         try:
@@ -78,7 +89,6 @@ class MetricsLogger():
             ]
         )
         self.set_properties(**properties_dict)
-
 
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """

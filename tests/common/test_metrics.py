@@ -3,6 +3,7 @@ import os
 import pytest
 from unittest.mock import Mock, patch
 import time
+import platform
 
 from common.metrics import MetricsLogger
 
@@ -59,6 +60,24 @@ def test_metrics_logger_set_properties(mlflow_set_tags_mock):
 
 
 @patch('mlflow.set_tags')
+def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
+    """ Tests MetricsLogger().set_properties() """
+    metrics_logger = MetricsLogger()
+
+    platform_properties = {
+        "machine":platform.machine(),
+        "processor":platform.processor(),
+        "system":platform.system(),
+        "system_version":platform.version(),
+        "cpu_count":os.cpu_count()
+    }
+    metrics_logger.set_platform_properties()
+
+    mlflow_set_tags_mock.assert_called_with(
+        platform_properties
+    )
+
+@patch('mlflow.set_tags')
 def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties_from_json() """
     metrics_logger = MetricsLogger()
@@ -85,7 +104,6 @@ def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
         )
     # making sure it's the right exception
     assert str(exc_info.value).startswith("Provided JSON properties should be a dict")
-
 
 @patch('mlflow.log_params')
 def test_metrics_logger_log_parameters(mlflow_log_params_mock):
