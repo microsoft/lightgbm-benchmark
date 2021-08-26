@@ -59,7 +59,7 @@ def test_metrics_logger_set_properties(mlflow_set_tags_mock):
 
 
 @patch('mlflow.log_params')
-def test_metrics_logger_set_properties(mlflow_log_params_mock):
+def test_metrics_logger_log_parameters(mlflow_log_params_mock):
     """ Tests MetricsLogger().log_parameters() """
     metrics_logger = MetricsLogger()
 
