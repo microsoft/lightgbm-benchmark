@@ -77,9 +77,36 @@ def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
         platform_properties
     )
 
+@patch('mlflow.set_tags')
+def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
+    """ Tests MetricsLogger().set_properties_from_json() """
+    metrics_logger = MetricsLogger()
+
+    metrics_logger.set_properties_from_json(
+        "{ \"key1\" : \"foo\", \"key2\" : 0.45 }"
+    )
+    mlflow_set_tags_mock.assert_called_with(
+        { 'key1' : "foo", 'key2' : '0.45' }
+    )
+
+    # test failure during json parsing
+    with pytest.raises(ValueError) as exc_info:
+        metrics_logger.set_properties_from_json(
+            "{ 'foo': NOTHING }"
+        )
+    # making sure it's the right exception
+    assert str(exc_info.value).startswith("During parsing of JSON properties")
+
+    # test failure if dict is not provided
+    with pytest.raises(ValueError) as exc_info:
+        metrics_logger.set_properties_from_json(
+            "[\"bla\", \"foo\"]"
+        )
+    # making sure it's the right exception
+    assert str(exc_info.value).startswith("Provided JSON properties should be a dict")
 
 @patch('mlflow.log_params')
-def test_metrics_logger_set_properties(mlflow_log_params_mock):
+def test_metrics_logger_log_parameters(mlflow_log_params_mock):
     """ Tests MetricsLogger().log_parameters() """
     metrics_logger = MetricsLogger()
 
