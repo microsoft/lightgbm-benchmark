@@ -28,4 +28,4 @@ def test_sample_inferencing_script(temporary_dir, regression_inference_sample, r
         sample.main()
 
     # test expected outputs
-    assert os.path.exists(predictions_dir, "predictions.txt")
+    assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))

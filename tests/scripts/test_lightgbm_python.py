@@ -64,4 +64,4 @@ def test_lightgbm_python_score(temporary_dir, regression_model_sample, regressio
         score.main()
 
     # test expected outputs
-    assert os.path.exists(predictions_dir, "predictions.txt")
+    assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))
