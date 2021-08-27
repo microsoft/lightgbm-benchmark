@@ -8,9 +8,9 @@ import os
 import sys
 import argparse
 import logging
+from distutils.util import strtobool
 import lightgbm
 import numpy
-from distutils.util import strtobool
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -91,6 +91,10 @@ def run(args, unknown_args=[]):
         task="score", framework="lightgbm_python", framework_version=lightgbm.__version__
     )
 
+    # if provided some custom_properties by the outside orchestrator
+    if args.custom_properties:
+        metrics_logger.set_properties_from_json(args.custom_properties)
+
     # make sure the output argument exists
     if args.output:
         os.makedirs(args.output, exist_ok=True)
@@ -100,7 +104,7 @@ def run(args, unknown_args=[]):
     booster = lightgbm.Booster(model_file=args.model)
 
     logger.info(f"Loading data for inferencing")
-    with metrics_logger.log_time_block("data_loading"):
+    with metrics_logger.log_time_block("time_data_loading"):
         # NOTE: this is bad, but allows for libsvm format (not just numpy)
         inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
         inference_raw_data = inference_data.get_data()
@@ -112,7 +116,7 @@ def run(args, unknown_args=[]):
     )
 
     logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block("inferencing"):
+    with metrics_logger.log_time_block("time_inferencing"):
         booster.predict(data=inference_raw_data, predict_disable_shape_check=bool(args.predict_disable_shape_check))
 
     # Important: close logging session before exiting

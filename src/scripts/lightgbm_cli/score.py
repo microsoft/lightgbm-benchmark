@@ -130,9 +130,12 @@ def run(args, unknown_args=[]):
         logger.info(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
         logger.info(f"LightGBM return code: {lightgbm_cli_call.returncode}")
 
+    # Important: close logging session before exiting
+    metrics_logger.close()
+
 
 def main(cli_args=None):
-    """ Component main function, parses arguments and executes run() function.
+    """Component main function, parses arguments and executes run() function.
 
     Args:
         cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.

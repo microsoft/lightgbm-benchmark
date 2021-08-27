@@ -8,7 +8,7 @@ import os
 import sys
 import argparse
 import logging
-from distutils.util import strtoboo
+from distutils.util import strtobool
 import numpy
 import sklearn
 from sklearn.datasets import make_classification, make_regression
@@ -133,7 +133,7 @@ def run(args, unknown_args=[]):
 
     # record a metric
     logger.info(f"Generating data in memory.")
-    with metrics_logger.log_time_block("data_generation"):
+    with metrics_logger.log_time_block("time_data_generation"):
         total_samples = (
             args.train_samples + args.test_samples + args.inferencing_samples
         )
@@ -173,7 +173,7 @@ def run(args, unknown_args=[]):
 
     # save as CSV
     logger.info(f"Saving data...")
-    with metrics_logger.log_time_block("data_saving"):
+    with metrics_logger.log_time_block("time_data_saving"):
         numpy.savetxt(
             os.path.join(args.output_train, "train.txt"),
             train_data,
