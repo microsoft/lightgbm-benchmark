@@ -7,7 +7,6 @@ defaults:
 
 modules:
   manifest:
-    # BASELINE PART 1
     - name: "lightgbm_python_score"
       version: null
       yaml: "lightgbm_python_score_spec.yaml"
@@ -36,8 +35,17 @@ module_loader: # module loading params
   force_all_module_version: null
   local_steps_folder: "../../../components/"
 
+### CUSTOM PARAMETERS ###
+
 lightgbm_benchmark:
+  # data: the name of the AML dataset containing inference data
   data: "synthetic_inference_4000col"
+
+  # model: the name of the AML dataset containing the lightgbm model
   model: "model_4000col_100000train_synthetic"
-  predict_disable_shape_check: true
+
+  # predict_disable_shape_check: if false, will except it model schema != inference data schema
+  predict_disable_shape_check: false
+
+  # os: switch from linux module to windows
   os: "linux"
