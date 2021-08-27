@@ -2,17 +2,15 @@
 # Licensed under the MIT license.
 
 """
-LightGBM/CLI inferencing script
+Sample benchmark script (lightgbm inferencing)
 """
 import os
 import sys
 import argparse
 import logging
+import lightgbm
+import numpy
 from distutils.util import strtobool
-from lightgbm import Booster, Dataset
-from subprocess import PIPE
-from subprocess import run as subprocess_run
-from subprocess import TimeoutExpired
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -43,15 +41,28 @@ def get_arg_parser(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(__doc__)
 
-    group_i = parser.add_argument_group("Input Data")
-    group_i.add_argument("--lightgbm_exec",
-        required=True, type=str, help="Path to lightgbm.exe (file path)")
-    group_i.add_argument("--data",
-        required=True, type=input_file_path, help="Inferencing data location (file path)")
-    group_i.add_argument("--model",
-        required=False, type=input_file_path, help="Exported model location")
-    group_i.add_argument("--output",
-        required=False, default=None, type=str, help="Inferencing output location (file path)")
+    # recommended: use groups
+    group_i = parser.add_argument_group("I/O Arguments")
+    group_i.add_argument(
+        "--data",
+        required=True,
+        type=input_file_path,  # use this helper type for a directory containing a single file
+        help="Some input location (directory containing a unique file)",
+    )
+    group_i.add_argument(
+        "--model",
+        required=True,
+        type=input_file_path,  # use this helper type for a directory containing a single file
+        help="Some input location (directory containing a unique file)",
+    )
+    group_i.add_argument(
+        "--output",
+        required=True,
+        default=None,
+        type=str,
+        help="Some output location (directory)",
+    )
+
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
         "--verbose",
@@ -67,7 +78,7 @@ def get_arg_parser(parser=None):
         type=str,
         help="provide custom properties as json dict",
     )
-    
+
     return parser
 
 
@@ -87,7 +98,7 @@ def run(args, unknown_args=[]):
 
     # add common properties to the session
     metrics_logger.set_properties(
-        task="inferencing", framework="lightgbm_cli", framework_version="n/a"
+        task="sample_task", framework="sample_framework", framework_version="0.0.1"
     )
 
     # if provided some custom_properties by the outside orchestrator
@@ -97,41 +108,35 @@ def run(args, unknown_args=[]):
     # add properties about environment of this script
     metrics_logger.set_platform_properties()
 
-    if args.output:
-        # make sure the output argument exists
-        os.makedirs(args.output, exist_ok=True)
-        
-        # and create your own file inside the output
-        args.output = os.path.join(args.output, "predictions.txt")
+    # make sure the output argument exists
+    os.makedirs(args.output, exist_ok=True)
 
-    if not os.path.isfile(args.lightgbm_exec):
-        raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")
+    # and create your own file inside the output
+    args.output = os.path.join(args.output, "predictions.txt")
 
-    # assemble a command for lightgbm cli
-    lightgbm_cli_command = [
-        args.lightgbm_exec,
-        "task=prediction",
-        f"data={args.data}",
-        f"input_model={args.model}",
-        "verbosity=2"
-    ]
-    if args.output:
-        lightgbm_cli_command.append(f"output_result={args.output}")
+    # CUSTOM CODE STARTS HERE
+    # below this line is user code
+    logger.info(f"Loading model from {args.model}")
+    booster = lightgbm.Booster(model_file=args.model)
 
+    # to log executing time of a code block, use log_time_block()
+    logger.info(f"Loading data for inferencing")
+    with metrics_logger.log_time_block(metric_name="time_data_loading"):
+        inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
+        inference_raw_data = inference_data.get_data()
 
+    # optional: add data shape as property
+    metrics_logger.set_properties(
+        inference_data_length=inference_data.num_data(),
+        inference_data_width=inference_data.num_feature(),
+    )
+
+    # to log executing time of a code block, use log_time_block()
     logger.info(f"Running .predict()")
     with metrics_logger.log_time_block(metric_name="time_inferencing"):
-        lightgbm_cli_call = subprocess_run(
-            " ".join(lightgbm_cli_command),
-            stdout=PIPE,
-            stderr=PIPE,
-            universal_newlines=True,
-            check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
-            timeout=None
-        )
-        logger.info(f"LightGBM stdout: {lightgbm_cli_call.stdout}")
-        logger.info(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
-        logger.info(f"LightGBM return code: {lightgbm_cli_call.returncode}")
+        booster.predict(data=inference_raw_data)
+
+    # CUSTOM CODE ENDS HERE
 
     # Important: close logging session before exiting
     metrics_logger.close()
