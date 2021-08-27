@@ -50,6 +50,8 @@ def get_arg_parser(parser=None):
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
     group_params = parser.add_argument_group("Scoring parameters")
+    group_params.add_argument("--num_threads",
+        required=False, default=1, type=int, help="number of threads")
     group_params.add_argument("--predict_disable_shape_check",
         required=False, default=False, type=strtobool, help="See LightGBM documentation")
 
@@ -117,7 +119,11 @@ def run(args, unknown_args=[]):
 
     logger.info(f"Running .predict()")
     with metrics_logger.log_time_block("time_inferencing"):
-        booster.predict(data=inference_raw_data, predict_disable_shape_check=bool(args.predict_disable_shape_check))
+        booster.predict(
+            data=inference_raw_data,
+            num_threads=args.num_threads,
+            predict_disable_shape_check=bool(args.predict_disable_shape_check)
+        )
 
     # Important: close logging session before exiting
     metrics_logger.close()
