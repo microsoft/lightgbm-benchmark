@@ -94,6 +94,9 @@ def run(args, unknown_args=[]):
     if args.custom_properties:
         metrics_logger.set_properties_from_json(args.custom_properties)
 
+    # add properties about environment of this script
+    metrics_logger.set_platform_properties()
+
     if args.output:
         # make sure the output argument exists
         os.makedirs(args.output, exist_ok=True)

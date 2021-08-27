@@ -108,6 +108,9 @@ def run(args, unknown_args=[]):
     if args.custom_properties:
         metrics_logger.set_properties_from_json(args.custom_properties)
 
+    # add properties about environment of this script
+    metrics_logger.set_platform_properties()
+
     # make sure the output argument exists
     if args.export_model:
         os.makedirs(args.export_model, exist_ok=True)
