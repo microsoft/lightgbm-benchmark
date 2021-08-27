@@ -14,6 +14,9 @@ modules:
     - name: "lightgbm_python_score_win"
       version: null
       yaml: "lightgbm_python_score_win_spec.yaml"
+    - name: "treelite_python_score"
+      version: null
+      yaml: "treelite_python_score_spec.yaml"
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
