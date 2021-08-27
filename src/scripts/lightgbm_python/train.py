@@ -123,6 +123,9 @@ def run(args, unknown_args=[]):
 
     metrics_logger.log_parameters(**lgbm_params)
 
+    # register logger for lightgbm logs
+    lightgbm.register_logger(logger)
+
     logger.info(f"Loading data for training")
     with metrics_logger.log_time_block("time_data_loading"):
         train_data = lightgbm.Dataset(args.train, params=lgbm_params).construct()
