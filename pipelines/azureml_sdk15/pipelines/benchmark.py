@@ -71,6 +71,7 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             lightgbm_score_module = self.module_load("lightgbm_python_score")
         else:
             raise Exception(f"lightgbm_benchmark.os should be either linux or windows, not '{config.lightgbm_benchmark.os}'")
+        treelite_score_module = self.module_load("treelite_python_score")
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="lightgbm_benchmark", # pythonic name
@@ -93,6 +94,12 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
                 predict_disable_shape_check = config.lightgbm_benchmark.predict_disable_shape_check
             )
             self.apply_smart_runsettings(lightgbm_score_step)
+
+            treelite_score_step = treelite_score_module(
+                data = data,
+                model = model
+            )
+            self.apply_smart_runsettings(treelite_score_step)
 
             # return {key: output}'
             return {}
