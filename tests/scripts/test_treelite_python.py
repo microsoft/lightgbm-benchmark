@@ -21,8 +21,9 @@ def test_treelist_inferencing_script(temporary_dir, regression_inference_sample,
         "--model", regression_model_sample,
         "--output", predictions_dir,
         "--model_format", "lightgbm",
-        "--toolchain", "gcc"
-        #"--toolchain", "msvc"
+        "--toolchain", "gcc",
+        #"--toolchain", "msvc",
+        "--nthreads", "1",
     ]
 
     # replaces sys.argv with test arguments and run main
