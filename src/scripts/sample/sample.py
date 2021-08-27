@@ -113,7 +113,7 @@ def run(args, unknown_args=[]):
 
     # CUSTOM CODE STARTS HERE
     # below this line is user code
-    logger.warn(f"Loading model from {args.model}")
+    logger.info(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)
 
     # to log executing time of a code block, use log_time_block()
