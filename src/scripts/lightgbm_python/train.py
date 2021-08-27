@@ -116,6 +116,7 @@ def run(args, unknown_args=[]):
     # add lgbm params to the session
     lgbm_params = vars(args)
     lgbm_params['feature_pre_filter'] = False
+    lgbm_params['verbose'] = 2
 
     metrics_logger.log_parameters(**lgbm_params)
 
