@@ -22,8 +22,13 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.metrics import MetricsLogger
-from common.io import input_file_path
+from common.io import input_file_path, InputDataLoader
 
+INPUT_DATA_LOADER = InputDataLoader(
+    allowed_loaders = ['numpy', 'libsvm', 'lightgbm'],
+    arg_prefix="data",
+    default_loader="lightgbm"
+)
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -44,6 +49,7 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
+    INPUT_DATA_LOADER.get_arg_parser(group_i) # add data loading parameters
     group_i.add_argument("--model",
         required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
@@ -110,14 +116,12 @@ def run(args, unknown_args=[]):
 
     logger.info(f"Loading data for inferencing")
     with metrics_logger.log_time_block("time_data_loading"):
-        # NOTE: this is bad, but allows for libsvm format (not just numpy)
-        inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
-        inference_raw_data = inference_data.get_data()
+        inference_raw_data, row_count, feature_count = INPUT_DATA_LOADER.load(args, args.data)
 
     # capture data shape as property
     metrics_logger.set_properties(
-        inference_data_length = inference_data.num_data(),
-        inference_data_width = inference_data.num_feature()
+        inference_data_length = row_count,
+        inference_data_width = feature_count
     )
 
     logger.info(f"Running .predict()")
