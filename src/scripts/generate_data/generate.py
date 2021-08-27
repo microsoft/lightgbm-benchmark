@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import logging
+from distutils.util import strtoboo
 import numpy
 import sklearn
 from sklearn.datasets import make_classification, make_regression
@@ -70,6 +71,22 @@ def get_arg_parser(parser=None):
         required=True,
         type=str,
         help="Output data location (directory)",
+    )
+
+    group_general = parser.add_argument_group("General parameters")
+    group_general.add_argument(
+        "--verbose",
+        required=False,
+        default=False,
+        type=strtobool,  # use this for bool args, do not use action_store=True
+        help="set True to show DEBUG logs",
+    )
+    group_general.add_argument(
+        "--custom_properties",
+        required=False,
+        default=None,
+        type=str,
+        help="provide custom properties as json dict",
     )
 
     return parser
