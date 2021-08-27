@@ -145,9 +145,19 @@ def main(cli_args=None):
     Args:
         cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
     """
+    # initialize root logger
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    console_handler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
     # construct arg parser and parse arguments
     parser = get_arg_parser()
     args, unknown_args = parser.parse_known_args(cli_args)
+
+    logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
     # run the actual thing
     run(args, unknown_args)

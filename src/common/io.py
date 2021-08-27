@@ -1,5 +1,6 @@
 import os
 import argparse
+import logging
 
 def input_file_path(path):
     """ Resolve input path from AzureML.
@@ -13,7 +14,7 @@ def input_file_path(path):
         str: path to file, or to unique file in directory
     """
     if os.path.isfile(path):
-        print(f"Found INPUT file {path}")
+        logging.getLogger(__name__).info(f"Found INPUT file {path}")
         return path
     if os.path.isdir(path):
         all_files = os.listdir(path)
@@ -21,6 +22,6 @@ def input_file_path(path):
             raise Exception(f"Could not find any file in specified input directory {path}")
         if len(all_files) > 1:
             raise Exception(f"Found multiple files in input file path {path}, use input_directory_path type instead.")
-        print(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
+        logging.getLogger(__name__).info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
         return os.path.join(path, all_files[0])
     raise Exception(f"Provided INPUT path {path} is neither a directory or a file???")
