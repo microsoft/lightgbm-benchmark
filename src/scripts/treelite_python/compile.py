@@ -50,10 +50,12 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
-    group_params = parser.add_argument_group("Scoring parameters")
-    group_params.add_argument("--nthreads",
-        required=False, default=1, type=int, help="number of threads")
-    
+    group_treelite = parser.add_argument_group("Treelite parameters")
+    group_treelite.add_argument("--model_format",
+        required=False, default="lightgbm", type=str, help="format of the input --model")
+    group_treelite.add_argument("--toolchain",
+        required=False, default="gcc", type=str, help="toolchain for compiling model")
+
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
         "--verbose",
@@ -109,20 +111,19 @@ def run(args, unknown_args=[]):
         args.output = os.path.join(args.output, "predictions.txt")
 
 
-    logger.info(f"Loading data for inferencing")
-    with metrics_logger.log_time_block("time_data_loading"):
-        my_data = pd.read_csv(args.data).to_numpy()
-        
-        predictor = treelite_runtime.Predictor(
-            './mymodel.so',
-            verbose=True,
-            nthread=args.nthreads
-        )
-        dmat = treelite_runtime.DMatrix(my_data)
 
-    logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block("treelite prediction"):
-        predictor.predict(dmat)
+    logger.info(f"Converting model to Treelite")
+    with metrics_logger.log_time_block("treelite_model_conversion"):
+        model = treelite.Model.load(
+            args.model,
+            model_format=args.model_format
+        )
+        model.export_lib(
+            toolchain=args.toolchain,
+            libpath='./mymodel.so',
+            verbose=True,
+            params={'parallel_comp':16}
+        )
 
     # Important: close logging session before exiting
     metrics_logger.close()
