@@ -17,10 +17,10 @@ outputs:
     description: "Predictions from LightGBM model"
 
 code:
-  local_path: ../../../src/
+  local_path: ../../../../src/
 
 environment:
-  conda_file: file:../../../src/scripts/lightgbm_python/conda.yml
+  conda_file: file:../../../../src/scripts/lightgbm_python/conda.yml
   docker: 
     image: mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
 

@@ -1,4 +1,4 @@
-name: lightgbm_python_benchmark_pipeline
+name: lightgbm_master_versus_custom_v0
 type: pipeline_job
 
 # <inputs_and_outputs>
@@ -28,7 +28,7 @@ jobs:
     type: component_job
 
     # to use below, module must have been registered before
-    component: file:./components/lightgbm_python_score.yml
+    component: file:../components/lightgbm_python/score.yml
 
     inputs:
       data: ${{inputs.benchmark_data}}
