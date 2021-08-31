@@ -8,7 +8,10 @@ import os
 import time
 from functools import wraps
 import mlflow
-
+import platform
+import json
+import traceback
+import logging
 
 class MetricsLogger():
     """
@@ -24,6 +27,7 @@ class MetricsLogger():
     _initialized = False
     _instance = None
     _session_name = None
+    _logger = logging.getLogger(__name__)
 
     @classmethod
     def _initialize_azureml_mlflow_client(cls):
@@ -58,7 +62,8 @@ class MetricsLogger():
             elif session_name:
                 # if new session name specified, overwrite
                 cls._session_name = session_name
-            cls._initialize_azureml_mlflow_client()
+            cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}']")
+            mlflow.start_run()
         else:
             # if this is not the first time
             pass
@@ -66,12 +71,11 @@ class MetricsLogger():
         return cls._instance
 
     def close(self):
-        if self._initialized:
-            print(f"Finalizing MLFLOW [session='{self._session_name}']")
-            mlflow.end_run()
+        self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
+        mlflow.end_run()
 
     def log_metric(self, key, value):
-        print(f"mlflow[session={self._session_name}].log_metric({key},{value})")
+        self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
@@ -79,12 +83,40 @@ class MetricsLogger():
 
     def set_properties(self, **kwargs):
         """ Set properties/tags for the session """
-        print(f"mlflow[session={self._session_name}].set_tags({kwargs})")
+        self._logger.debug(f"mlflow[session={self._session_name}].set_tags({kwargs})")
         mlflow.set_tags(kwargs)
+
+    def set_platform_properties(self):
+        """ Capture platform sysinfo and record as properties """
+        self.set_properties(
+            machine=platform.machine(),
+            processor=platform.processor(),
+            system=platform.system(),
+            system_version=platform.version(),
+            cpu_count=os.cpu_count()
+        )
+
+    def set_properties_from_json(self, json_string):
+        """ Set properties/tags for the session from a json_string """
+        try:
+            json_dict = json.loads(json_string)
+        except:
+            raise ValueError(f"During parsing of JSON properties '{json_string}', an exception occured: {traceback.format_exc()}")
+
+        if not isinstance(json_dict, dict):
+            raise ValueError(f"Provided JSON properties should be a dict, instead it was {str(type(json_dict))}: {json_string}")
+        
+        properties_dict = dict(
+            [
+                (k, str(v)) # transform whatever as a string
+                for k,v in json_dict.items()
+            ]
+        )
+        self.set_properties(**properties_dict)
 
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """
-        print(f"mlflow[session={self._session_name}].log_params({kwargs})")
+        self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
         mlflow.log_params(kwargs)
 
     def log_time_block(self, metric_name):
@@ -135,6 +167,7 @@ class LogTimeBlock(object):
         # internal variables
         self.name = name
         self.start_time = None
+        self._logger = logging.getLogger(__name__)
 
     def __enter__(self):
         """ Starts the timer, gets triggered at beginning of code block """
@@ -146,7 +179,7 @@ class LogTimeBlock(object):
         Note: arguments are by design for with statements. """
         run_time = time.time() - self.start_time # stops "timer"
 
-        print(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
+        self._logger.info(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
         MetricsLogger().log_metric(self.name, run_time)
 
 
@@ -163,7 +196,7 @@ def log_time_function(func):
         output = func(*args, **kwargs)
         run_time = time.time() - start_time
 
-        print("--- time elapsed: {} = {:2f} s".format(log_name, run_time))
+        logging.getLogger(__name__).info("--- time elapsed: {} = {:2f} s".format(log_name, run_time))
         MetricsLogger().log_metric(log_name, run_time)
 
         return output

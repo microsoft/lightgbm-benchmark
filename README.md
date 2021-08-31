@@ -8,9 +8,7 @@ The goal is to support the community of developers of LightGBM by providing tool
 
 ## Documentation
 
-Current documentation is in the [`docs/` folder](./docs):
-- [The goals and methodology of the LightGBM benchmark](./docs/Benchmark-project.md)
-- [How to run the benchmark scripts manually](./docs/Manual-benchmark.md)
+Please find the full documentation of this project at [microsoft.github.io/lightgbm-benchmark](https://microsoft.github.io/lightgbm-benchmark)
 
 ## Contributing
 

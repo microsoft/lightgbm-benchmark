@@ -19,3 +19,22 @@ def temporary_dir():
     temp_directory = tempfile.TemporaryDirectory()
     yield temp_directory.name
     temp_directory.cleanup()
+
+
+TEST_DATA_ROOT = os.path.join(os.path.dirname(__file__), "data")
+
+@pytest.fixture()
+def regression_train_sample():
+    return os.path.join(TEST_DATA_ROOT, "regression", "train")
+
+@pytest.fixture()
+def regression_test_sample():
+    return os.path.join(TEST_DATA_ROOT, "regression", "test")
+
+@pytest.fixture()
+def regression_inference_sample():
+    return os.path.join(TEST_DATA_ROOT, "regression", "inference")
+
+@pytest.fixture()
+def regression_model_sample():
+    return os.path.join(TEST_DATA_ROOT, "regression", "model")
