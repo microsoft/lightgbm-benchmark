@@ -46,7 +46,7 @@ The benchmark could be used in the following comparison scenarios:
 - **Lightgbm performance and scalability** - Compare lightgbm (stable or custom) to itself while changing compiling options, VMs and environments. This will likely use synthetic data or large public datasets. This is where allowing users to run on their own production data makes more sense.
 - **Lightgbm "master" vs lightgbm "custom"** - Compare any new implementation of lightgbm against the current stable release. This comparison will ensure model quality is equivalent, and will focus on compute performance.
 
-For each of those scenarios, we'll need to report both the variables subject to change (framework, lightgbm version, VMs, dependencies, etc) and the metrics produces during training or inferencing. A list of those variables and metrics is provided in the [Reporting Guide](Reporting-guide.md).
+For each of those scenarios, we'll need to report both the variables subject to change (framework, lightgbm version, VMs, dependencies, etc) and the metrics produces during training or inferencing. A list of those variables and metrics is provided in the [Reporting Guide](contribute/reporting-guide.md).
 
 ## Phases and Milestones
 
