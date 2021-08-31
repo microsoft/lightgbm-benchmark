@@ -55,7 +55,14 @@ def get_arg_parser(parser=None):
     group_exp.add_argument("--aml-run-id", dest="aml_run_id",
         required=True, type=str)
 
-    group_general = parser.add_argument_group("General parameters")
+    group_general = parser.add_argument_group("Analysis parameters")
+    group_general.add_argument(
+        "--output",
+        required=False,
+        default=None,
+        type=str,
+        help="Path to write report in markdown"
+    )
     group_general.add_argument(
         "--verbose",
         required=False,
@@ -77,20 +84,21 @@ def analyze_ab_pipeline_run(args, experiment, pipeline_run):
         pipeline_run (azureml.core.run.PipelineRun) : the pipeline run object from our canary (once completed)
     """
     # report header
-    canary_report = [
-        "# AzureML Canary Experiment Report",
+    benchmark_report = [
+        "# LightGBM master vs custom report",
         "",
-        f"- Pipeline Run Url: {pipeline_run.get_portal_url()}",
-        f"- Run Id: {pipeline_run.id}",
+        f"- Pipeline name: {pipeline_run.name}",
+        #f"- Pipeline Run Url: {pipeline_run.get_portal_url()}",
+        #f"- Run Id: {pipeline_run.id}",
         f"- Tags: `{str(pipeline_run.get_tags())}`",
         f"- Properties: `{str(pipeline_run.get_properties())}`",
         f"- Status: {pipeline_run.get_status()}",
     ]
 
     # report the pipeline metrics
-    canary_report.append("")
-    canary_report.append("## Pipeline Level Metrics")
-    canary_report.append("")
+    benchmark_report.append("")
+    benchmark_report.append("## Pipeline Level Metrics")
+    benchmark_report.append("")
 
     # custom function to report metric tables
     def _write_metrics_report(report, metrics_dict):
@@ -115,26 +123,55 @@ def analyze_ab_pipeline_run(args, experiment, pipeline_run):
             report.extend(flat_metrics_report)
 
     # using it once at pipeline level
-    _write_metrics_report(canary_report, pipeline_run.get_metrics())
+    _write_metrics_report(benchmark_report, pipeline_run.get_metrics())
 
     # adding table of pipeline steps
-    canary_report.append("")
-    canary_report.append("## Pipeline Steps")
-    canary_report.append("")
+    benchmark_report.append("")
+    benchmark_report.append("## Pipeline Steps")
+    benchmark_report.append("")
 
+
+    metrics_pivot_table = {}
+    steps_names = []
+    for step in pipeline_run.get_steps():
+        steps_names.append(step.name)
+        #metrics_pivot_table[step.name] = step.get_metrics()
+        metrics_reported = step.get_metrics()
+        for key in metrics_reported:
+            if key not in metrics_pivot_table:
+                metrics_pivot_table[key] = {}
+            metrics_pivot_table[key][step.name] = metrics_reported[key]
+
+    print(metrics_pivot_table)
 
     # this is a simple table with direct links to the Metrics panels
-    canary_report.append("| Step | Status | Metrics Link |")
-    canary_report.append("| :-- | :-- | :-- |")
-    for step in pipeline_run.get_steps():
-        metrics_reported = step.get_metrics()
-        canary_report.append(f"| [{step.name}]({step.get_portal_url()}) | {step.get_status()} | [{len(metrics_reported)} metrics available]({step.get_portal_url()}#metrics): {', '.join(list(metrics_reported.keys()))} |")
+    benchmark_report.append("| " + " | ".join(["Metric"] + steps_names) + " |")
+    benchmark_report.append("| " + " | ".join([":--"] * (len(steps_names)+1)) + " |")
+
+    for key in metrics_pivot_table:
+        benchmark_report.append(
+            "| " +
+            " | ".join(
+                [ key ] +
+                [
+                    "{:2f}".format((metrics_pivot_table[key][name]))
+                    for name in steps_names
+                ]
+            ) +
+            " |"
+        )
+
+        #benchmark_report.append(f"| [{step.name}]({step.get_portal_url()}) | {step.get_status()} | [{len(metrics_reported)} metrics available]({step.get_portal_url()}#metrics): {', '.join(list(metrics_reported.keys()))} |")
 
     # wrap it up
-    canary_report.append("")
-    markdown_report = "\n".join(canary_report)
+    benchmark_report.append("")
+    markdown_report = "\n".join(benchmark_report)
     print(markdown_report)
 
+    # save if provided with a path
+    if args.output:
+        with open(args.output, "w") as o_file:
+            o_file.write(markdown_report)
 
 
 def run(args, unknown_args=[]):
