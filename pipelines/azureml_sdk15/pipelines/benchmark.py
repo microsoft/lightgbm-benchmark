@@ -71,7 +71,7 @@ class LightGBMBenchmarkPipeline(AMLPipelineHelper):
             lightgbm_score_module = self.module_load("lightgbm_python_score")
         else:
             raise Exception(f"lightgbm_benchmark.os should be either linux or windows, not '{config.lightgbm_benchmark.os}'")
-        treelite_score_module = self.module_load("treelite_python_score")
+        treelite_score_module = self.module_load("treelite_score")
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="lightgbm_benchmark", # pythonic name

@@ -1,7 +1,7 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
-name: lightgbm_python_score
+name: lightgbm_python_custom_score
 version: 1.0.0
-display_name: "LightGBM Inferencing (Python API)"
+display_name: "LightGBM Inferencing (Custom Build)"
 type: CommandComponent
 description: lightgbm score
 is_deterministic: true
