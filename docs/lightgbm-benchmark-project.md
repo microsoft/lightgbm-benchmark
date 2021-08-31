@@ -38,6 +38,16 @@ The users should be able to run the benchmark on multiple data sources. Not only
 
 To allow for modularity and standardization, we propose to structure the benchmark into a collection of independent python scripts (specs in a separate document). Each script will have its own environment, inputs, outputs and parameters. All scripts will eventually draw from common helper classes to support implementation routines (reporting, argument parsing, etc).
 
+## Benchmarking scenarios and reporting
+
+The benchmark could be used in the following comparison scenarios:
+
+- **Training framework comparison** - Compare lightgbm versus other training (or inferencing) ML framework. This comparison will be mainly based on model quality, but also training computing performance. It will run those framework on typical public datasets.
+- **Lightgbm performance and scalability** - Compare lightgbm (stable or custom) to itself while changing compiling options, VMs and environments. This will likely use synthetic data or large public datasets. This is where allowing users to run on their own production data makes more sense.
+- **Lightgbm "master" vs lightgbm "custom"** - Compare any new implementation of lightgbm against the current stable release. This comparison will ensure model quality is equivalent, and will focus on compute performance.
+
+For each of those scenarios, we'll need to report both the variables subject to change (framework, lightgbm version, VMs, dependencies, etc) and the metrics produces during training or inferencing. A list of those variables and metrics is provided in the [Reporting Guide](contribute/reporting-guide.md).
+
 ## Phases and Milestones
 
 We propose the following process to iterate on implementation.

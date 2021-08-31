@@ -100,6 +100,9 @@ def run(args, unknown_args=[]):
     # add properties about environment of this script
     metrics_logger.set_platform_properties()
 
+    # register logger for lightgbm logs
+    lightgbm.register_logger(logger)
+
     # make sure the output argument exists
     if args.output:
         os.makedirs(args.output, exist_ok=True)
