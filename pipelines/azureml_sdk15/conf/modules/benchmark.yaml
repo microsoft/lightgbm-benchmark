@@ -3,10 +3,10 @@ manifest:
   - name: "lightgbm_python_score"
     version: null
     yaml: "lightgbm_python/score_spec.yaml"
-  - name: "lightgbm_python_score_win"
+  - name: "lightgbm_python_win_score"
     version: null
     yaml: "lightgbm_python_win/score_spec.yaml"
-  - name: "lightgbm_python_custom"
+  - name: "lightgbm_python_custom_score"
     version: null
     yaml: "lightgbm_python_custom/score_spec.yaml"
   - name: "treelite_score"
