@@ -1,0 +1,35 @@
+site_name: LightGBM-Benchmark
+
+# https://www.mkdocs.org/user-guide/configuration/
+repo_url: https://github.com/Microsoft/lightgbm-benchmark
+edit_uri: edit/main/docs
+
+nav:
+- Home: index.md
+- About: lightgbm-benchmark-project.md
+- Contribute:
+    Developer Guide: contribute/developer-guide.md
+    Reporting Guide: contribute/reporting-guide.md
+- Run:
+    Install: quickstart/install.md
+    Run manually: quickstart/manual-benchmark.md
+- Results:
+    Latest: results/latest.md
+
+theme:
+  name: readthedocs
+  name: material
+
+markdown_extensions:
+- pymdownx.highlight:
+    linenums: true
+    linenums_style: pymdownx-inline
+- pymdownx.superfences
+- pymdownx.snippets
+# https://github.com/mkdocs/mkdocs/issues/777
+- markdown_include.include:
+    base_path: .
+
+plugins:
+- search
+- mkdocstrings
