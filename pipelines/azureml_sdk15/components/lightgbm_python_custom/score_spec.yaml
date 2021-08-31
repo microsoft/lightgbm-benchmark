@@ -26,6 +26,7 @@ command: >-
 environment:
   docker:
     build:
-      dockerfile: file:lightgbm_custom.dockerfile
+      # file path is resolved after additional includes
+      dockerfile: file:./lightgbm_custom.dockerfile
   conda:
     userManagedDependencies: true
