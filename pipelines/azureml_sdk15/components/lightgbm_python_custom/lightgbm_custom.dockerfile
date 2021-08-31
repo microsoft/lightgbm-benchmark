@@ -11,19 +11,14 @@ ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 
 # Install pip dependencies
 RUN HOROVOD_WITH_TENSORFLOW=1 \
-    pip install 'matplotlib>=3.3,<3.4' \
-                'psutil>=5.8,<5.9' \
-                'tqdm>=4.59,<4.60' \
-                'pandas>=1.1,<1.2' \
+    pip install 'pandas>=1.1,<1.2' \
                 'numpy>=1.10,<1.20' \
                 'scipy~=1.5.0' \
                 'scikit-learn~=0.24.1' \
-                'xgboost~=1.4.0' \
                 'lightgbm~=3.2.0' \
                 'dask~=2021.6.0' \
                 'distributed~=2021.6.0' \
                 'dask-ml~=1.9.0' \
-                'adlfs~=0.7.0' \
                 'azureml-core==1.30.0' \
                 'azureml-defaults==1.30.0' \
                 'azureml-mlflow==1.30.0' \
@@ -31,16 +26,19 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' 
-    # && \
-    #pip install 'lightgbm~=3.2.0' --install-option=--mpi
 
+# Clone lightgbm official repository (master branch)
 RUN mkdir LightGBM && \
     cd LightGBM && \
     git clone --recursive https://github.com/microsoft/LightGBM.git
 
+# Download and apply a particular patch
 RUN cd LightGBM/LightGBM && \
-     git apply --whitespace=fix lightgbm_custom.python.patch && \
-    cd python-package && \
+    wget https://raw.githubusercontent.com/microsoft/lightgbm-benchmark/jfomhover/sdk15dev/pipelines/azureml_sdk15/components/lightgbm_python_custom/lightgbm_custom.python.patch && \
+    git apply --whitespace=fix ./ulfk_prototype.python.patch
+
+# Build lightgbm with custom patch applied
+RUN cd LightGBM/LightGBM/python-package && \
     python setup.py install --mpi
 
 # This is needed for mpi to locate libpython
