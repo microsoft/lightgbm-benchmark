@@ -45,7 +45,7 @@ jobs:
       run: |
         python -m pytest tests/ --junitxml=test-build-result.xml
 
-    - name: Publish test results for shrike.build
+    - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v1
       with:
         check_name: Unit Test Results for Build
