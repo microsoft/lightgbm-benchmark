@@ -1,0 +1,14 @@
+# @package _group_
+manifest:
+  - name: "lightgbm_python_score"
+    version: null
+    yaml: "lightgbm_python/score_spec.yaml"
+  - name: "lightgbm_python_score_win"
+    version: null
+    yaml: "lightgbm_python_win/score_spec.yaml"
+  - name: "lightgbm_python_custom"
+    version: null
+    yaml: "lightgbm_python_custom/score_spec.yaml"
+  - name: "treelite_score"
+    version: null
+    yaml: "treelite/score_spec.yaml"
