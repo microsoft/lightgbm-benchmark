@@ -1,4 +1,4 @@
-# Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
 """
@@ -45,6 +45,8 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
+    group_i.add_argument("--so_path",
+        required=False, default = "./mymodel.so" , help="full path to model so")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
@@ -112,7 +114,7 @@ def run(args, unknown_args=[]):
         my_data = pd.read_csv(args.data).to_numpy()
         
         predictor = treelite_runtime.Predictor(
-            './mymodel.so',
+            args.so_path,
             verbose=True,
             nthread=args.nthreads
         )

@@ -49,6 +49,8 @@ def get_arg_parser(parser=None):
     group_treelite = parser.add_argument_group("Treelite parameters")
     group_treelite.add_argument("--model_format",
         required=False, default="lightgbm", type=str, help="format of the input --model")
+    group_treelite.add_argument("--so_path",
+        required=False, default="./mymodel.so", type=str, help="full path to the saved model")
     group_treelite.add_argument("--toolchain",
         required=False, default="gcc", type=str, help="toolchain for compiling model")
 
@@ -108,7 +110,7 @@ def run(args, unknown_args=[]):
         )
         model.export_lib(
             toolchain=args.toolchain,
-            libpath='./mymodel.so',
+            libpath=args.so_path,
             verbose=True,
             params={'parallel_comp':16}
         )
