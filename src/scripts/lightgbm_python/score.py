@@ -134,9 +134,6 @@ def run(args, unknown_args=[]):
     # Important: close logging session before exiting
     metrics_logger.close()
 
-    # optional: close logging session
-    metrics_logger.close()
-
 
 def main(cli_args=None):
     """Component main function, parses arguments and executes run() function.
