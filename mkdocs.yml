@@ -12,7 +12,8 @@ nav:
     Reporting Guide: contribute/reporting-guide.md
 - Run:
     Install: quickstart/install.md
-    Run manually: quickstart/manual-benchmark.md
+    Run Manually: quickstart/manual-benchmark.md
+    Run in AzureML CLI v2.0: quickstart/azureml-cli20-benchmark.md
 - Results:
     Latest: results/latest.md
 

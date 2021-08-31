@@ -53,5 +53,5 @@ az ml data create --file ./pipelines/azureml_cli/inference_data.yml
 ## Run the benchmark
 
 ```
-az ml job create --file ./pipelines/azureml_cli20/score.yml --web
+az ml job create --file ./pipelines/azureml_cli20/pipelines/score_ab.yml --web
 ```
