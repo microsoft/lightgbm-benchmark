@@ -20,7 +20,7 @@ inputs:
 command: >-
   python scripts/treelite_python/score.py
     --data {inputs.data}
-    --model {inputs.compiled_model}
+    --so_path {inputs.compiled_model}
 
 environment:
   conda:
