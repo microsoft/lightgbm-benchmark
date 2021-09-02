@@ -1,9 +1,9 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
-name: treelite_score
+name: treelite_compile
 version: 1.0.0
-display_name: "Treelite Inferencing (Python API)"
+display_name: "Treelite Compile"
 type: CommandComponent
-description: treelite score
+description: treelite compile
 is_deterministic: true
 
 inputs:
