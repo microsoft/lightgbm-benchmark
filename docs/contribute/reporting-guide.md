@@ -6,7 +6,7 @@ This reporting is facilitated by a library under `/src/common/metrics.py`. This 
 
 ## Specifications of reporting
 
-As mentioned in the [project definition](Benchmark-project.md), we'd like to address three benchmarking scenarios:
+As mentioned in the [project definition](../lightgbm-benchmark-project.md), we'd like to address three benchmarking scenarios:
 1. Training framework comparison (lightgbm versus other ML frameworks)
 2. Lightgbm performance and scalability (lightgbm on different compute types)
 3. Lightgbm "master" vs lightgbm "custom" (measuring progress of lightgbm versions)
