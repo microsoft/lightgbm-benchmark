@@ -43,17 +43,17 @@ def get_arg_parser(parser=None):
         parser = argparse.ArgumentParser(__doc__)
 
     group_i = parser.add_argument_group("Input Data")
-    group_i.add_argument("--data",
-        required=True, type=input_file_path, help="Inferencing data location (file path)")
-    group_i.add_argument("--so_path",
-        required=False, default = "./mymodel.so" , help="full path to model so")
-    group_i.add_argument("--output",
-        required=False, default=None, type=str, help="Inferencing output location (file path)")
+    group_i.add_argument("--model",
+        required=False, type=input_file_path, help="Exported model location (file path)")
     
-    group_params = parser.add_argument_group("Scoring parameters")
-    group_params.add_argument("--nthreads",
-        required=False, default=1, type=int, help="number of threads")
-    
+    group_treelite = parser.add_argument_group("Treelite parameters")
+    group_treelite.add_argument("--model_format",
+        required=False, default="lightgbm", type=str, help="format of the input --model")
+    group_treelite.add_argument("--so_path",
+        required=False, default="./mymodel.so", type=str, help="full path to the saved model")
+    group_treelite.add_argument("--toolchain",
+        required=False, default="gcc", type=str, help="toolchain for compiling model")
+
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
         "--verbose",
@@ -85,12 +85,12 @@ def run(args, unknown_args=[]):
 
     # get Metrics logger for benchmark metrics
     # below: initialize reporting of metrics with a custom session name
-    metrics_logger = MetricsLogger("treelite.score")
+    metrics_logger = MetricsLogger("treelite.compile")
 
     # add some properties to the session
     metrics_logger.set_properties(
         framework = 'treelite_python',
-        task = 'score',
+        task = 'compile',
         lightgbm_version = treelite.__version__
     )
 
@@ -101,28 +101,19 @@ def run(args, unknown_args=[]):
     # add properties about environment of this script
     metrics_logger.set_platform_properties()
 
-    if args.output:
-        # make sure the output argument exists
-        os.makedirs(args.output, exist_ok=True)
-        
-        # and create your own file inside the output
-        args.output = os.path.join(args.output, "predictions.txt")
 
-
-    logger.info(f"Loading data for inferencing")
-    with metrics_logger.log_time_block("time_data_loading"):
-        my_data = pd.read_csv(args.data).to_numpy()
-        
-        predictor = treelite_runtime.Predictor(
-            args.so_path,
-            verbose=True,
-            nthread=args.nthreads
+    logger.info(f"Converting model to Treelite")
+    with metrics_logger.log_time_block("treelite_model_conversion"):
+        model = treelite.Model.load(
+            args.model,
+            model_format=args.model_format
         )
-        dmat = treelite_runtime.DMatrix(my_data)
-
-    logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block("treelite prediction"):
-        predictor.predict(dmat)
+        model.export_lib(
+            toolchain=args.toolchain,
+            libpath=args.so_path,
+            verbose=True,
+            params={'parallel_comp':16}
+        )
 
     # Important: close logging session before exiting
     metrics_logger.close()
