@@ -1,0 +1,151 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: lightgbm_python_train
+version: 1.0.0
+display_name: "LightGBM Training (Python API)"
+type: CommandComponent
+description: lightgbm train
+is_deterministic: true
+
+inputs:
+  # Inputs
+  train:
+    type: AnyDirectory
+    description: directory to the training data
+    optional: false
+  test:
+    type: AnyDirectory
+    description: directory to the testing data
+    optional: false
+
+  # Input Parameters
+  header:
+    type: Boolean
+    default: False
+    description: "does data have a header, see https://lightgbm.readthedocs.io/en/latest/Parameters.html#header"
+  label_column:
+    type: String
+    optional: true
+    description: "specify label column, default 0, see https://lightgbm.readthedocs.io/en/latest/Parameters.html#label_column"
+  group_column:
+    type: String
+    optional: true
+    description: "specify group/query column, default '', see https://lightgbm.readthedocs.io/en/latest/Parameters.html#group_column"
+
+  # Learning Parameters
+  objective:
+    type: Enum
+    default: "regression"
+    enum:
+      - regression
+      - regression_l1
+      - huber
+      - fair
+      - poisson
+      - quantile
+      - mape
+      - gamma
+      - tweedie
+      - binary
+      - multiclass
+      - multiclassova
+      - cross_entropy
+      - cross_entropy_lambda
+      - lambdarank
+      - rank_xendcg
+    description: "see https://lightgbm.readthedocs.io/en/latest/Parameters.html#objective"
+  metric:
+    # let's not use Enum here to allow for custom metrics
+    type: String
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#metric"
+  boosting:
+    type: Enum
+    default: "gbdt"
+    enum:
+      - gbdt
+      - rf
+      - dart
+      - goss
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#boosting"
+  tree_learner:
+    type: Enum
+    default: "serial"
+    enum:
+      - serial
+      - feature
+      - data
+      - voting
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#tree_learner"
+  num_iterations:
+    type: Integer
+    min: 1
+    default: 100
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#num_iterations"
+  num_leaves:
+    type: Integer
+    min: 1
+    default: 31
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#num_leaves"
+  min_data_in_leaf:
+    type: Integer
+    min: 1
+    default: 20
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#min_data_in_leaf"
+  learning_rate:
+    type: Float
+    default: 0.1
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#learning_rate"
+  max_bin:
+    type: Integer
+    min: 1
+    default: 255
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#max_bin"
+  feature_fraction:
+    type: Float
+    default: 1.0
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#feature_fraction"
+
+  # generic benchmark parameters
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job
+    optional: true
+
+outputs:
+  model:
+    type: AnyDirectory
+
+command: >-
+  python scripts/lightgbm_python/train.py
+    --train {inputs.train}
+    --test {inputs.test}
+
+    --header {inputs.header}
+    [--label_column {inputs.label_column}]
+    [--group_column {inputs.group_column}]
+
+    --objective {inputs.objective}
+    --metric {inputs.metric}
+    --boosting {inputs.boosting}
+    --tree_learner {inputs.tree_learner}
+    --num_iterations {inputs.num_iterations}
+    --num_leaves {inputs.num_leaves}
+    --min_data_in_leaf {inputs.min_data_in_leaf}
+    --learning_rate {inputs.learning_rate}
+    --max_bin {inputs.max_bin}
+    --feature_fraction {inputs.feature_fraction}
+
+    --model {outputs.model}
+
+    [--verbose {inputs.verbose}]
+    [--custom_properties {inputs.custom_properties}]
+
+environment:
+  docker:
+    build:
+      # file path is resolved after additional includes
+      dockerfile: file:./scripts/lightgbm_python/lightgbm.dockerfile
+  conda:
+    userManagedDependencies: true

@@ -7,6 +7,12 @@ description: "generate synthetic data using scikit-learn make_* functions"
 is_deterministic: true
 
 inputs:
+  learning_task:
+    type: Enum
+    default: "regression"
+    enum:
+      - regression
+      - classification
   train_samples:
     type: Integer
     description: Number of training samples
@@ -53,7 +59,7 @@ outputs:
 
 command: >-
   python scripts/generate_data/generate.py
-
+    --type {inputs.learning_task}
     --train_samples {inputs.train_samples}
     --test_samples {inputs.test_samples}
     --inferencing_samples {inputs.inferencing_samples}

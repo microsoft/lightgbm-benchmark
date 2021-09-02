@@ -47,7 +47,7 @@ def get_arg_parser(parser=None):
         required=True, type=input_file_path, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
-    group_i.add_argument("--query_column", required=False, default=None, type=str)
+    group_i.add_argument("--group_column", required=False, default="", type=str)
 
     group_o = parser.add_argument_group("Outputs")
     group_o.add_argument("--export_model",
@@ -56,15 +56,15 @@ def get_arg_parser(parser=None):
     # learner params
     group_lgbm = parser.add_argument_group("LightGBM learning parameters")
     group_lgbm.add_argument("--objective", required=True, type=str)
-    group_lgbm.add_argument("--metric", required=True, type=str)
-    group_lgbm.add_argument("--boosting_type", required=True, type=str)
-    group_lgbm.add_argument("--tree_learner", required=True, type=str)
-    group_lgbm.add_argument("--num_trees", required=True, type=int)
-    group_lgbm.add_argument("--num_leaves", required=True, type=int)
+    group_lgbm.add_argument("--metric", required=False, default="", type=str)
+    group_lgbm.add_argument("--boosting", required=False, default="gbdt", type=str, choices=['gbdt', 'rf', 'dart', 'goss'])
+    group_lgbm.add_argument("--tree_learner", required=False, default="serial", type=str, choices=['serial', 'feature', 'data', 'voting'])
+    group_lgbm.add_argument("--num_trees", required=False, default=100, type=int)
+    group_lgbm.add_argument("--num_leaves", required=False, default=31, type=int)
     group_lgbm.add_argument("--min_data_in_leaf", required=True, type=int)
-    group_lgbm.add_argument("--learning_rate", required=True, type=float)
-    group_lgbm.add_argument("--max_bin", required=True, type=int)
-    group_lgbm.add_argument("--feature_fraction", required=True, type=float)
+    group_lgbm.add_argument("--learning_rate", required=False, default=0.1, type=float)
+    group_lgbm.add_argument("--max_bin", required=False, default=255, type=int)
+    group_lgbm.add_argument("--feature_fraction", required=False, default=1.0, type=float)
 
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
@@ -120,6 +120,7 @@ def run(args, unknown_args=[]):
     lgbm_params = vars(args)
     lgbm_params['feature_pre_filter'] = False
     lgbm_params['verbose'] = 2
+    lgbm_params['header'] = str(args.header) # strtobool returns 0 or 1
 
     metrics_logger.log_parameters(**lgbm_params)
 
