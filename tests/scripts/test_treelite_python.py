@@ -31,7 +31,7 @@ def test_treelist_inferencing_script(temporary_dir, regression_inference_sample,
     
     script_args = [
         "score.py",
-        "--so_path", os.path.join(temporary_dir, "mymodel.so")
+        "--so_path", os.path.join(temporary_dir, "mymodel.so"),
         "--data", regression_inference_sample,
         "--output", predictions_dir,
         "--nthreads", "1",
