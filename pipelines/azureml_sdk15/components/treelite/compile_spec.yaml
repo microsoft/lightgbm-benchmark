@@ -25,6 +25,13 @@ inputs:
       - lightgbm
       - xgboost
       - xgboost_json
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job
+    optional: true
 
 outputs:
   compiled_model:
@@ -36,6 +43,8 @@ command: >-
   python scripts/treelite_python/compile_treelite.py
     --model {inputs.model}
     --so_path {outputs.compiled_model}
+    [--verbose {inputs.verbose}]
+    [--custom_properties {inputs.custom_properties}]
 
 environment:
   conda:
