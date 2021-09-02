@@ -7,20 +7,35 @@ description: treelite score
 is_deterministic: true
 
 inputs:
-  data:
-    type: path
-    description: directory to the inference data
-    optional: false
-  compiled_model:
+  model:
     type: path
     description: directory to the model
     optional: false
+  toolchain:
+    type: Enum
+    default: "gcc"
+    enum:
+      - gcc
+      - msvc
+      - clang
+  model_format:
+    type: Enum
+    default: "lightgbm"
+    enum:
+      - lightgbm
+      - xgboost
+      - xgboost_json
+
+outputs:
+  compiled_model:
+    type: path
+    description: compiled model binary
 
 # path for running command is resolved after additional includes
 command: >-
-  python scripts/treelite_python/score.py
-    --data {inputs.data}
-    --model {inputs.compiled_model}
+  python scripts/treelite_python/compile_treelite.py
+    --model {inputs.model}
+    --so_path {outputs.compiled_model}
 
 environment:
   conda:

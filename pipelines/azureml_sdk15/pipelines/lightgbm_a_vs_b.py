@@ -71,6 +71,8 @@ class LightGBMMasterVsCustom(AMLPipelineHelper):
         # load the right module depending on config
         lightgbm_score_module = self.module_load("lightgbm_python_score")
         lightgbm_score_custom_module = self.module_load("lightgbm_python_custom_score")
+        treelite_compile_module = self.module_load("treelite_compile")
+        treelite_score_module = self.module_load("treelite_score")
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="lightgbm_a_vs_b", # pythonic name
@@ -100,6 +102,17 @@ class LightGBMMasterVsCustom(AMLPipelineHelper):
                 predict_disable_shape_check = config.lightgbm_benchmark.predict_disable_shape_check
             )
             self.apply_smart_runsettings(lightgbm_score_custom_step)
+
+            treelite_compile_step = treelite_compile_module(
+                model = model
+            )
+            self.apply_smart_runsettings(treelite_compile_step)
+
+            treelite_score_step = treelite_score_module(
+                data = data,
+                compiled_model = treelite_compile_step.outputs.compiled_model
+            )
+            self.apply_smart_runsettings(treelite_score_step)
 
             # return {key: output}'
             return {}
