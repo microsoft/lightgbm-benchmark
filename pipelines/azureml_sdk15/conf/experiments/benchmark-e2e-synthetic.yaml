@@ -36,6 +36,7 @@ lightgbm_e2e_synthetic:
   n_informative: 4000
 
   # TRAINING
+  objective: "regression"
   metric: "rmse"
   boosting: "gbdt"
   tree_learner: "serial"
