@@ -120,7 +120,7 @@ def run(args, unknown_args=[]):
     lgbm_params = vars(args)
     lgbm_params['feature_pre_filter'] = False
     lgbm_params['verbose'] = 2
-    lgbm_params['header'] = str(args.header) # strtobool returns 0 or 1
+    lgbm_params['header'] = bool(args.header) # strtobool returns 0 or 1, lightgbm needs actual bool
 
     metrics_logger.log_parameters(**lgbm_params)
 
