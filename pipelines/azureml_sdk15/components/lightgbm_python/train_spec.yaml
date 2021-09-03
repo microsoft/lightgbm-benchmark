@@ -137,7 +137,7 @@ command: >-
     --max_bin {inputs.max_bin}
     --feature_fraction {inputs.feature_fraction}
 
-    --model {outputs.model}
+    --export_model {outputs.model}
 
     [--verbose {inputs.verbose}]
     [--custom_properties {inputs.custom_properties}]
