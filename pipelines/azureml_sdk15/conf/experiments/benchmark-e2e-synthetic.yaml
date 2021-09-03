@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml_sdk15/
-# > python pipelines/lightgbm_e2e_synthetic.py --config-dir ./conf --config-name experiments/benchmark-synthetic run.submit=True
+# > python pipelines/lightgbm_e2e_synthetic.py --config-dir ./conf --config-name experiments/benchmark-e2e-synthetic run.submit=True
 
 defaults:
   - aml: sample

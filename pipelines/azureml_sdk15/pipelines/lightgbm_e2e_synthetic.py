@@ -1,10 +1,6 @@
 """
-Compares two versions of lightgbm
-A - vanilla
-B - custom build
-
 to execute:
-> python pipelines/azureml_sdk15/pipelines/lightgbm_a_vs_b.py
+> python pipelines/azureml_sdk15/pipelines/lightgbm_e2e_synthetic.py -h
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
@@ -100,7 +96,7 @@ class LightGBMEndToEnd(AMLPipelineHelper):
         treelite_score_module = self.module_load("treelite_score")
 
         benchmark_custom_properties = json.dumps({
-            'benchmark_name' : 'foo'
+            'benchmark_name' : config.lightgbm_e2e_synthetic.benchmark_name
         })
         pipeline_name = f"lightgbm_e2e_synthetic_{config.lightgbm_e2e_synthetic.learning_task}"
         pipeline_description = f"LightGBM {config.lightgbm_e2e_synthetic.learning_task} train/inferencing on synthetic data"
