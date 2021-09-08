@@ -88,7 +88,7 @@ def run(args, other_args=[]):
     )
 
 
-    logger.info(f"Loading data for inferencing")
+    #metrics_logger.info(f"Loading data for inferencing")
     with metrics_logger.log_time_block("time_data_loading"):
         inference_raw_data, row_count, feature_count = INPUT_DATA_LOADER.load(args, args.data)
 
