@@ -22,8 +22,13 @@ if COMMON_ROOT not in sys.path:
 
 # before doing local import
 from common.metrics import MetricsLogger
-from common.io import input_file_path
+from common.io import input_file_path, InputDataLoader
 
+INPUT_DATA_LOADER = InputDataLoader(
+    allowed_loaders = ['numpy', 'libsvm'],
+    arg_prefix="data",
+    default_loader="libsvm"
+)
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -44,6 +49,8 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
+    INPUT_DATA_LOADER.get_arg_parser(group_i) # add data loading parameters
+        
     group_i.add_argument("--nthreads",
         required=False, default = 1, type=int, help="number of threads")
     group_i.add_argument("--model",
@@ -81,15 +88,16 @@ def run(args, other_args=[]):
     )
 
 
+    logger.info(f"Loading data for inferencing")
+    with metrics_logger.log_time_block("time_data_loading"):
+        inference_raw_data, row_count, feature_count = INPUT_DATA_LOADER.load(args, args.data)
 
-    with metrics_logger.log_time_block("pandas data loading to numpy"):
-        my_data = pd.read_csv(args.data).to_numpy()
 
     with metrics_logger.log_time_block("treelite model converstion"):
         model = treelite.Model.load(args.model,model_format='lightgbm')
         model.export_lib(toolchain= 'gcc', libpath = './mymodel.so',verbose = True, params={'parallel_comp':16})
         predictor = treelite_runtime.Predictor('./mymodel.so', verbose=True,nthread=args.nthreads)
-        dmat = treelite_runtime.DMatrix(my_data)
+        dmat = treelite_runtime.DMatrix(inference_raw_data)
 
     with metrics_logger.log_time_block("treelite prediction"):
         predictor.predict(dmat)
