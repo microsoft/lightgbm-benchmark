@@ -29,6 +29,8 @@ COMPONENT_SPEC_FILES = [
     "generate_data/generate_spec.yaml",
     "lightgbm_python/train_spec.yaml",
     "lightgbm_python/score_spec.yaml",
+    "treelite_python/compile_spec.yaml",
+    "treelite_python/score_spec.yaml",
 ]
 
 
