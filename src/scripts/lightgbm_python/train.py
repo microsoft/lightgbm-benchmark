@@ -59,7 +59,7 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--metric", required=False, default="", type=str)
     group_lgbm.add_argument("--boosting", required=False, default="gbdt", type=str, choices=['gbdt', 'rf', 'dart', 'goss'])
     group_lgbm.add_argument("--tree_learner", required=False, default="serial", type=str, choices=['serial', 'feature', 'data', 'voting'])
-    group_lgbm.add_argument("--num_trees", required=False, default=100, type=int)
+    group_lgbm.add_argument("--num_iterations", required=False, default=100, type=int)
     group_lgbm.add_argument("--num_leaves", required=False, default=31, type=int)
     group_lgbm.add_argument("--min_data_in_leaf", required=True, type=int)
     group_lgbm.add_argument("--learning_rate", required=False, default=0.1, type=float)
