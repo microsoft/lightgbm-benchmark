@@ -1,6 +1,0 @@
-# @package _group_
-subscription_id: TODO
-resource_group: TODO
-workspace_name: TODO
-tenant: TODO
-auth: "interactive"
