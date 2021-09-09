@@ -26,7 +26,9 @@ COMPONENT_ROOT_FOLDER = os.path.abspath(
 
 # modules that should ALSO pass advanced tests (design pattern)
 COMPONENT_SPEC_FILES = [
-    "generate_data/generate_spec.yaml"
+    "generate_data/generate_spec.yaml",
+    "treelite_python/compile_spec.yaml",
+    "treelite_python/score_spec.yaml",
 ]
 
 
