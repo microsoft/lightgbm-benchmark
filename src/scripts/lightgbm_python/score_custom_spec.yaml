@@ -1,0 +1,47 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: lightgbm_python_custom_score
+version: 1.0.0
+display_name: "LightGBM Inferencing (Custom Build)"
+type: CommandComponent
+description: lightgbm score
+is_deterministic: true
+inputs:
+  data:
+    type: AnyDirectory
+    description: directory to the inference data
+    optional: false
+  model:
+    type: AnyDirectory
+    description: directory to the model
+    optional: false
+  predict_disable_shape_check:
+    type: Boolean
+    description: "control whether or not LightGBM raises an error when you try to predict on data with a different number of features than the training data"
+    optional: true
+  n_threads:
+    type: Integer
+    optional: true
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job
+    optional: true
+
+command: >-
+  python score.py
+  --data {inputs.data}
+  --model {inputs.model}
+  [--num_threads {inputs.n_threads}]
+  [--predict_disable_shape_check {inputs.predict_disable_shape_check}]
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
+
+environment:
+  docker:
+    build:
+      # file path is resolved after additional includes
+      dockerfile: file:./lightgbm_custom.dockerfile
+  conda:
+    userManagedDependencies: true
