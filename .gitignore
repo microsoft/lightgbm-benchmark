@@ -133,3 +133,7 @@ data/
 
 # ignore mlflow local dumps
 mlruns/
+
+# ignore hydra outputs (sdk 1.5 + shrike)
+pipelines/azureml/outputs/
+outputs/
