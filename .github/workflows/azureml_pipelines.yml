@@ -38,12 +38,12 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name : Validate pipelines [inferencing]
-      run: |
-        python pipelines/lightgbm_inferencing.py \
-            --config-dir ./conf --config-name experiments/benchmark-inferencing \
-            run.validate=True \
-            aml.subscription_id=${{secrets.SUBSCRIPTION}} \
-            aml.resource_group=${{secrets.RESOURCE_GROUP}} \
-            aml.workspace_name=${{secrets.WORKSPACE_NAME}} \
-            aml.auth="azurecli"
+      run: >-
+        python pipelines/lightgbm_inferencing.py
+        --config-dir ./conf
+        --config-name experiments/benchmark-inferencing
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
       working-directory: pipelines/azureml/
