@@ -1,4 +1,4 @@
-# to execute, run from /pipelines/azureml_sdk15/
+# to execute, run from /pipelines/azureml/
 # > python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/benchmark-inferencing run.submit=True
 
 defaults:
