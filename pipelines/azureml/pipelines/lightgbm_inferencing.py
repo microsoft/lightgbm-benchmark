@@ -12,7 +12,8 @@ to execute:
 import os
 import sys
 import json
-from dataclasses import MISSING, dataclass
+from dataclasses import dataclass
+from omegaconf import MISSING
 from typing import Optional
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
