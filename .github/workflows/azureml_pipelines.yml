@@ -25,3 +25,25 @@ jobs:
       uses: azure/login@v1
       with:
         creds: ${{secrets.MLOPS_AZURE_CREDS}}
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8==3.9.1 pytest~=6.2 pytest-cov~=2.11
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name : Validate pipelines [inferencing]
+      run: |
+        python pipelines/lightgbm_inferencing.py \
+            --config-dir ./conf --config-name experiments/benchmark-inferencing \
+            run.validate=True \
+            aml.subscription_id=${{secrets.MLOPS_SUBSCRIPTION}} \
+            aml.resource_group=${{secrets.MLOPS_RESOURCE_GROUP}} \
+            aml.workspace_name=${{secrets.MLOPS_WORKSPACE_NAME}} \
+            aml.auth="azurecli"
+      working-directory: pipelines/azureml/
