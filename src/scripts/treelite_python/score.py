@@ -121,7 +121,7 @@ def run(args, unknown_args=[]):
         dmat = treelite_runtime.DMatrix(my_data)
 
     logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block("treelite prediction"):
+    with metrics_logger.log_time_block("time_inferencing"):
         predictor.predict(dmat)
 
     # Important: close logging session before exiting
