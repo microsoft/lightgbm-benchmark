@@ -1,4 +1,4 @@
-# to execute, run from /pipelines/azureml_sdk15/
+# to execute, run from /pipelines/azureml/
 # > python pipelines/lightgbm_e2e_synthetic.py --config-dir ./conf --config-name experiments/benchmark-e2e-synthetic run.submit=True
 
 defaults:
@@ -23,6 +23,8 @@ module_loader: # module loading params
   force_default_module_version: null
   force_all_module_version: null
   local_steps_folder: "../../../../../src/scripts/"
+
+### CUSTOM PARAMETERS ###
 
 lightgbm_e2e_synthetic:
   benchmark_name: "benchmark-dev"

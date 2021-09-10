@@ -1,4 +1,6 @@
 """
+Runs an e2e training of LightGBM, then runs inferencing with 3 different versions.
+
 to execute:
 > python pipelines/lightgbm_e2e_synthetic.py --config-dir ./conf --config-name experiments/benchmark-e2e-synthetic run.submit=True
 """
@@ -7,7 +9,8 @@ to execute:
 import os
 import sys
 import json
-from dataclasses import MISSING, dataclass
+from dataclasses import dataclass
+from omegaconf import MISSING
 from typing import Optional
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper

@@ -135,5 +135,5 @@ data/
 mlruns/
 
 # ignore hydra outputs (sdk 1.5 + shrike)
-pipelines/azureml_sdk15/outputs/
+pipelines/azureml/outputs/
 outputs/

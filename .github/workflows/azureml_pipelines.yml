@@ -1,0 +1,60 @@
+name: AzureML Pipelines Validation
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+    - 'docs/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - 'docs/**'
+
+jobs:
+  build:
+    environment: mlops
+
+    runs-on: ubuntu-latest
+
+    steps:
+  
+    - name: check out repo
+      uses: actions/checkout@v2
+
+    - name: azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDS}}
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8==3.9.1 pytest~=6.2 pytest-cov~=2.11
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name : Validate pipelines [inferencing]
+      run: >-
+        python pipelines/lightgbm_inferencing.py
+        --config-dir ./conf
+        --config-name experiments/benchmark-inferencing
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+      working-directory: pipelines/azureml/
+
+    - name : Validate pipelines [e2e synthetic]
+      run: >-
+        python pipelines/lightgbm_e2e_synthetic.py
+        --config-dir ./conf
+        --config-name experiments/benchmark-e2e-synthetic
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+      working-directory: pipelines/azureml/
