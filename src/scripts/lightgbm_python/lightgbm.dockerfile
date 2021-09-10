@@ -11,15 +11,22 @@ ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 
 # Install pip dependencies
 RUN HOROVOD_WITH_TENSORFLOW=1 \
-    pip install 'pandas>=1.1,<1.2' \
-                'numpy>=1.10,<1.20' \
-                'scipy~=1.5.0' \
-                'scikit-learn~=0.24.1' \
-                'lightgbm~=3.2.0' \
-                'azureml-core==1.30.0' \
+    pip install 'azureml-core==1.30.0' \
                 'azureml-defaults==1.30.0' \
                 'azureml-mlflow==1.30.0' \
                 'azureml-telemetry==1.30.0'
+
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install 'cmake==3.21.0' 
+
+# Clone lightgbm official repository (main branch)
+RUN mkdir LightGBM && \
+    cd LightGBM && \
+    git clone --recursive https://github.com/microsoft/LightGBM.git
+
+# Build lightgbm with custom patch applied
+RUN cd LightGBM/LightGBM/python-package && \
+    python setup.py install --mpi
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
