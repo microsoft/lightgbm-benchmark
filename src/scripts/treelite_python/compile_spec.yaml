@@ -8,7 +8,7 @@ is_deterministic: true
 
 inputs:
   model:
-    type: path
+    type: AnyDirectory
     description: directory to the model
     optional: false
   toolchain:
@@ -35,19 +35,19 @@ inputs:
 
 outputs:
   compiled_model:
-    type: path
+    type: AnyDirectory
     description: compiled model binary
 
 # path for running command is resolved after additional includes
 command: >-
-  python scripts/treelite_python/compile_treelite.py
-    --model {inputs.model}
-    --so_path {outputs.compiled_model}
-    [--verbose {inputs.verbose}]
-    [--custom_properties {inputs.custom_properties}]
+  python compile_treelite.py
+  --model {inputs.model}
+  --so_path {outputs.compiled_model}
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
 
 environment:
   conda:
     # conda file path is resolved after additional includes
-    conda_dependencies_file: scripts/treelite_python/conda_env.yaml
+    conda_dependencies_file: conda_env.yaml
   os: Linux

@@ -24,4 +24,6 @@ def input_file_path(path):
             raise Exception(f"Found multiple files in input file path {path}, use input_directory_path type instead.")
         logging.getLogger(__name__).info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
         return os.path.join(path, all_files[0])
-    raise Exception(f"Provided INPUT path {path} is neither a directory or a file???")
+    
+    logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
+    return path

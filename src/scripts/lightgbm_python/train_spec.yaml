@@ -118,34 +118,30 @@ outputs:
     type: AnyDirectory
 
 command: >-
-  python scripts/lightgbm_python/train.py
-    --train {inputs.train}
-    --test {inputs.test}
-
-    --header {inputs.header}
-    [--label_column {inputs.label_column}]
-    [--group_column {inputs.group_column}]
-
-    --objective {inputs.objective}
-    --metric {inputs.metric}
-    --boosting {inputs.boosting}
-    --tree_learner {inputs.tree_learner}
-    --num_iterations {inputs.num_iterations}
-    --num_leaves {inputs.num_leaves}
-    --min_data_in_leaf {inputs.min_data_in_leaf}
-    --learning_rate {inputs.learning_rate}
-    --max_bin {inputs.max_bin}
-    --feature_fraction {inputs.feature_fraction}
-
-    --export_model {outputs.model}
-
-    [--verbose {inputs.verbose}]
-    [--custom_properties {inputs.custom_properties}]
+  python train.py
+  --train {inputs.train}
+  --test {inputs.test}
+  --header {inputs.header}
+  [--label_column {inputs.label_column}]
+  [--group_column {inputs.group_column}]
+  --objective {inputs.objective}
+  --metric {inputs.metric}
+  --boosting {inputs.boosting}
+  --tree_learner {inputs.tree_learner}
+  --num_trees {inputs.num_iterations}
+  --num_leaves {inputs.num_leaves}
+  --min_data_in_leaf {inputs.min_data_in_leaf}
+  --learning_rate {inputs.learning_rate}
+  --max_bin {inputs.max_bin}
+  --feature_fraction {inputs.feature_fraction}
+  --export_model {outputs.model}
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
 
 environment:
   docker:
     build:
       # file path is resolved after additional includes
-      dockerfile: file:./scripts/lightgbm_python/lightgbm.dockerfile
+      dockerfile: file:./lightgbm.dockerfile
   conda:
     userManagedDependencies: true

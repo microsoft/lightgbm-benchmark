@@ -8,11 +8,11 @@ is_deterministic: true
 
 inputs:
   data:
-    type: path
+    type: AnyDirectory
     description: directory to the inference data
     optional: false
   compiled_model:
-    type: path
+    type: AnyDirectory
     description: directory to the model
     optional: false
   verbose:
@@ -25,14 +25,14 @@ inputs:
 
 # path for running command is resolved after additional includes
 command: >-
-  python scripts/treelite_python/score.py
-    --data {inputs.data}
-    --so_path {inputs.compiled_model}
-    [--verbose {inputs.verbose}]
-    [--custom_properties {inputs.custom_properties}]
+  python score.py
+  --data {inputs.data}
+  --so_path {inputs.compiled_model}
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
 
 environment:
   conda:
     # conda file path is resolved after additional includes
-    conda_dependencies_file: scripts/treelite_python/conda_env.yaml
+    conda_dependencies_file: conda_env.yaml
   os: Linux

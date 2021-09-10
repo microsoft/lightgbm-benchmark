@@ -122,7 +122,7 @@ def run(args, unknown_args=[]):
     logger.info(f"Running .predict()")
     with metrics_logger.log_time_block(metric_name="time_inferencing"):
         lightgbm_cli_call = subprocess_run(
-            " ".join(lightgbm_cli_command),
+            lightgbm_cli_command,
             stdout=PIPE,
             stderr=PIPE,
             universal_newlines=True,

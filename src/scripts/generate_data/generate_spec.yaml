@@ -58,25 +58,23 @@ outputs:
     type: AnyDirectory
 
 command: >-
-  python scripts/generate_data/generate.py
-    --type {inputs.learning_task}
-    --train_samples {inputs.train_samples}
-    --test_samples {inputs.test_samples}
-    --inferencing_samples {inputs.inferencing_samples}
-    --n_features {inputs.n_features}
-    --n_informative {inputs.n_informative}
-    [--n_redundant {inputs.n_redundant}]
-    [--random_state {inputs.random_state}]
-
-    --output_train {outputs.output_train}
-    --output_test {outputs.output_test}
-    --output_inference {outputs.output_inference}
-
-    [--verbose {inputs.verbose}]
-    [--custom_properties {inputs.custom_properties}]
+  python generate.py
+  --type {inputs.learning_task}
+  --train_samples {inputs.train_samples}
+  --test_samples {inputs.test_samples}
+  --inferencing_samples {inputs.inferencing_samples}
+  --n_features {inputs.n_features}
+  --n_informative {inputs.n_informative}
+  [--n_redundant {inputs.n_redundant}]
+  [--random_state {inputs.random_state}]
+  --output_train {outputs.output_train}
+  --output_test {outputs.output_test}
+  --output_inference {outputs.output_inference}
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
 
 environment:
   conda:
     # conda file path is resolved after additional includes
-    conda_dependencies_file: scripts/generate_data/conda_env.yaml
+    conda_dependencies_file: conda_env.yaml
   os: Linux
