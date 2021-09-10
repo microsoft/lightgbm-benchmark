@@ -53,7 +53,7 @@ def get_arg_parser(parser=None):
     group_params.add_argument("--num_threads",
         required=False, default=1, type=int, help="number of threads")
     group_params.add_argument("--predict_disable_shape_check",
-        required=False, default=False, type=strtobool, help="See LightGBM documentation")
+        required=False, default=False, type=strtobool, help="control whether or not LightGBM raises an error when you try to predict on data with a different number of features than the training data")
 
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
