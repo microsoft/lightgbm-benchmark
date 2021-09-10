@@ -48,7 +48,7 @@ jobs:
         aml.auth="azurecli"
       working-directory: pipelines/azureml/
 
-    - name : Validate pipelines [inferencing]
+    - name : Validate pipelines [e2e synthetic]
       run: >-
         python pipelines/lightgbm_e2e_synthetic.py
         --config-dir ./conf
