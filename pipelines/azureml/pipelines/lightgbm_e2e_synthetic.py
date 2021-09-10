@@ -1,6 +1,6 @@
 """
 to execute:
-> python pipelines/azureml_sdk15/pipelines/lightgbm_e2e_synthetic.py -h
+> python pipelines/lightgbm_e2e_synthetic.py --config-dir ./conf --config-name experiments/benchmark-e2e-synthetic run.submit=True
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
