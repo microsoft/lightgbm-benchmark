@@ -9,12 +9,6 @@ manifest:
   - name: "lightgbm_python_score"
     version: null
     yaml: "lightgbm_python/score_spec.yaml"
-<<<<<<< HEAD
-  - name: "lightgbm_python_win_score"
-    version: null
-    yaml: "lightgbm_python_win/score_spec.yaml"
-=======
->>>>>>> main
   - name: "lightgbm_python_custom_score"
     version: null
     yaml: "lightgbm_python/score_custom_spec.yaml"
@@ -23,8 +17,4 @@ manifest:
     yaml: "treelite_python/compile_spec.yaml"
   - name: "treelite_score"
     version: null
-<<<<<<< HEAD
     yaml: "treelite_python/score_spec.yaml"
-=======
-    yaml: "treelite_python/score_spec.yaml"
->>>>>>> main
