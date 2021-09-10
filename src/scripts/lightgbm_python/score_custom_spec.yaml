@@ -1,7 +1,7 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
-name: lightgbm_python_score
+name: lightgbm_python_custom_score
 version: 1.0.0
-display_name: "LightGBM Inferencing (Python API)"
+display_name: "LightGBM Inferencing (Custom Build)"
 type: CommandComponent
 description: lightgbm score
 is_deterministic: true
@@ -42,6 +42,6 @@ environment:
   docker:
     build:
       # file path is resolved after additional includes
-      dockerfile: file:./lightgbm.dockerfile
+      dockerfile: file:./lightgbm_custom.dockerfile
   conda:
     userManagedDependencies: true
