@@ -1,4 +1,4 @@
-name: AzureML Pipelines
+name: AzureML Pipelines Validation
 
 on:
   push:
@@ -42,6 +42,17 @@ jobs:
         python pipelines/lightgbm_inferencing.py
         --config-dir ./conf
         --config-name experiments/benchmark-inferencing
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+      working-directory: pipelines/azureml/
+
+    - name : Validate pipelines [e2e synthetic]
+      run: >-
+        python pipelines/lightgbm_e2e_synthetic.py
+        --config-dir ./conf
+        --config-name experiments/benchmark-e2e-synthetic
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
