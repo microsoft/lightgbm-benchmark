@@ -47,7 +47,7 @@ def get_arg_parser(parser=None):
         required=True, type=input_file_path, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
-    group_i.add_argument("--query_column", required=False, default=None, type=str)
+    group_i.add_argument("--group_column", required=False, default=None, type=str)
 
     group_o = parser.add_argument_group("Outputs")
     group_o.add_argument("--export_model",

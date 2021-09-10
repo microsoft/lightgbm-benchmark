@@ -51,7 +51,7 @@ def get_arg_parser(parser=None):
     group_params.add_argument("--n_features", required=True, type=int)
     group_params.add_argument("--n_informative", required=True, type=int)
     group_params.add_argument("--n_redundant", required=False, type=int)
-    group_params.add_argument("--random_state", required=True, type=int)
+    group_params.add_argument("--random_state", required=False, default=None, type=int)
 
     group_o = parser.add_argument_group("Outputs")
     group_o.add_argument(
