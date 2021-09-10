@@ -24,7 +24,7 @@ jobs:
     - name: azure login
       uses: azure/login@v1
       with:
-        creds: ${{secrets.MLOPS_AZURE_CREDS}}
+        creds: ${{secrets.AZURE_CREDS}}
 
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
@@ -42,8 +42,8 @@ jobs:
         python pipelines/lightgbm_inferencing.py \
             --config-dir ./conf --config-name experiments/benchmark-inferencing \
             run.validate=True \
-            aml.subscription_id=${{secrets.MLOPS_SUBSCRIPTION}} \
-            aml.resource_group=${{secrets.MLOPS_RESOURCE_GROUP}} \
-            aml.workspace_name=${{secrets.MLOPS_WORKSPACE_NAME}} \
+            aml.subscription_id=${{secrets.SUBSCRIPTION}} \
+            aml.resource_group=${{secrets.RESOURCE_GROUP}} \
+            aml.workspace_name=${{secrets.WORKSPACE_NAME}} \
             aml.auth="azurecli"
       working-directory: pipelines/azureml/
