@@ -13,9 +13,9 @@ To generate a synthetic dataset based on sklearn:
 
 ```sh
 python src/scripts/generate_data/generate.py \
-    --train_samples 100000 \
-    --test_samples 10000 \
-    --inferencing_samples 100000 \
+    --train_samples 30000 \
+    --test_samples 3000 \
+    --inferencing_samples 30000 \
     --n_features 4000 \
     --n_informative 400 \
     --random_state 5 \
@@ -24,6 +24,8 @@ python src/scripts/generate_data/generate.py \
     --output_inference ./data/synthetic/inference/ \
     --type regression
 ```
+
+Note: Running the synthetic data generation script with these parameter values requires at least 4 GB of RAM available and generates a 754 MB training, a 75 MB testing, and a 744 MB inferencing dataset.
 
 ## Run training on synthetic data
 
