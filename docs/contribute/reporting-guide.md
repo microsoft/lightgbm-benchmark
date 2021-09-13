@@ -104,7 +104,7 @@ Any keyword arg of log_parameters() is submitted as a parameter in mlflow.
 metrics_logger.log_parameters(**lgbm_params)
 ```
 
-#### 4. Compute wall-time using with statement
+### 4. Compute wall-time using with statement
 
 To compute wall time, the `MetricsLogger` class provide a helper method you can use within a `with` statement:
 
