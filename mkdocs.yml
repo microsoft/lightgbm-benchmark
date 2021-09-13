@@ -13,6 +13,7 @@ nav:
 - Run:
     Install: quickstart/install.md
     Run manually: quickstart/manual-benchmark.md
+    Run in AzureML: quickstart/azureml-benchmark.md
 - Results:
     Latest: results/latest.md
 
