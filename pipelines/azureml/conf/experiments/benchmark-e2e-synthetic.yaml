@@ -1,0 +1,50 @@
+# to execute, run from /pipelines/azureml/
+# > python pipelines/lightgbm_e2e_synthetic.py --config-dir ./conf --config-name experiments/benchmark-e2e-synthetic run.submit=True
+
+defaults:
+  - aml: sample
+  - compute: sample
+  - modules: benchmark
+
+# run parameters are command line arguments for running your experiment
+run: # params for running pipeline
+  experiment_name: "lightgbmbenchmark-e2e-synthetic" # IMPORTANT
+  regenerate_outputs: false
+  continue_on_failure: false
+  verbose: false
+  submit: false
+  resume: false
+  canary: false
+  silent: false
+  wait: false
+
+module_loader: # module loading params
+  use_local: "*"
+  force_default_module_version: null
+  force_all_module_version: null
+  local_steps_folder: "../../../../../src/scripts/"
+
+### CUSTOM PARAMETERS ###
+
+lightgbm_e2e_synthetic:
+  benchmark_name: "benchmark-dev"
+
+  # DATA
+  learning_task: "regression"
+  train_samples: 10000
+  test_samples: 1000
+  inferencing_samples: 10000
+  n_features: 4000
+  n_informative: 4000
+
+  # TRAINING
+  objective: "regression"
+  metric: "rmse"
+  boosting: "gbdt"
+  tree_learner: "serial"
+  num_iterations: 100
+  num_leaves: 31
+  min_data_in_leaf: 20
+  learning_rate: 0.1
+  max_bin: 255
+  feature_fraction: 1.0
