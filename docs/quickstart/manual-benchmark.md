@@ -86,7 +86,7 @@ Note: Running the synthetic data generation script with these parameter values r
         --feature_fraction 0.15
     ```
 
-## Run inferencing on synthetic data
+## Run inferencing on synthetic data (lightgbm python)
 
 === "Bash"
 
@@ -101,6 +101,30 @@ Note: Running the synthetic data generation script with these parameter values r
 
     ``` powershell
     python src/scripts/lightgbm_python/score.py `
+        --data ./data/synthetic/inference/ `
+        --model ./data/models/synthetic-1200/ `
+        --output ./data/outputs/predictions/
+    ```
+
+## Run inferencing on synthetic data (lightgbm cli)
+
+If you have a local installation of lightgbm cli, run the `lightgbm_cli` script by pointing to the lightgbm binaries (works for both linux and windows).
+
+=== "Bash"
+
+    ```bash
+    python src/scripts/lightgbm_cli/score.py \
+        --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe \
+        --data ./data/synthetic/inference/ \
+        --model ./data/models/synthetic-1200/ \
+        --output ./data/outputs/predictions/
+    ```
+
+=== "Powershell"
+
+    ``` powershell
+    python src/scripts/lightgbm_cli/score.py `
+        --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe `
         --data ./data/synthetic/inference/ `
         --model ./data/models/synthetic-1200/ `
         --output ./data/outputs/predictions/
