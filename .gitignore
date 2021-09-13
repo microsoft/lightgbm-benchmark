@@ -137,3 +137,7 @@ mlruns/
 # ignore hydra outputs (sdk 1.5 + shrike)
 pipelines/azureml/outputs/
 outputs/
+
+# ignore aml references
+pipelines/azureml/conf/aml/
+pipelines/azureml/conf/compute/
