@@ -21,9 +21,11 @@ def input_file_path(path):
         if not all_files:
             raise Exception(f"Could not find any file in specified input directory {path}")
         if len(all_files) > 1:
-            raise Exception(f"Found multiple files in input file path {path}, use input_directory_path type instead.")
-        logging.getLogger(__name__).info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
-        return os.path.join(path, all_files[0])
+            logging.getLogger(__name__).info(f"Found INPUT directory {path} with multiple files ({len(all_files)})")
+            return all_files
+        else:
+            logging.getLogger(__name__).info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
+            return os.path.join(path, all_files[0])
     
     logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
     return path
