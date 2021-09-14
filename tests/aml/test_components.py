@@ -30,6 +30,7 @@ COMPONENT_SPEC_FILES = [
     "lightgbm_python/train_spec.yaml",
     "lightgbm_python/score_spec.yaml",
     "lightgbm_python/score_custom_spec.yaml",
+    "partition_data/partition_spec.yaml",
     "treelite_python/compile_spec.yaml",
     "treelite_python/score_spec.yaml",
 ]
