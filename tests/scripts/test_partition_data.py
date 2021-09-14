@@ -17,11 +17,11 @@ def verify_partitioned_files(partitioned_data_dir, expected_file_count, expected
 
     for expected_file in [os.path.join(partitioned_data_dir, "part_{:06d}".format(i)) for i in range(expected_file_count)]:
         assert os.path.isfile(
-            
-        ), "Script partition.py should generate partitioned data file {} in --output, but no output files were found"
+            expected_file
+        ), "Script partition.py should generate partitioned data file {expected_file} in --output, but no output files were found"
 
         # open file in read mode
-        with open(os.path.join(partitioned_data_dir, expected_file), 'r') as i_file:
+        with open(expected_file, 'r') as i_file:
             for count, line in enumerate(i_file):
                 pass
 
