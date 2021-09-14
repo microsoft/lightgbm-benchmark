@@ -1,6 +1,6 @@
 # @package _group_
 manifest:
-  - name: "generate_data"
+  - name: "generate_synthetic_data"
     version: null
     yaml: "generate_data/generate_spec.yaml"
   - name: "lightgbm_python_train"
