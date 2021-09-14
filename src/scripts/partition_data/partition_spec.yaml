@@ -50,5 +50,5 @@ environment:
   docker:
     image: mcr.microsoft.com/azureml/base:latest
   conda:
-    conda_dependencies_file: conda_env.yaml
+    conda_dependencies_file: conda_env.yml
   os: Linux
