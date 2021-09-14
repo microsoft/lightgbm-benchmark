@@ -100,18 +100,6 @@ def run(args, unknown_args=[]):
     # below: initialize reporting of metrics with a custom session name
     metrics_logger = MetricsLogger("lightgbm_python.score")
 
-    # add common properties to the session
-    metrics_logger.set_properties(
-        task="train", framework="lightgbm", framework_version=lightgbm.__version__
-    )
-
-    # if provided some custom_properties by the outside orchestrator
-    if args.custom_properties:
-        metrics_logger.set_properties_from_json(args.custom_properties)
-
-    # add properties about environment of this script
-    metrics_logger.set_platform_properties()
-
     comm = MPI.COMM_WORLD
     world_size = comm.Get_size()
     world_rank = comm.Get_rank()
@@ -133,8 +121,19 @@ def run(args, unknown_args=[]):
     if mpi_mode and world_rank == 0:
         lgbm_params['num_machines'] = world_size
         lgbm_params['machines'] = ":"
-
         metrics_logger.log_parameters(**lgbm_params)
+
+        # add common properties to the session
+        metrics_logger.set_properties(
+            task="train", framework="lightgbm", framework_version=lightgbm.__version__
+        )
+
+        # if provided some custom_properties by the outside orchestrator
+        if args.custom_properties:
+            metrics_logger.set_properties_from_json(args.custom_properties)
+
+        # add properties about environment of this script
+        metrics_logger.set_platform_properties()
 
     # register logger for lightgbm logs
     lightgbm.register_logger(logger)
