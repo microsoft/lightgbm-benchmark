@@ -27,3 +27,69 @@ def input_file_path(path):
     
     logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
     return path
+
+
+class PartitioningEngine():
+    """ Class handles partitioning files into chunks with various strategies. """
+    PARTITION_MODES = [
+        'chunk',
+        'roundrobin'
+    ]
+
+    def __init__(self, mode, number, logger=None):
+        self.mode = mode
+        self.number = number
+        self.logger = logger or logging.getLogger(__name__)
+
+    def split_by_size(self, input_files, output_path, partition_size):
+        """The function that partition data by size"""
+        current_partition_size = 0
+        current_partition_index = 0
+        self.logger.info(f"Creating partition {current_partition_index}")
+        for input_file in input_files:
+            with open(input_file, "r", encoding="utf-8") as input_handler:
+                for line in input_handler:
+                    if partition_size > 0 and current_partition_size >= partition_size:
+                        current_partition_index += 1
+                        current_partition_size = 0
+                        self.logger.info(f"Creating partition {current_partition_index}")
+                    with open(os.path.join(output_path, "part_{:06d}".format(current_partition_index)), 'a', encoding="utf-8") as output_handler:
+                        output_handler.write(line)
+                        current_partition_size += 1
+        self.logger.info(f"Created {current_partition_index+1} partitions")
+
+    def split_by_count(self, input_files, output_path, partition_count):
+        """The function that partition data by count"""
+        self.logger.info(f"Creating {partition_count} partitions using round robin.")
+
+        partition_files = [open(os.path.join(output_path, "part_{:06d}".format(i)), "w", encoding="utf-8") for i in range(partition_count)]
+
+        current_index = 0
+        for input_file in input_files:
+            with open(input_file, "r", encoding="utf-8") as input_handler:
+                for line in input_handler:
+                    partition_files[current_index % partition_count].write(line)
+                    current_index += 1
+
+        for handler in partition_files:
+            handler.close()
+        self.logger.info(f"Created {partition_count} partitions")
+
+    def run(self, input_path, output_path):
+        # Retrieve all input files
+        if os.path.isfile(input_path):
+            self.logger.info("Input is one unique file")
+            file_names = [os.path.basename(input_path)]
+            input_files = [input_path]
+        else:
+            self.logger.info("Input is a directory, listing all of them for processing")
+            file_names = os.listdir(input_path)
+            input_files = [os.path.join(input_path, file) for file in file_names]
+            self.logger.info("Found {} files in {}".format(len(input_files), input_path))
+
+        if self.mode == "chunk":
+            self.split_by_size(input_files, output_path, self.number)
+        elif self.mode == "roundrobin":
+            self.split_by_count(input_files, output_path, self.number)
+        else:
+            raise NotImplementedError(f"Mode {self.mode} not implemented.")
