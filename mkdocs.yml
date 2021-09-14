@@ -22,11 +22,13 @@ theme:
   name: material
 
 markdown_extensions:
-- pymdownx.highlight:
-    linenums: true
-    linenums_style: pymdownx-inline
+- pymdownx.tabbed
 - pymdownx.superfences
 - pymdownx.snippets
+- pymdownx.highlight:
+    use_pygments: true
+    linenums: true
+    linenums_style: pymdownx-inline
 # https://github.com/mkdocs/mkdocs/issues/777
 - markdown_include.include:
     base_path: .
