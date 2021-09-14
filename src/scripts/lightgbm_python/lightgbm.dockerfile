@@ -15,14 +15,14 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'numpy>=1.10,<1.20' \
                 'scipy~=1.5.0' \
                 'scikit-learn~=0.24.1' \
-                'lightgbm~=3.2.0' \
                 'dask~=2021.6.0' \
                 'distributed~=2021.6.0' \
                 'dask-ml~=1.9.0' \
                 'azureml-core==1.30.0' \
                 'azureml-defaults==1.30.0' \
                 'azureml-mlflow==1.30.0' \
-                'azureml-telemetry==1.30.0'
+                'azureml-telemetry==1.30.0' \
+                'mpi4py==3.1.1'
 
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' 

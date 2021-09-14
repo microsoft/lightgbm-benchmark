@@ -88,7 +88,7 @@ class LightGBMEndToEnd(AMLPipelineHelper):
         # load the right module depending on config
 
         # Data modules
-        generate_data_module = self.module_load("generate_data")
+        generate_data_module = self.module_load("generate_synthetic_data")
 
         # Training modules
         lightgbm_train_module = self.module_load("lightgbm_python_train")
@@ -136,6 +136,7 @@ class LightGBMEndToEnd(AMLPipelineHelper):
                 verbose = False,
                 custom_properties = benchmark_custom_properties
             )
+            self.apply_smart_runsettings(generate_data_step)
             
             lightgbm_train_step = lightgbm_train_module(
                 train = generate_data_step.outputs.output_train,

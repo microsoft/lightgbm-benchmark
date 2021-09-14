@@ -134,7 +134,7 @@ def run(args, unknown_args=[]):
         lgbm_params['num_machines'] = world_size
         lgbm_params['machines'] = ":"
 
-    metrics_logger.log_parameters(**lgbm_params)
+        metrics_logger.log_parameters(**lgbm_params)
 
     # register logger for lightgbm logs
     lightgbm.register_logger(logger)
@@ -144,13 +144,14 @@ def run(args, unknown_args=[]):
         train_data = lightgbm.Dataset(args.train, params=lgbm_params).construct()
         val_data = train_data.create_valid(args.test).construct()
 
-    # capture data shape as property
-    metrics_logger.set_properties(
-        train_data_length = train_data.num_data(),
-        train_data_width = train_data.num_feature(),
-        test_data_length = val_data.num_data(),
-        test_data_width = val_data.num_feature()
-    )
+    if mpi_mode and world_rank == 0:
+        # capture data shape as property
+        metrics_logger.set_properties(
+            train_data_length = train_data.num_data(),
+            train_data_width = train_data.num_feature(),
+            test_data_length = val_data.num_data(),
+            test_data_width = val_data.num_feature()
+        )
 
     logger.info(f"Training LightGBM with parameters: {lgbm_params}")
     with metrics_logger.log_time_block("time_training"):
@@ -167,6 +168,10 @@ def run(args, unknown_args=[]):
 
     # Important: close logging session before exiting
     metrics_logger.close()
+
+    if MPI.Is_initialized():
+        logger.info("MPI was initialized, calling MPI.finalize()")
+        MPI.Finalize()
 
 
 def main(cli_args=None):
