@@ -15,10 +15,10 @@ def verify_partitioned_files(partitioned_data_dir, expected_file_count, expected
     """Utility for testing outputs"""
     assert os.path.isdir(partitioned_data_dir)
 
-    for expected_file in ["part_{:06d}".format(i) for i in range(expected_file_count)]:
+    for expected_file in [os.path.join(partitioned_data_dir, "part_{:06d}".format(i)) for i in range(expected_file_count)]:
         assert os.path.isfile(
-            os.path.join(partitioned_data_dir, expected_file)
-        ), "Script partition.py should generate partitioned data in --output, but no output files were found"
+            
+        ), "Script partition.py should generate partitioned data file {} in --output, but no output files were found"
 
         # open file in read mode
         with open(os.path.join(partitioned_data_dir, expected_file), 'r') as i_file:
@@ -53,7 +53,6 @@ def test_partition_data_roundrobin(temporary_dir, regression_train_sample):
         expected_file_length=20
     )
 
-
 def test_partition_data_chunk(temporary_dir, regression_train_sample):
     """Tests src/scripts/partition_data/partition.py"""
     partitioned_data_dir = os.path.join(temporary_dir, "partitioned_data")
@@ -79,4 +78,3 @@ def test_partition_data_chunk(temporary_dir, regression_train_sample):
         expected_file_count=20,
         expected_file_length=5
     )
-
