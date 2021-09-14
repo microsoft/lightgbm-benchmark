@@ -22,7 +22,7 @@ if COMMON_ROOT not in sys.path:
 # useful imports from common
 from common.metrics import MetricsLogger
 from common.io import input_file_path
-
+from common.lightgbm import LightGBMCallbackHandler
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -98,6 +98,7 @@ def run(args, unknown_args=[]):
     # get Metrics logger for benchmark metrics
     # below: initialize reporting of metrics with a custom session name
     metrics_logger = MetricsLogger("lightgbm_python.score")
+    callbacks_handler = LightGBMCallbackHandler(metrics_logger=metrics_logger)
 
     # add common properties to the session
     metrics_logger.set_properties(
@@ -146,7 +147,7 @@ def run(args, unknown_args=[]):
             lgbm_params,
             train_data,
             valid_sets = val_data,
-            callbacks=[]
+            callbacks=[callbacks_handler.callback]
         )
 
     if args.export_model:

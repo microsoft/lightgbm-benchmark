@@ -20,9 +20,9 @@ def test_metrics_logger_log_metric(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_metric() """
     metrics_logger = MetricsLogger()
 
-    metrics_logger.log_metric("foo", "bar")
+    metrics_logger.log_metric("foo", "bar", step=16)
     mlflow_log_metric_mock.assert_called_with(
-        "foo", "bar"
+        "foo", "bar", step=16
     )
 
 
@@ -38,10 +38,10 @@ def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
     assert len(short_metric_key), 50
 
     metrics_logger.log_metric(
-        metric_key, "bar"
+        metric_key, "bar", step=15
     )
     mlflow_log_metric_mock.assert_called_with(
-        short_metric_key, "bar"
+        short_metric_key, "bar", step=15
     )
 
 

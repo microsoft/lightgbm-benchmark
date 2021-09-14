@@ -52,12 +52,12 @@ class MetricsLogger():
         self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
         mlflow.end_run()
 
-    def log_metric(self, key, value):
+    def log_metric(self, key, value, step=None):
         self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
-        mlflow.log_metric(key, value)
+        mlflow.log_metric(key, value, step=step)
 
     def set_properties(self, **kwargs):
         """ Set properties/tags for the session """
