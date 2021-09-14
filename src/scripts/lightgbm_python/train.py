@@ -10,6 +10,7 @@ import argparse
 import logging
 from distutils.util import strtobool
 import lightgbm
+from mpi4py import MPI
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -111,6 +112,13 @@ def run(args, unknown_args=[]):
     # add properties about environment of this script
     metrics_logger.set_platform_properties()
 
+    comm = MPI.COMM_WORLD
+    world_size = comm.Get_size()
+    world_rank = comm.Get_rank()
+    mpi_mode = world_size > 1
+
+    logger.info(f"mpi_mode = {mpi_mode}, world_size = {world_size}, world_rank = {world_rank}")
+
     # make sure the output argument exists
     if args.export_model:
         os.makedirs(args.export_model, exist_ok=True)
@@ -121,6 +129,10 @@ def run(args, unknown_args=[]):
     lgbm_params['feature_pre_filter'] = False
     lgbm_params['verbose'] = 2
     lgbm_params['header'] = bool(args.header) # strtobool returns 0 or 1, lightgbm needs actual bool
+
+    if mpi_mode and world_rank == 0:
+        lgbm_params['num_machines'] = world_size
+        lgbm_params['machines'] = ":"
 
     metrics_logger.log_parameters(**lgbm_params)
 

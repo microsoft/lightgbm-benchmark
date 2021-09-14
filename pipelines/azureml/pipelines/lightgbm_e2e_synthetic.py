@@ -156,6 +156,10 @@ class LightGBMEndToEnd(AMLPipelineHelper):
                 verbose = False,
                 custom_properties = benchmark_custom_properties
             )
+            self.apply_smart_runsettings(
+                lightgbm_train_step,
+                node_count = 2
+            )
 
             # call module with all the right arguments
             lightgbm_score_step = lightgbm_score_module(
