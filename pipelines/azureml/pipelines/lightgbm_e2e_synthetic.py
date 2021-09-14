@@ -88,7 +88,7 @@ class LightGBMEndToEnd(AMLPipelineHelper):
         # load the right module depending on config
 
         # Data modules
-        generate_data_module = self.module_load("generate_data")
+        generate_data_module = self.module_load("generate_synthetic_data")
 
         # Training modules
         lightgbm_train_module = self.module_load("lightgbm_python_train")
