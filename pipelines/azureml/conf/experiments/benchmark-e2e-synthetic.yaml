@@ -31,8 +31,8 @@ lightgbm_e2e_synthetic:
 
   # DATA
   learning_task: "regression"
-  train_samples: 100000
-  test_samples: 10000
+  train_samples: 10000
+  test_samples: 1000
   inferencing_samples: 10000
   n_features: 4000
   n_informative: 4000
@@ -41,7 +41,7 @@ lightgbm_e2e_synthetic:
   objective: "regression"
   metric: "rmse"
   boosting: "gbdt"
-  tree_learner: "data"
+  tree_learner: "serial"
   num_iterations: 100
   num_leaves: 31
   min_data_in_leaf: 20
