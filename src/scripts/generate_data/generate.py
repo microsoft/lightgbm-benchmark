@@ -168,7 +168,7 @@ def run(args, unknown_args=[]):
 
         test_X = X[args.train_samples : args.train_samples + args.test_samples]
         test_y = y[args.train_samples : args.train_samples + args.test_samples]
-        test_data = numpy.hstack((test_X, test_y))  # keep target as column 0
+        test_data = numpy.hstack((test_y, test_X))  # keep target as column 0
         logger.info(f"Test data shape: {test_data.shape}")
 
         inference_data = X[args.train_samples + args.test_samples :]
