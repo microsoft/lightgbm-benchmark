@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import logging
+import traceback
 from distutils.util import strtobool
 import lightgbm
 from mpi4py import MPI
@@ -106,14 +107,16 @@ def detect_mpi_config():
             (comm.Get_size() > 1), # mpi_available
             (comm.Get_rank() == 0), # main_node
         )
+        foo
+        logging.getLogger().info(f"MPI detection results: {mpi_config}")
     except:
-        logging.getLogger().critical("MPI initialization failed, switching to single node.")
         mpi_config = mpi_config_tuple(
             1, # world_size
             0, # world_rank
             False, # mpi_available
             True, # main_node
         )
+        logging.getLogger().critical(f"MPI detection failed, switching to single node: {mpi_config}, see traceback below:\n{traceback.format_exc()}")
 
     return mpi_config
 
