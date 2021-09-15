@@ -215,10 +215,7 @@ def run(args, unknown_args=[]):
         "lightgbm_python.train",
         metrics_prefix=f"node_{mpi_config.world_rank}/" if mpi_config.mpi_available else None
     )
-    callbacks_handler = LightGBMCallbackHandler(
-        metrics_logger = metrics_logger,
-        metrics_prefix = f"node_{mpi_config.world_rank}/" if mpi_config.mpi_available else None
-    )
+    callbacks_handler = LightGBMCallbackHandler(metrics_logger = metrics_logger)
 
     # make sure the output argument exists
     if args.export_model and mpi_config.main_node:
