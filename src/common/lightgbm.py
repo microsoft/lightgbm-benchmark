@@ -9,7 +9,7 @@ import logging
 
 class LightGBMCallbackHandler():
     """ This class handles LightGBM callbacks for recording metrics. """
-    def __init__(self, metrics_logger, node_index=0):
+    def __init__(self, metrics_logger):
         """
         Args:
             metrics_logger (common.metrics.MetricsLogger)
@@ -17,7 +17,6 @@ class LightGBMCallbackHandler():
         """
         self.metrics = {}
         self.metrics_logger = metrics_logger
-        self.node_index = node_index
         self.logger = logging.getLogger(__name__)
     
     def callback(self, env: lightgbm.callback.CallbackEnv) -> None:
@@ -31,7 +30,7 @@ class LightGBMCallbackHandler():
         for data_name, eval_name, result, _ in env.evaluation_result_list:
             # log each as a distinct metric
             self.metrics_logger.log_metric(
-                key=f"node_{self.node_index}.{data_name}.{eval_name}",
+                key=f"{data_name}.{eval_name}",
                 value=result,
                 step=env.iteration # provide iteration as step in mlflow
             )
