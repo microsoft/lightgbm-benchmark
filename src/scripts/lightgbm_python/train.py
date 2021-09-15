@@ -44,7 +44,7 @@ def get_arg_parser(parser=None):
 
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--train",
-        required=True, type=input_file_path, help="Training data location (file path)")
+        required=True, type=str, help="Training data location (file or dir path)")
     group_i.add_argument("--test",
         required=True, type=input_file_path, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
@@ -88,6 +88,13 @@ def get_arg_parser(parser=None):
 
 
 def detect_mpi_config():
+    """ Detects if we're running in MPI.
+    Args:
+        None
+
+    Returns:
+        mpi_config (namedtuple)
+    """
     # check if we're running multi or single node
     mpi_config_tuple = namedtuple("mpi_config", ['world_size', 'world_rank', 'mpi_available', 'main_node'])
 
@@ -101,7 +108,16 @@ def detect_mpi_config():
 
     return mpi_config
 
+
 def load_lgbm_params_from_cli(args, mpi_config):
+    """Gets the right LightGBM parameters from argparse + mpi config
+    Args:
+        args (argparse.Namespace)
+        mpi_config (namedtuple): as returned from detect_mpi_config()
+    
+    Returns:
+        lgbm_params (dict)
+    """
     lgbm_params = vars(args)
     lgbm_params['feature_pre_filter'] = False
     lgbm_params['verbose'] = 2
@@ -114,30 +130,54 @@ def load_lgbm_params_from_cli(args, mpi_config):
 
     return lgbm_params
 
-def assign_train_data(args, mpi_config):
-    train_path = args.train
 
-    # check input data
-    if isinstance(train_path, str):
-        # turn into a list to simplify code below
-        train_path = [train_path]
+def get_train_files(path):
+    """ Scans input path and returns a list of files. """
+    # if input path is already a file, return as list
+    if os.path.isfile(path):
+        logging.getLogger().info(f"Found INPUT file {path}")
+        return [path]
+    
+    # if input path is a directory, list all files and return
+    if os.path.isdir(path):
+        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
+        if not all_files:
+            raise Exception(f"Could not find any file in specified input directory {path}")
+        return all_files
+
+    logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
+    return path
+
+
+def assign_train_data(args, mpi_config):
+    """ Identifies which training file to load on this node.
+    Checks for consistency between number of files and mpi config.
+
+    Args:
+        args (argparse.Namespace)
+        mpi_config (namedtuple): as returned from detect_mpi_config()
+    
+    Returns:
+        str: path to the data file for this node
+    """
+    train_file_paths = get_train_files(args.train)
 
     if mpi_config.mpi_available:    
         if args.tree_learner == "data" or args.tree_learner == "voting":
-            if len(train_path) == mpi_config.world_size:
-                train_data = train_path[mpi_config.world_rank]
+            if len(train_file_paths) == mpi_config.world_size:
+                train_data = train_file_paths[mpi_config.world_rank]
             else:
-                raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input data into {mpi_config.world_rank} files (currently found {len(train_path)})")
+                raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
         elif args.tree_learner == "parallel":
-            if len(train_path) == 1:
-                train_data = train_path[0]
+            if len(train_file_paths) == 1:
+                train_data = train_file_paths[0]
             else:
-                raise Exception(f"To use MPI with tree_learner=parallel you need to provide only 1 input file, but {len(train_path)} were found")
+                raise Exception(f"To use MPI with tree_learner=parallel you need to provide only 1 input file, but {len(train_file_paths)} were found")
         elif args.tree_learner == "serial":
-            if len(train_path) == 1:
-                train_data = train_path[0]
+            if len(train_file_paths) == 1:
+                train_data = train_file_paths[0]
             else:
-                raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(train_path)} were found")
+                raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(train_file_paths)} were found")
         else:
             NotImplementedError(f"tree_learner mode {args.tree_learner} does not exist or is not implemented.")
 
@@ -147,10 +187,10 @@ def assign_train_data(args, mpi_config):
             args.tree_learner = "serial"
 
         # check input data
-        if len(train_path) == 1:
-            train_data = train_path[0]
+        if len(train_file_paths) == 1:
+            train_data = train_file_paths[0]
         else:
-            raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(train_path)} were found")
+            raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(train_file_paths)} were found")
     return train_data
 
 
