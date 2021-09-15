@@ -7,18 +7,24 @@ import platform
 
 from common.metrics import MetricsLogger
 
+@patch('mlflow.end_run')
 @patch('mlflow.start_run')
-def test_unique_mlflow_initialization(mlflow_start_run_mock):
+def test_unique_mlflow_initialization(mlflow_start_run_mock, mlflow_end_run_mock):
     """ Tests MetricsLogger() unique initialization of mlflow"""
     metrics_logger = MetricsLogger()
     metrics_logger_2 = MetricsLogger()
+    metrics_logger.close()
+    metrics_logger_2.close()
+
     mlflow_start_run_mock.assert_called_once()
+    mlflow_end_run_mock.assert_called_once()
 
 
 @patch('mlflow.log_metric')
 def test_metrics_logger_log_metric(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_metric() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     metrics_logger.log_metric("foo", "bar", step=16)
     mlflow_log_metric_mock.assert_called_with(
@@ -26,10 +32,12 @@ def test_metrics_logger_log_metric(mlflow_log_metric_mock):
     )
 
 
+
 @patch('mlflow.log_metric')
-def test_metrics_logger_log_metric(mlflow_log_metric_mock):
+def test_metrics_logger_log_metric_with_prefix(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_metric() """
     metrics_logger = MetricsLogger(metrics_prefix="foo/")
+    metrics_logger.close()
 
     metrics_logger.log_metric("foo", "bar", step=16)
     mlflow_log_metric_mock.assert_called_with(
@@ -38,9 +46,31 @@ def test_metrics_logger_log_metric(mlflow_log_metric_mock):
 
 
 @patch('mlflow.log_metric')
+def test_metrics_logger_log_metric_with_prefix_2sessions(mlflow_log_metric_mock):
+    """ Tests MetricsLogger().log_metric() """
+    metrics_logger = MetricsLogger(metrics_prefix="foo/")
+    metrics_logger_2 = MetricsLogger()
+
+    metrics_logger.log_metric("foo", "bar", step=16)
+    mlflow_log_metric_mock.assert_called_with(
+        "foo/foo", "bar", step=16
+    )
+
+    metrics_logger_2.log_metric("foo2", "bar2", step=12)
+    mlflow_log_metric_mock.assert_called_with(
+        "foo/foo2", "bar2", step=12
+    )
+
+    metrics_logger.close()
+    metrics_logger_2.close()
+
+
+
+@patch('mlflow.log_metric')
 def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_metric() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     metric_key = "x" * 250
     assert len(metric_key), 250
@@ -60,6 +90,7 @@ def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
 def test_metrics_logger_set_properties(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     metrics_logger.set_properties(
         key1 = "foo",
@@ -74,6 +105,7 @@ def test_metrics_logger_set_properties(mlflow_set_tags_mock):
 def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     platform_properties = {
         "machine":platform.machine(),
@@ -92,6 +124,7 @@ def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
 def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties_from_json() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     metrics_logger.set_properties_from_json(
         "{ \"key1\" : \"foo\", \"key2\" : 0.45 }"
@@ -120,6 +153,7 @@ def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
 def test_metrics_logger_log_parameters(mlflow_log_params_mock):
     """ Tests MetricsLogger().log_parameters() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     metrics_logger.log_parameters(
         key1 = "foo",
@@ -134,6 +168,7 @@ def test_metrics_logger_log_parameters(mlflow_log_params_mock):
 def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_time_block() """
     metrics_logger = MetricsLogger()
+    metrics_logger.close()
 
     with metrics_logger.log_time_block("foo_metric"):
         time.sleep(0.01)
