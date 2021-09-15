@@ -1,8 +1,11 @@
 # @package _group_
 manifest:
-  - name: "generate_data"
+  - name: "generate_synthetic_data"
     version: null
     yaml: "generate_data/generate_spec.yaml"
+  - name: "partition_data"
+    version: null
+    yaml: "partition_data/partition_spec.yaml"
   - name: "lightgbm_python_train"
     version: null
     yaml: "lightgbm_python/train_spec.yaml"
