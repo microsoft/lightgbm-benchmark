@@ -1,5 +1,7 @@
 """
 Partitions input data (text/lines) into chunks for parallel processing.
+
+NOTE: current script assumes all records are independent.
 """
 import os
 import sys
