@@ -32,7 +32,7 @@ class MetricsLogger():
 
     def __new__(cls, session_name=None, metrics_prefix=None):
         """ Create a new instance of the Singleton if necessary """
-        if cls._instance is None:
+        if not cls._initialized:
             # if this is the first time we're initializing
             cls._instance = super(MetricsLogger, cls).__new__(cls)
             cls._metrics_prefix = metrics_prefix
@@ -44,18 +44,24 @@ class MetricsLogger():
                 cls._session_name = session_name
             cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}', metrics_prefix={cls._metrics_prefix}]")
             mlflow.start_run()
+            cls._initialized = True
         else:
-            # if this is not the first time
-            if cls._metrics_prefix != metrics_prefix:
-                cls._logger.warning(f"New creation of MetricsLogger() with a new prefix {cls._metrics_prefix} != {metrics_prefix}")
-            cls._metrics_prefix = metrics_prefix
+            # if this is not the first time, and things are already initialized
+            if not cls._metrics_prefix:
+                cls._logger.warning(f"New creation of MetricsLogger() with a new prefix {metrics_prefix}")
+                cls._metrics_prefix = metrics_prefix
             pass
 
         return cls._instance
 
-    def close(self):
-        self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
-        mlflow.end_run()
+    @classmethod
+    def close(cls):
+        if cls._initialized:
+            cls._logger.info(f"Finalizing MLFLOW [session='{cls._session_name}']")
+            mlflow.end_run()
+            cls._initialized = False
+        else:
+            cls._logger.warning(f"Call to finalize MLFLOW [session='{cls._session_name}'] that was never initialized.")
 
     def log_metric(self, key, value, step=None):
         if self._metrics_prefix:
