@@ -17,7 +17,7 @@ def input_file_path(path):
         logging.getLogger(__name__).info(f"Found INPUT file {path}")
         return path
     if os.path.isdir(path):
-        all_files = os.listdir(path)
+        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
         if not all_files:
             raise Exception(f"Could not find any file in specified input directory {path}")
         if len(all_files) > 1:
