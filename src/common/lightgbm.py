@@ -28,9 +28,6 @@ class LightGBMCallbackHandler():
 
         # loop on all the evaluation results tuples
         for data_name, eval_name, result, _ in env.evaluation_result_list:
-            metric_key = f"{data_name}.{eval_name}"
-            if self.metrics_prefix:
-                metric_key = f"{self.metrics_prefix}.{metric_key}"
             # log each as a distinct metric
             self.metrics_logger.log_metric(
                 key=f"{data_name}.{eval_name}",
