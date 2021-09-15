@@ -27,23 +27,28 @@ class MetricsLogger():
     _initialized = False
     _instance = None
     _session_name = None
+    _metrics_prefix = None
     _logger = logging.getLogger(__name__)
 
-    def __new__(cls, session_name=None):
+    def __new__(cls, session_name=None, metrics_prefix=None):
         """ Create a new instance of the Singleton if necessary """
         if cls._instance is None:
             # if this is the first time we're initializing
             cls._instance = super(MetricsLogger, cls).__new__(cls)
+            cls._metrics_prefix = metrics_prefix
             if not cls._session_name:
                 # if no previously recorded session name
                 cls._session_name = session_name
             elif session_name:
                 # if new session name specified, overwrite
                 cls._session_name = session_name
-            cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}']")
+            cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}', metrics_prefix={cls._metrics_prefix}]")
             mlflow.start_run()
         else:
             # if this is not the first time
+            if cls._metrics_prefix != metrics_prefix:
+                cls._logger.warning(f"New creation of MetricsLogger() with a new prefix {cls._metrics_prefix} != {metrics_prefix}")
+            cls._metrics_prefix = metrics_prefix
             pass
 
         return cls._instance
@@ -53,6 +58,9 @@ class MetricsLogger():
         mlflow.end_run()
 
     def log_metric(self, key, value, step=None):
+        if self._metrics_prefix:
+            key = self._metrics_prefix + key
+
         self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
