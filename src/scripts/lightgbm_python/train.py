@@ -168,7 +168,7 @@ def assign_train_data(args, mpi_config):
                 train_data = train_file_paths[mpi_config.world_rank]
             else:
                 raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
-        elif args.tree_learner == "parallel":
+        elif args.tree_learner == "feature":
             if len(train_file_paths) == 1:
                 train_data = train_file_paths[0]
             else:
