@@ -136,15 +136,21 @@ class LightGBMDistributed(AMLPipelineHelper):
             )
             self.apply_smart_runsettings(generate_data_step)
             
-            partition_data_step = partition_data_module(
-                input_data=generate_data_step.outputs.output_train,
-                mode="roundrobin",
-                number=config.lightgbm_distributed.nodes
-            )
-            self.apply_smart_runsettings(partition_data_step)
+            if config.lightgbm_distributed.tree_learner == "data" or config.lightgbm_distributed.tree_learner == "voting":
+                # if using data parallel, train data has to be partitioned first
+                partition_data_step = partition_data_module(
+                    input_data=generate_data_step.outputs.output_train,
+                    mode="roundrobin",
+                    number=config.lightgbm_distributed.nodes
+                )
+                self.apply_smart_runsettings(partition_data_step)
+                train_data = partition_data_step.outputs.output_data
+            else:
+                # for other modes, train data has to be one file
+                train_data = generate_data_step.outputs.output_train
 
             lightgbm_train_step = lightgbm_train_module(
-                train = partition_data_step.outputs.output_data,
+                train = train_data,
                 test = generate_data_step.outputs.output_test,
                 header = False,
                 label_column = "0",
