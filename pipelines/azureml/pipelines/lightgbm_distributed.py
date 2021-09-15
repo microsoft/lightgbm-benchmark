@@ -1,5 +1,5 @@
 """
-Runs an e2e training of LightGBM, then runs inferencing with 3 different versions.
+Runs LightGBM using distributed (mpi) training.
 
 to execute:
 > python pipelines/lightgbm_distributed.py --config-dir ./conf --config-name experiments/benchmark-distributed run.submit=True
