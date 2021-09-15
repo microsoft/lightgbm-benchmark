@@ -54,7 +54,7 @@ Note: Running the synthetic data generation script with these parameter values r
     python src/scripts/lightgbm_python/train.py \
         --train ./data/synthetic/train/ \
         --test ./data/synthetic/test/ \
-        --export_model ./data/models/synthetic-1200/ \
+        --export_model ./data/models/synthetic-100trees-4000cols/ \
         --objective regression \
         --boosting_type gbdt \
         --tree_learner serial \
@@ -73,7 +73,7 @@ Note: Running the synthetic data generation script with these parameter values r
     python src/scripts/lightgbm_python/train.py `
         --train ./data/synthetic/train/ `
         --test ./data/synthetic/test/ `
-        --export_model ./data/models/synthetic-1200/ `
+        --export_model ./data/models/synthetic-100trees-4000cols/ `
         --objective regression `
         --boosting_type gbdt `
         --tree_learner serial `
@@ -93,7 +93,7 @@ Note: Running the synthetic data generation script with these parameter values r
     ```bash
     python src/scripts/lightgbm_python/score.py \
         --data ./data/synthetic/inference/ \
-        --model ./data/models/synthetic-1200/ \
+        --model ./data/models/synthetic-100trees-4000cols/ \
         --output ./data/outputs/predictions/
     ```
 
@@ -102,7 +102,7 @@ Note: Running the synthetic data generation script with these parameter values r
     ``` powershell
     python src/scripts/lightgbm_python/score.py `
         --data ./data/synthetic/inference/ `
-        --model ./data/models/synthetic-1200/ `
+        --model ./data/models/synthetic-100trees-4000cols/ `
         --output ./data/outputs/predictions/
     ```
 
@@ -116,7 +116,7 @@ If you have a local installation of lightgbm cli, run the `lightgbm_cli` script 
     python src/scripts/lightgbm_cli/score.py \
         --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe \
         --data ./data/synthetic/inference/ \
-        --model ./data/models/synthetic-1200/ \
+        --model ./data/models/synthetic-100trees-4000cols/ \
         --output ./data/outputs/predictions/
     ```
 
@@ -126,6 +126,6 @@ If you have a local installation of lightgbm cli, run the `lightgbm_cli` script 
     python src/scripts/lightgbm_cli/score.py `
         --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe `
         --data ./data/synthetic/inference/ `
-        --model ./data/models/synthetic-1200/ `
+        --model ./data/models/synthetic-100trees-4000cols/ `
         --output ./data/outputs/predictions/
     ```
