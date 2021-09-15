@@ -27,6 +27,17 @@ def test_metrics_logger_log_metric(mlflow_log_metric_mock):
 
 
 @patch('mlflow.log_metric')
+def test_metrics_logger_log_metric(mlflow_log_metric_mock):
+    """ Tests MetricsLogger().log_metric() """
+    metrics_logger = MetricsLogger(metrics_prefix="foo/")
+
+    metrics_logger.log_metric("foo", "bar", step=16)
+    mlflow_log_metric_mock.assert_called_with(
+        "foo/foo", "bar", step=16
+    )
+
+
+@patch('mlflow.log_metric')
 def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_metric() """
     metrics_logger = MetricsLogger()

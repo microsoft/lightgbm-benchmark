@@ -35,18 +35,20 @@ class MetricsLogger():
         if cls._instance is None:
             # if this is the first time we're initializing
             cls._instance = super(MetricsLogger, cls).__new__(cls)
+            cls._metrics_prefix = metrics_prefix
             if not cls._session_name:
                 # if no previously recorded session name
                 cls._session_name = session_name
-                cls._metrics_prefix = metrics_prefix
             elif session_name:
                 # if new session name specified, overwrite
                 cls._session_name = session_name
-                cls._metrics_prefix = metrics_prefix
             cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}', metrics_prefix={cls._metrics_prefix}]")
             mlflow.start_run()
         else:
             # if this is not the first time
+            if cls._metrics_prefix != metrics_prefix:
+                cls._logger.warning(f"New creation of MetricsLogger() with a new prefix {cls._metrics_prefix} != {metrics_prefix}")
+            cls._metrics_prefix = metrics_prefix
             pass
 
         return cls._instance
