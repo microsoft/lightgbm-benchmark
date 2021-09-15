@@ -17,15 +17,13 @@ def input_file_path(path):
         logging.getLogger(__name__).info(f"Found INPUT file {path}")
         return path
     if os.path.isdir(path):
-        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
+        all_files = os.listdir(path)
         if not all_files:
             raise Exception(f"Could not find any file in specified input directory {path}")
         if len(all_files) > 1:
-            logging.getLogger(__name__).info(f"Found INPUT directory {path} with multiple files ({len(all_files)})")
-            return all_files
-        else:
-            logging.getLogger(__name__).info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
-            return os.path.join(path, all_files[0])
+            raise Exception(f"Found multiple files in input file path {path}, use input_directory_path type instead.")
+        logging.getLogger(__name__).info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
+        return os.path.join(path, all_files[0])
     
     logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
     return path
