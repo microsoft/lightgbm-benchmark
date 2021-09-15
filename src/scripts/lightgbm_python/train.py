@@ -11,7 +11,7 @@ import logging
 from distutils.util import strtobool
 import lightgbm
 from mpi4py import MPI
-from collection import namedtuple
+from collections import namedtuple
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
