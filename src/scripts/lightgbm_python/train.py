@@ -98,13 +98,22 @@ def detect_mpi_config():
     # check if we're running multi or single node
     mpi_config_tuple = namedtuple("mpi_config", ['world_size', 'world_rank', 'mpi_available', 'main_node'])
 
-    comm = MPI.COMM_WORLD
-    mpi_config = mpi_config_tuple(
-        comm.Get_size(), # world_size
-        comm.Get_rank(), # world_rank
-        (comm.Get_size() > 1), # mpi_available
-        (comm.Get_rank() == 0), # main_node
-    )
+    try:
+        comm = MPI.COMM_WORLD
+        mpi_config = mpi_config_tuple(
+            comm.Get_size(), # world_size
+            comm.Get_rank(), # world_rank
+            (comm.Get_size() > 1), # mpi_available
+            (comm.Get_rank() == 0), # main_node
+        )
+    except:
+        logging.getLogger().critical("MPI initialization failed, switching to single node.")
+        mpi_config = mpi_config_tuple(
+            1, # world_size
+            0, # world_rank
+            False, # mpi_available
+            True, # main_node
+        )
 
     return mpi_config
 
@@ -118,13 +127,22 @@ def load_lgbm_params_from_cli(args, mpi_config):
     Returns:
         lgbm_params (dict)
     """
-    lgbm_params = vars(args)
+    # copy all parameters from argparse
+    cli_params = dict(vars(args))
+
+    # removing arguments that are purely CLI
+    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train']:
+        del cli_params[key]
+
+    # doing some fixes and hardcoded values
+    lgbm_params = cli_params
     lgbm_params['feature_pre_filter'] = False
     lgbm_params['verbose'] = 2
     lgbm_params['header'] = bool(args.header) # strtobool returns 0 or 1, lightgbm needs actual bool
+    lgbm_params['is_provide_training_metric'] = True
 
+    # add mpi parameters if relevant
     if mpi_config.mpi_available:
-        # add mpi parameters
         lgbm_params['num_machines'] = mpi_config.world_size
         lgbm_params['machines'] = ":"
 
