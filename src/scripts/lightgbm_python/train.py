@@ -107,7 +107,6 @@ def detect_mpi_config():
             (comm.Get_size() > 1), # mpi_available
             (comm.Get_rank() == 0), # main_node
         )
-        foo
         logging.getLogger().info(f"MPI detection results: {mpi_config}")
     except:
         mpi_config = mpi_config_tuple(
