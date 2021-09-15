@@ -163,6 +163,7 @@ def assign_train_data(args, mpi_config):
     train_file_paths = get_train_files(args.train)
 
     if mpi_config.mpi_available:    
+        # depending on mode, we'll require different number of training files
         if args.tree_learner == "data" or args.tree_learner == "voting":
             if len(train_file_paths) == mpi_config.world_size:
                 train_data = train_file_paths[mpi_config.world_rank]
@@ -182,11 +183,11 @@ def assign_train_data(args, mpi_config):
             NotImplementedError(f"tree_learner mode {args.tree_learner} does not exist or is not implemented.")
 
     else:
+        # if not using mpi, let's just use serial mode with one unique input file
         if args.tree_learner != "serial":
             logging.getLogger().warning(f"Using tree_learner={args.tree_learner} on single node does not make sense, switching back to tree_learner=serial")
             args.tree_learner = "serial"
 
-        # check input data
         if len(train_file_paths) == 1:
             train_data = train_file_paths[0]
         else:
