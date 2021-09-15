@@ -34,7 +34,7 @@ RUN mkdir LightGBM && \
 
 # Download and apply a particular patch
 RUN cd LightGBM/LightGBM && \
-    wget https://raw.githubusercontent.com/microsoft/lightgbm-benchmark/jfomhover/sdk15dev/pipelines/azureml_sdk15/components/lightgbm_python_custom/lightgbm_custom.python.patch && \
+    wget https://raw.githubusercontent.com/microsoft/lightgbm-benchmark/32cbb007b61f5bed89af1423c7da250607726a35/pipelines/azureml_sdk15/components/lightgbm_python_custom/lightgbm_custom.python.patch && \
     git apply --whitespace=fix ./lightgbm_custom.python.patch
 
 # Build lightgbm with custom patch applied
