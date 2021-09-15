@@ -213,11 +213,11 @@ def run(args, unknown_args=[]):
     # below: initialize reporting of metrics with a custom session name
     metrics_logger = MetricsLogger(
         "lightgbm_python.train",
-        #metrics_prefix=f"node_{mpi_config.world_rank}" if mpi_config.mpi_available else None
+        metrics_prefix=f"node_{mpi_config.world_rank}/" if mpi_config.mpi_available else None
     )
     callbacks_handler = LightGBMCallbackHandler(
         metrics_logger = metrics_logger,
-        metrics_prefix = f"node_{mpi_config.world_rank}" if mpi_config.mpi_available else None
+        metrics_prefix = f"node_{mpi_config.world_rank}/" if mpi_config.mpi_available else None
     )
 
     # make sure the output argument exists
