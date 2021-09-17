@@ -68,6 +68,7 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--learning_rate", required=True, type=float)
     group_lgbm.add_argument("--max_bin", required=True, type=int)
     group_lgbm.add_argument("--feature_fraction", required=True, type=float)
+    group_lgbm.add_argument("--device_type", required=True, type=str)
 
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(

@@ -34,7 +34,8 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
         "--min_data_in_leaf", "1",
         "--learning_rate", "0.3",
         "--max_bin", "16",
-        "--feature_fraction", "0.15"
+        "--feature_fraction", "0.15",
+        "--device_type", "cpu"
     ]
 
     # replaces sys.argv with test arguments and run main
