@@ -4,7 +4,7 @@ ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
 # Create conda environment
 RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
-    python=3.7 pip=20.2.4
+    python=3.8 pip=20.2.4
 
 # Prepend path to AzureML conda environment
 ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
