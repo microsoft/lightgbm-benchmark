@@ -54,4 +54,4 @@ lightgbm_training:
   device_type: "cpu"
   nodes: 1
   processes: 1
-  #override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi.dockerfile"
+  #override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_pip.dockerfile"
