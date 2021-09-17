@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_distributed.py --config-dir ./conf --config-name experiments/benchmark-distributed-gpu run.submit=True
+# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm-training-gpu run.submit=True
 
 defaults:
   - aml: sample
@@ -8,7 +8,7 @@ defaults:
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
-  experiment_name: "lightgbmbenchmark-distributed" # IMPORTANT
+  experiment_name: "lightgbmbenchmark-training" # IMPORTANT
   regenerate_outputs: false
   continue_on_failure: false
   verbose: false
@@ -26,7 +26,7 @@ module_loader: # module loading params
 
 ### CUSTOM PARAMETERS ###
 
-lightgbm_distributed:
+lightgbm_training:
   benchmark_name: "benchmark-dev"
 
   # DATA
@@ -49,8 +49,9 @@ lightgbm_distributed:
   max_bin: 255
   feature_fraction: 1.0
 
-  # DISTRIBUTED
-  target: "gpu-nv24-cluster"
+  # COMPUTE PARAMS
+  #target: null
   device_type: "gpu"
   nodes: 1
   processes: 1
+  override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_gpu.dockerfile"

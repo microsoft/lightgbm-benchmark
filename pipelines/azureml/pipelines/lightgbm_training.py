@@ -2,7 +2,7 @@
 Runs LightGBM using distributed (mpi) training.
 
 to execute:
-> python pipelines/lightgbm_distributed.py --config-dir ./conf --config-name experiments/benchmark-distributed run.submit=True
+> python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm-training run.submit=True
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
@@ -14,6 +14,7 @@ from omegaconf import MISSING
 from typing import Optional
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
+from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
 LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -22,7 +23,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
-class LightGBMDistributed(AMLPipelineHelper):
+class LightGBMTraining(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
 
     This class inherits from AMLPipelineHelper which provides
@@ -36,7 +37,7 @@ class LightGBMDistributed(AMLPipelineHelper):
             dataclass: class for configuring this runnable pipeline.
         """
         @dataclass
-        class lightgbm_distributed: # pylint: disable=invalid-name
+        class lightgbm_training: # pylint: disable=invalid-name
             """ Config object constructed as a dataclass.
 
             NOTE: the name of this class will be used as namespace in your config yaml file.
@@ -70,10 +71,11 @@ class LightGBMDistributed(AMLPipelineHelper):
             nodes: int = 1
             processes: int = 1
             target: Optional[str] = None
+            override_docker: Optional[str] = None
 
         # return the dataclass itself
         # for helper class to construct config file
-        return lightgbm_distributed
+        return lightgbm_training
 
 
     def build(self, config):
@@ -101,10 +103,10 @@ class LightGBMDistributed(AMLPipelineHelper):
         lightgbm_train_module = self.module_load("lightgbm_python_train")
 
         benchmark_custom_properties = json.dumps({
-            'benchmark_name' : config.lightgbm_distributed.benchmark_name
+            'benchmark_name' : config.lightgbm_training.benchmark_name
         })
-        pipeline_name = f"lightgbm_distributed_{config.lightgbm_distributed.learning_task}"
-        pipeline_description = f"LightGBM {config.lightgbm_distributed.learning_task} distributed training (mpi) on synthetic data"
+        pipeline_name = f"lightgbm_training_{config.lightgbm_training.learning_task}"
+        pipeline_description = f"LightGBM {config.lightgbm_training.learning_task} distributed training (mpi) on synthetic data"
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name=pipeline_name, # pythonic name
@@ -127,7 +129,7 @@ class LightGBMDistributed(AMLPipelineHelper):
                     for instance to be consumed by other graphs
             """
             generate_data_step = generate_data_module(
-                learning_task = config.lightgbm_distributed.learning_task,
+                learning_task = config.lightgbm_training.learning_task,
                 train_samples = train_samples,
                 test_samples = test_samples,
                 inferencing_samples = inferencing_samples,
@@ -139,15 +141,19 @@ class LightGBMDistributed(AMLPipelineHelper):
             )
             self.apply_smart_runsettings(generate_data_step)
             
-            if config.lightgbm_distributed.tree_learner == "data" or config.lightgbm_distributed.tree_learner == "voting":
+            if config.lightgbm_training.tree_learner == "data" or config.lightgbm_training.tree_learner == "voting":
                 # if using data parallel, train data has to be partitioned first
-                partition_data_step = partition_data_module(
-                    input_data=generate_data_step.outputs.output_train,
-                    mode="roundrobin",
-                    number=(config.lightgbm_distributed.nodes * config.lightgbm_distributed.processes)
-                )
-                self.apply_smart_runsettings(partition_data_step)
-                train_data = partition_data_step.outputs.output_data
+                if (config.lightgbm_training.nodes * config.lightgbm_training.processes) > 1:
+                    partition_data_step = partition_data_module(
+                        input_data=generate_data_step.outputs.output_train,
+                        mode="roundrobin",
+                        number=(config.lightgbm_training.nodes * config.lightgbm_training.processes)
+                    )
+                    self.apply_smart_runsettings(partition_data_step)
+                    train_data = partition_data_step.outputs.output_data
+                else:
+                    # for other modes, train data has to be one file
+                    train_data = generate_data_step.outputs.output_train
             else:
                 # for other modes, train data has to be one file
                 train_data = generate_data_step.outputs.output_train
@@ -158,27 +164,30 @@ class LightGBMDistributed(AMLPipelineHelper):
                 header = False,
                 label_column = "0",
                 #group_column = None,
-                objective = config.lightgbm_distributed.objective,
-                metric = config.lightgbm_distributed.metric,
-                boosting = config.lightgbm_distributed.boosting,
-                tree_learner = config.lightgbm_distributed.tree_learner,
+                objective = config.lightgbm_training.objective,
+                metric = config.lightgbm_training.metric,
+                boosting = config.lightgbm_training.boosting,
+                tree_learner = config.lightgbm_training.tree_learner,
                 num_iterations = num_iterations,
                 num_leaves = num_leaves,
-                min_data_in_leaf = config.lightgbm_distributed.min_data_in_leaf,
-                learning_rate = config.lightgbm_distributed.learning_rate,
-                max_bin = config.lightgbm_distributed.max_bin,
-                feature_fraction = config.lightgbm_distributed.feature_fraction,
+                min_data_in_leaf = config.lightgbm_training.min_data_in_leaf,
+                learning_rate = config.lightgbm_training.learning_rate,
+                max_bin = config.lightgbm_training.max_bin,
+                feature_fraction = config.lightgbm_training.feature_fraction,
                 verbose = False,
                 custom_properties = benchmark_custom_properties,
-                device_type = config.lightgbm_distributed.device_type
+                device_type = config.lightgbm_training.device_type
             )
             self.apply_smart_runsettings(
                 lightgbm_train_step,
-                node_count = config.lightgbm_distributed.nodes,
-                process_count_per_node = config.lightgbm_distributed.processes,
-                gpu = (config.lightgbm_distributed.device_type == 'gpu' or config.lightgbm_distributed.device_type == 'cuda'),
-                target = config.lightgbm_distributed.target
+                node_count = config.lightgbm_training.nodes,
+                process_count_per_node = config.lightgbm_training.processes,
+                gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
+                target = config.lightgbm_training.target
             )
+            if config.lightgbm_training.override_docker:
+                custom_docker = Docker(file=config.lightgbm_training.override_docker)
+                lightgbm_train_step.runsettings.environment.configure(docker=custom_docker, os="Linux")
 
             # return {key: output}'
             return {}
@@ -202,13 +211,13 @@ class LightGBMDistributed(AMLPipelineHelper):
         """
         # when all inputs are obtained, we call the pipeline function
         experiment_pipeline = pipeline_function(
-            train_samples=config.lightgbm_distributed.train_samples,
-            test_samples=config.lightgbm_distributed.test_samples,
-            inferencing_samples=config.lightgbm_distributed.inferencing_samples,
-            n_features=config.lightgbm_distributed.n_features,
-            n_informative=config.lightgbm_distributed.n_informative,
-            num_iterations=config.lightgbm_distributed.num_iterations,
-            num_leaves=config.lightgbm_distributed.num_leaves
+            train_samples=config.lightgbm_training.train_samples,
+            test_samples=config.lightgbm_training.test_samples,
+            inferencing_samples=config.lightgbm_training.inferencing_samples,
+            n_features=config.lightgbm_training.n_features,
+            n_informative=config.lightgbm_training.n_informative,
+            num_iterations=config.lightgbm_training.num_iterations,
+            num_leaves=config.lightgbm_training.num_leaves
         )
 
         # and we return that function so that helper can run it.
@@ -218,4 +227,4 @@ class LightGBMDistributed(AMLPipelineHelper):
 # NOTE: main block is necessary only if script is intended to be run from command line
 if __name__ == "__main__":
     # calling the helper .main() function
-    LightGBMDistributed.main()
+    LightGBMTraining.main()
