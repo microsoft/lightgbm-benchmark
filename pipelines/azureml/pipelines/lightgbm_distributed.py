@@ -69,6 +69,8 @@ class LightGBMDistributed(AMLPipelineHelper):
             device_type: str = "cpu"
             gpu: bool = False
             nodes: int = 1
+            processes: int = 1
+            target: Optional[str] = None
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -143,7 +145,7 @@ class LightGBMDistributed(AMLPipelineHelper):
                 partition_data_step = partition_data_module(
                     input_data=generate_data_step.outputs.output_train,
                     mode="roundrobin",
-                    number=config.lightgbm_distributed.nodes
+                    number=(config.lightgbm_distributed.nodes * config.lightgbm_distributed.processes)
                 )
                 self.apply_smart_runsettings(partition_data_step)
                 train_data = partition_data_step.outputs.output_data
@@ -174,7 +176,9 @@ class LightGBMDistributed(AMLPipelineHelper):
             self.apply_smart_runsettings(
                 lightgbm_train_step,
                 node_count = config.lightgbm_distributed.nodes,
-                gpu = config.lightgbm_distributed.gpu
+                process_count_per_node = config.lightgbm_distributed.processes,
+                gpu = config.lightgbm_distributed.gpu,
+                target = config.lightgbm_distributed.target
             )
 
             # return {key: output}'

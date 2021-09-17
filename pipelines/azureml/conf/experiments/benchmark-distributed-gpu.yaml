@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_distributed.py --config-dir ./conf --config-name experiments/benchmark-distributed run.submit=True
+# > python pipelines/lightgbm_distributed.py --config-dir ./conf --config-name experiments/benchmark-distributed-gpu run.submit=True
 
 defaults:
   - aml: sample
@@ -50,8 +50,8 @@ lightgbm_distributed:
   feature_fraction: 1.0
 
   # DISTRIBUTED
-  #target: null
-  device_type: "cpu"
-  gpu: False
-  nodes: 2
-  processes: 1
+  target: "gpu-nv24-cluster"
+  device_type: "gpu"
+  gpu: True
+  nodes: 1
+  processes: 4
