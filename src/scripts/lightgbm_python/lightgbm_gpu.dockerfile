@@ -32,19 +32,17 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' 
 
 # Clone lightgbm official repository (master branch)
-RUN mkdir LightGBM && \
-    cd LightGBM && \
-    git clone --recursive https://github.com/microsoft/LightGBM.git
+RUN git clone --recursive https://github.com/microsoft/LightGBM
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
-RUN cd LightGBM && \
+RUN cd /LightGBM && \
     mkdir build && \
     cd build && \
-    cmake -DUSE_GPU=1 .. && \
+    cmake -DUSE_GPU=1 -DUSE_MPI=ON .. && \
     make -j$(nproc)
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#install-python-interface-optional
-RUN cd LightGBM/python-package/ && \
+RUN cd /LightGBM/python-package/ && \
     python setup.py install --precompile
 
 # This is needed for mpi to locate libpython
