@@ -52,6 +52,5 @@ lightgbm_distributed:
   # DISTRIBUTED
   #target: null
   device_type: "cpu"
-  gpu: False
   nodes: 2
   processes: 1

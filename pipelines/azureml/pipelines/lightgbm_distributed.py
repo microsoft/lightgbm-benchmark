@@ -67,7 +67,6 @@ class LightGBMDistributed(AMLPipelineHelper):
 
             # COMPUTE
             device_type: str = "cpu"
-            gpu: bool = False
             nodes: int = 1
             processes: int = 1
             target: Optional[str] = None
@@ -177,7 +176,7 @@ class LightGBMDistributed(AMLPipelineHelper):
                 lightgbm_train_step,
                 node_count = config.lightgbm_distributed.nodes,
                 process_count_per_node = config.lightgbm_distributed.processes,
-                gpu = config.lightgbm_distributed.gpu,
+                gpu = (config.lightgbm_distributed.device_type == 'gpu' or config.lightgbm_distributed.device_type == 'cuda'),
                 target = config.lightgbm_distributed.target
             )
 

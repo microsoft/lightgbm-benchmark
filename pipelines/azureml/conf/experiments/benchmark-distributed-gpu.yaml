@@ -52,6 +52,5 @@ lightgbm_distributed:
   # DISTRIBUTED
   target: "gpu-nv24-cluster"
   device_type: "gpu"
-  gpu: True
   nodes: 1
   processes: 4
