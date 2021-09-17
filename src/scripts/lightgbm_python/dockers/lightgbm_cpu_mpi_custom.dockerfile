@@ -28,17 +28,15 @@ RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' 
 
 # Clone lightgbm official repository (master branch)
-RUN mkdir LightGBM && \
-    cd LightGBM && \
-    git clone --recursive https://github.com/microsoft/LightGBM.git
+RUN git clone --recursive https://github.com/microsoft/LightGBM.git
 
 # Download and apply a particular patch
-RUN cd LightGBM/LightGBM && \
+RUN cd /LightGBM && \
     wget https://raw.githubusercontent.com/microsoft/lightgbm-benchmark/32cbb007b61f5bed89af1423c7da250607726a35/pipelines/azureml_sdk15/components/lightgbm_python_custom/lightgbm_custom.python.patch && \
     git apply --whitespace=fix ./lightgbm_custom.python.patch
 
 # Build lightgbm with custom patch applied
-RUN cd LightGBM/LightGBM/python-package && \
+RUN cd /LightGBM/python-package && \
     python setup.py install --mpi
 
 # This is needed for mpi to locate libpython

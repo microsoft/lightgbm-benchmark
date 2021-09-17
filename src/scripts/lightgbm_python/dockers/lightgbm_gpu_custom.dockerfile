@@ -15,6 +15,20 @@ RUN apt-get install --no-install-recommends nvidia-375 -y && \
     apt-get install --no-install-recommends nvidia-opencl-icd-375 nvidia-opencl-dev opencl-headers -y
 
 RUN apt-get install --no-install-recommends git cmake build-essential libboost-dev libboost-system-dev libboost-filesystem-dev -y
+RUN apt-get install libfmt-dev -y
+
+# Clone lightgbm official repository (master branch)
+#RUN git clone --recursive https://github.com/microsoft/LightGBM
+RUN git clone --recursive https://github.com/shiyu1994/LightGBM && \
+    cd LightGBM && \
+    git checkout cuda-new-refactor-2
+
+# https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
+RUN cd /LightGBM && \
+    mkdir build && \
+    cd build && \
+    cmake -DUSE_GPU=1 -DUSE_MPI=ON .. && \
+    make -j$(nproc)
 
 # Install pip dependencies
 RUN HOROVOD_WITH_TENSORFLOW=1 \
@@ -30,16 +44,6 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' 
-
-# Clone lightgbm official repository (master branch)
-RUN git clone --recursive https://github.com/microsoft/LightGBM
-
-# https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
-RUN cd /LightGBM && \
-    mkdir build && \
-    cd build && \
-    cmake -DUSE_GPU=1 -DUSE_MPI=ON .. && \
-    make -j$(nproc)
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#install-python-interface-optional
 RUN cd /LightGBM/python-package/ && \
