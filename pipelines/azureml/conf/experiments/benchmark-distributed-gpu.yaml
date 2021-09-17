@@ -53,4 +53,4 @@ lightgbm_distributed:
   target: "gpu-nv24-cluster"
   device_type: "gpu"
   nodes: 1
-  processes: 4
+  processes: 1
