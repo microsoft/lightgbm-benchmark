@@ -103,6 +103,14 @@ inputs:
     type: Float
     default: 1.0
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#feature_fraction"
+  device_type:
+    type: Enum
+    default: "cpu"
+    enum:
+      - cpu
+      - gpu
+      - cuda
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#device_type"
 
   # generic benchmark parameters
   verbose:
@@ -126,6 +134,7 @@ launcher:
     --header {inputs.header}
     [--label_column {inputs.label_column}]
     [--group_column {inputs.group_column}]
+    --device_type {inputs.device_type}
     --objective {inputs.objective}
     --metric {inputs.metric}
     --boosting {inputs.boosting}

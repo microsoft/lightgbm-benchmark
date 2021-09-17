@@ -65,8 +65,10 @@ class LightGBMDistributed(AMLPipelineHelper):
             max_bin: int = MISSING
             feature_fraction: float = MISSING
 
-            # DISTRIBUTED
-            nodes: int = MISSING
+            # COMPUTE
+            device_type: str = "cpu"
+            gpu: bool = False
+            nodes: int = 1
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -166,11 +168,13 @@ class LightGBMDistributed(AMLPipelineHelper):
                 max_bin = config.lightgbm_distributed.max_bin,
                 feature_fraction = config.lightgbm_distributed.feature_fraction,
                 verbose = False,
-                custom_properties = benchmark_custom_properties
+                custom_properties = benchmark_custom_properties,
+                device_type = config.lightgbm_distributed.device_type
             )
             self.apply_smart_runsettings(
                 lightgbm_train_step,
-                node_count = config.lightgbm_distributed.nodes
+                node_count = config.lightgbm_distributed.nodes,
+                gpu = config.lightgbm_distributed.gpu
             )
 
             # return {key: output}'
