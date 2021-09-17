@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm-training run.submit=True
+# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training/gpu run.submit=True
 
 defaults:
   - aml: sample
@@ -51,7 +51,7 @@ lightgbm_training:
 
   # COMPUTE PARAMS
   #target: null
-  device_type: "cpu"
+  device_type: "gpu"
   nodes: 1
   processes: 1
-  #override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi.dockerfile"
+  override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_gpu.dockerfile"
