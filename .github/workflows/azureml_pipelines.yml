@@ -60,11 +60,11 @@ jobs:
         aml.auth="azurecli"
       working-directory: pipelines/azureml/
 
-    - name : Validate pipelines [distributed]
+    - name : Validate pipelines [training]
       run: >-
-        python pipelines/lightgbm_distributed.py
+        python pipelines/lightgbm_training.py
         --config-dir ./conf
-        --config-name experiments/benchmark-distributed
+        --config-name experiments/lightgbm_training/cpu
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
