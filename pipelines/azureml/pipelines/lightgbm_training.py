@@ -72,6 +72,7 @@ class LightGBMTraining(AMLPipelineHelper):
             processes: int = 1
             target: Optional[str] = None
             override_docker: Optional[str] = None
+            override_os: Optional[str] = None
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -187,7 +188,10 @@ class LightGBMTraining(AMLPipelineHelper):
             )
             if config.lightgbm_training.override_docker:
                 custom_docker = Docker(file=config.lightgbm_training.override_docker)
-                lightgbm_train_step.runsettings.environment.configure(docker=custom_docker, os="Linux")
+                lightgbm_train_step.runsettings.environment.configure(
+                    docker=custom_docker,
+                    os=config.lightgbm_training.override_os or "Linux"
+                )
 
             # return {key: output}'
             return {}
