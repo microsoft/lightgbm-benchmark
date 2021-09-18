@@ -1,0 +1,77 @@
+$schema: http://azureml/sdk-1-5/SweepComponent.json
+name: lightgbm_sweep_aether
+version: 1.0.0
+display_name: LightGBM Sweep
+type: SweepComponent
+description: A sweep component for training hyper parameters
+is_deterministic: false
+
+#outputs:
+#  metrics:
+#    type: metrics
+#    description: metrics data
+#  saved_model:
+#    type: path
+#    description: path of the saved_model of trial run
+#  training_stats:
+#    type: path
+#    description: writes some stats file of the trial component.
+
+trial: file:./train_spec.yaml
+
+algorithm: random
+
+search_space:
+  num_trees:
+    type: choice
+    values: [50]
+  num_leaves:
+    type: choice
+    values: [30]
+  min_data_in_leaf:
+    type: choice
+    values: [20] # default value from lightgbm docs https://testlightgbm.readthedocs.io/en/latest/Parameters.html#learning-control-parameters
+  learning_rate:
+    type: choice
+    values: [0.1] # default value from lightgbm docs https://testlightgbm.readthedocs.io/en/latest/Parameters.html#learning-control-parameters
+  max_bin:
+    type: choice
+    values: [255] # default value from lightgbm docs https://testlightgbm.readthedocs.io/en/latest/Parameters.html#learning-control-parameters
+  feature_fraction:
+    type: choice
+    values: [1.0] # default value from lightgbm docs https://testlightgbm.readthedocs.io/en/latest/Parameters.html#learning-control-parameters
+
+objective:
+  primary_metric:
+    default: valid_0.rmse
+    enum:
+      # NOTE: we have to declare all the possible metrics names here
+      - valid_0.l1
+      - valid_0.l2
+      - valid_0.rmse
+      - valid_0.quantile
+      - valid_0.mape
+      - valid_0.huber
+      - valid_0.fair
+      - valid_0.poisson
+      - valid_0.gamma
+      - valid_0.gamma_deviance
+      - valid_0.tweedie
+      - valid_0.ndcg
+      - valid_0.map
+      - valid_0.auc
+      - valid_0.average_precision
+      - valid_0.binary_logloss
+      - valid_0.binary_error
+      - valid_0.auc_mu
+      - valid_0.multi_logloss
+      - valid_0.multi_error
+      - valid_0.cross_entropy
+      - valid_0.cross_entropy_lambda
+      - valid_0.kullback_leibler
+  goal: minimize
+
+limits:
+  max_total_trials: 4
+  max_concurrent_trials: 4
+  timeout_minutes: 40
