@@ -38,10 +38,13 @@ lightgbm_training:
   n_informative: 4000
 
   # TRAINING
+  # fixed training parameters
   objective: "regression"
   metric: "rmse"
   boosting: "gbdt"
   tree_learner: "data"
+
+  # "sweepable" training parameters
   num_iterations: "choice(100, 200)"
   num_leaves: "choice(10,20,30)"
   min_data_in_leaf: 20
