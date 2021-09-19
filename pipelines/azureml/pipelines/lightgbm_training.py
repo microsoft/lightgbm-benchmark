@@ -258,8 +258,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 # apply runsettings specific to sweep
                 self.apply_smart_runsettings(
                     lightgbm_train_step,
-                    node_count = config.lightgbm_training.nodes,
-                    process_count_per_node = config.lightgbm_training.processes,
+                    #node_count = config.lightgbm_training.nodes,
+                    #process_count_per_node = config.lightgbm_training.processes,
                     gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
                     target = config.lightgbm_training.target,
                     sweep = True,
