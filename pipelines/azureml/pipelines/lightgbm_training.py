@@ -57,10 +57,14 @@ class LightGBMTraining(AMLPipelineHelper):
             n_informative: int = MISSING
 
             # TRAINING
+            # fixed training parameters
             objective: str = MISSING
             metric: str = MISSING
             boosting: str = MISSING
             tree_learner: str = MISSING
+
+            # sweepable training parameters
+            # NOTE: need to be str so they can be parsed (ex: 'choice(100,200)')
             num_iterations: str = MISSING
             num_leaves: str = MISSING
             min_data_in_leaf: str = MISSING
@@ -77,9 +81,9 @@ class LightGBMTraining(AMLPipelineHelper):
             override_os: Optional[str] = None
 
             # SWEEP
+            # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809
             sweep_algorithm: str = "random"
             sweep_goal: str = "minimize"
-            sweep_early_termination: Optional[str] = None
             sweep_max_total_trials: Optional[int] = None
             sweep_max_concurrent_trials: Optional[int] = None
             sweep_timeout_minutes: Optional[int] = None
@@ -168,16 +172,6 @@ class LightGBMTraining(AMLPipelineHelper):
             # there are no sweep parameters, use regular training
             lightgbm_train_module = self.module_load("lightgbm_python_train")
             training_params = fixed_params
-
-        print("**********************************")
-        print("**********************************")
-        print("**********************************")
-        print(tunable_params)
-        print(fixed_params)
-        print(training_params)
-        print("**********************************")
-        print("**********************************")
-        print("**********************************")
 
         benchmark_custom_properties = json.dumps({
             'benchmark_name' : config.lightgbm_training.benchmark_name
@@ -272,7 +266,6 @@ class LightGBMTraining(AMLPipelineHelper):
                     primary_metric = "valid_0." + config.lightgbm_training.metric,
                     goal = config.lightgbm_training.sweep_goal,
                     algorithm = config.lightgbm_training.sweep_algorithm,
-                    early_termination = config.lightgbm_training.sweep_early_termination,
                     max_total_trials = config.lightgbm_training.sweep_max_total_trials,
                     max_concurrent_trials = config.lightgbm_training.sweep_max_concurrent_trials,
                     timeout_minutes = config.lightgbm_training.sweep_timeout_minutes
