@@ -258,8 +258,6 @@ class LightGBMTraining(AMLPipelineHelper):
                 # apply runsettings specific to sweep
                 self.apply_smart_runsettings(
                     lightgbm_train_step,
-                    #node_count = config.lightgbm_training.nodes,
-                    #process_count_per_node = config.lightgbm_training.processes,
                     gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
                     target = config.lightgbm_training.target,
                     sweep = True,
@@ -269,6 +267,10 @@ class LightGBMTraining(AMLPipelineHelper):
                     max_total_trials = config.lightgbm_training.sweep_max_total_trials,
                     max_concurrent_trials = config.lightgbm_training.sweep_max_concurrent_trials,
                     timeout_minutes = config.lightgbm_training.sweep_timeout_minutes
+                )
+                lightgbm_train_step.runsettings.resource_layout.configure(
+                    node_count=config.lightgbm_training.nodes,
+                    process_count_per_node=config.lightgbm_training.processes
                 )
             else:
                 self.apply_smart_runsettings(
