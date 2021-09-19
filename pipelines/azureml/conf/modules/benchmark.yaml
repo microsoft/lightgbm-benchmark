@@ -9,7 +9,7 @@ manifest:
   - name: "lightgbm_python_train"
     version: null
     yaml: "lightgbm_python/train_spec.yaml"
-  - name: "lightgbm_python_train_Sweep"
+  - name: "lightgbm_python_train_sweep"
     version: null
     yaml: "lightgbm_python/train_sweep_spec.yaml"
   - name: "lightgbm_python_score"

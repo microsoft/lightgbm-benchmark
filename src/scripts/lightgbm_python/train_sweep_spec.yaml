@@ -1,5 +1,5 @@
 $schema: http://azureml/sdk-1-5/SweepComponent.json
-name: lightgbm_sweep_aether
+name: lightgbm_python_train_sweep
 version: 1.0.0
 display_name: LightGBM Sweep
 type: SweepComponent
@@ -22,7 +22,7 @@ trial: file:./train_spec.yaml
 algorithm: random
 
 search_space:
-  num_trees:
+  num_iterations:
     type: choice
     values: [50]
   num_leaves:
