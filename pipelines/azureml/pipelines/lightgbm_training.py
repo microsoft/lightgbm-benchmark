@@ -80,8 +80,9 @@ class LightGBMTraining(AMLPipelineHelper):
             sweep_algorithm: str = "random"
             sweep_goal: str = "minimize"
             sweep_early_termination: Optional[str] = None
-            sweep_max_total_runs: Optional[int] = None
-            sweep_max_concurrent_runs: Optional[int] = None
+            sweep_max_total_trials: Optional[int] = None
+            sweep_max_concurrent_trials: Optional[int] = None
+            sweep_timeout_minutes: Optional[int] = None
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -272,8 +273,9 @@ class LightGBMTraining(AMLPipelineHelper):
                     goal = config.lightgbm_training.sweep_goal,
                     algorithm = config.lightgbm_training.sweep_algorithm,
                     early_termination = config.lightgbm_training.sweep_early_termination,
-                    max_total_runs = config.lightgbm_training.sweep_max_total_runs,
-                    max_concurrent_runs = config.lightgbm_training.sweep_max_concurrent_runs
+                    max_total_trials = config.lightgbm_training.sweep_max_total_trials,
+                    max_concurrent_trials = config.lightgbm_training.sweep_max_concurrent_trials,
+                    timeout_minutes = config.lightgbm_training.sweep_timeout_minutes
                 )
             else:
                 self.apply_smart_runsettings(

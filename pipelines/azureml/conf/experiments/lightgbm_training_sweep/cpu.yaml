@@ -60,5 +60,6 @@ lightgbm_training:
   sweep_algorithm: "random"
   sweep_goal: "minimize"
   sweep_early_termination: False
-  sweep_max_total_runs: null
-  sweep_max_concurrent_runs: null
+  sweep_max_total_trials: 10
+  sweep_max_concurrent_trials: 10
+  sweep_timeout_minutes: 60
