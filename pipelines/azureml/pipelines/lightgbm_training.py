@@ -88,6 +88,12 @@ class LightGBMTraining(AMLPipelineHelper):
             sweep_max_concurrent_trials: Optional[int] = None
             sweep_timeout_minutes: Optional[int] = None
 
+            # OUTPUT REGISTRATION
+            data_register_train_as: Optional[str] = None
+            data_register_test_as: Optional[str] = None
+            data_register_inference_as: Optional[str] = None
+            training_register_model_as: Optional[str] = None
+
         # return the dataclass itself
         # for helper class to construct config file
         return lightgbm_training
@@ -209,6 +215,23 @@ class LightGBMTraining(AMLPipelineHelper):
                 custom_properties = benchmark_custom_properties
             )
             self.apply_smart_runsettings(generate_data_step)
+
+            # optional: save outputs
+            if config.lightgbm_training.data_register_train_as:
+                generate_data_step.outputs.output_train.register_as(
+                    name=config.lightgbm_training.data_register_train_as,
+                    create_new_version=True
+                )                
+            if config.lightgbm_training.data_register_test_as:
+                generate_data_step.outputs.output_test.register_as(
+                    name=config.lightgbm_training.data_register_test_as,
+                    create_new_version=True
+                )                
+            if config.lightgbm_training.data_register_inference_as:
+                generate_data_step.outputs.output_inference.register_as(
+                    name=config.lightgbm_training.data_register_inference_as,
+                    create_new_version=True
+                )                
             
             if config.lightgbm_training.tree_learner == "data" or config.lightgbm_training.tree_learner == "voting":
                 # if using data parallel, train data has to be partitioned first
@@ -278,6 +301,13 @@ class LightGBMTraining(AMLPipelineHelper):
                     gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
                     target = config.lightgbm_training.target
                 )
+
+            # optional: save output model
+            if config.lightgbm_training.training_register_model_as:
+                lightgbm_train_step.outputs.model.register_as(
+                    name=config.lightgbm_training.training_register_model_as,
+                    create_new_version=True
+                )                
 
             if config.lightgbm_training.override_docker:
                 custom_docker = Docker(file=config.lightgbm_training.override_docker)
