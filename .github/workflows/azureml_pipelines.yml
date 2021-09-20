@@ -70,3 +70,14 @@ jobs:
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
         aml.auth="azurecli"
       working-directory: pipelines/azureml/
+
+    - name : Validate pipelines [training+sweep]
+      run: >-
+        python pipelines/lightgbm_training.py
+        --config-dir ./conf
+        --config-name experiments/lightgbm_training_sweep/cpu
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+      working-directory: pipelines/azureml/
