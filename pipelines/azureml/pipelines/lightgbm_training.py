@@ -17,11 +17,13 @@ from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
-LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
 if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
+
+from common.sweep import SweepParameterParser
 
 class LightGBMTraining(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -55,16 +57,20 @@ class LightGBMTraining(AMLPipelineHelper):
             n_informative: int = MISSING
 
             # TRAINING
+            # fixed training parameters
             objective: str = MISSING
             metric: str = MISSING
             boosting: str = MISSING
             tree_learner: str = MISSING
-            num_iterations: int = MISSING
-            num_leaves: int = MISSING
-            min_data_in_leaf: int = MISSING
-            learning_rate: float = MISSING
-            max_bin: int = MISSING
-            feature_fraction: float = MISSING
+
+            # sweepable training parameters
+            # NOTE: need to be str so they can be parsed (ex: 'choice(100,200)')
+            num_iterations: str = MISSING
+            num_leaves: str = MISSING
+            min_data_in_leaf: str = MISSING
+            learning_rate: str = MISSING
+            max_bin: str = MISSING
+            feature_fraction: str = MISSING
 
             # COMPUTE
             device_type: str = "cpu"
@@ -74,9 +80,62 @@ class LightGBMTraining(AMLPipelineHelper):
             override_docker: Optional[str] = None
             override_os: Optional[str] = None
 
+            # SWEEP
+            # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809
+            sweep_algorithm: str = "random"
+            sweep_goal: str = "minimize"
+            sweep_max_total_trials: Optional[int] = None
+            sweep_max_concurrent_trials: Optional[int] = None
+            sweep_timeout_minutes: Optional[int] = None
+
         # return the dataclass itself
         # for helper class to construct config file
         return lightgbm_training
+
+
+    def process_sweep_parameters(self, config):
+        """Parses config and spots sweepable paraneters
+        
+        Args:
+            config (DictConfig): configuration object (see get_config_class())
+
+        Returns:
+            tunable_params (dict)
+        """
+        # the class below automates parsing of sweepable parameters
+        sweep_param_parser = SweepParameterParser(
+            tunable_parameters=[
+                # those are keys and their default values
+                "num_iterations",
+                "num_leaves",
+                "min_data_in_leaf",
+                "learning_rate",
+                "max_bin",
+                "feature_fraction"
+            ],
+            cli_prefix=None, # this is not argparse
+            parameter_sampling=config.lightgbm_training.sweep_algorithm
+        )
+
+        # provide config as a dictionary to the parser
+        sweep_parameters = {
+            "num_iterations": config.lightgbm_training.num_iterations,
+            "num_leaves": config.lightgbm_training.num_leaves,
+            "min_data_in_leaf": config.lightgbm_training.min_data_in_leaf,
+            "learning_rate": config.lightgbm_training.learning_rate,
+            "max_bin": config.lightgbm_training.max_bin,
+            "feature_fraction": config.lightgbm_training.feature_fraction,
+        }
+
+        # parser gonna parse
+        sweep_param_parser.parse_from_dict(sweep_parameters)
+
+        # and return params as we want them
+        tunable_params = sweep_param_parser.get_tunable_params()
+        fixed_params = sweep_param_parser.get_fixed_params()
+
+        # return dictionaries to fed as params into our pipeline
+        return tunable_params, fixed_params
 
 
     def build(self, config):
@@ -94,14 +153,25 @@ class LightGBMTraining(AMLPipelineHelper):
         Returns:
             dsl.pipeline: the function to create your pipeline
         """
-        # load the right module depending on config
+        tunable_params, fixed_params = self.process_sweep_parameters(config)
+        enable_sweep = (len(tunable_params.keys())>0)
 
         # Data modules
         generate_data_module = self.module_load("generate_synthetic_data")
         partition_data_module = self.module_load("partition_data")
 
         # Training modules
-        lightgbm_train_module = self.module_load("lightgbm_python_train")
+        if enable_sweep:
+            # there is at least one sweep parameter, use sweep instead
+            lightgbm_train_module = self.module_load("lightgbm_python_train_sweep")
+            
+            # merge both params to feed into module
+            training_params = fixed_params.copy()
+            training_params.update(tunable_params)
+        else:
+            # there are no sweep parameters, use regular training
+            lightgbm_train_module = self.module_load("lightgbm_python_train")
+            training_params = fixed_params
 
         benchmark_custom_properties = json.dumps({
             'benchmark_name' : config.lightgbm_training.benchmark_name
@@ -117,9 +187,7 @@ class LightGBMTraining(AMLPipelineHelper):
                                                  test_samples=1000,
                                                  inferencing_samples=10000,
                                                  n_features=4000,
-                                                 n_informative=4000,
-                                                 num_iterations=100,
-                                                 num_leaves=31):
+                                                 n_informative=4000):
             """Pipeline function for this graph.
 
             Args:
@@ -169,23 +237,48 @@ class LightGBMTraining(AMLPipelineHelper):
                 metric = config.lightgbm_training.metric,
                 boosting = config.lightgbm_training.boosting,
                 tree_learner = config.lightgbm_training.tree_learner,
-                num_iterations = num_iterations,
-                num_leaves = num_leaves,
-                min_data_in_leaf = config.lightgbm_training.min_data_in_leaf,
-                learning_rate = config.lightgbm_training.learning_rate,
-                max_bin = config.lightgbm_training.max_bin,
-                feature_fraction = config.lightgbm_training.feature_fraction,
+
+                # sweepable params
+                num_iterations = training_params['num_iterations'],
+                num_leaves = training_params['num_leaves'],
+                min_data_in_leaf = training_params['min_data_in_leaf'],
+                learning_rate = training_params['learning_rate'],
+                max_bin = training_params['max_bin'],
+                feature_fraction = training_params['feature_fraction'],
+
+                # generic params
                 verbose = False,
                 custom_properties = benchmark_custom_properties,
+
+                # compute params
                 device_type = config.lightgbm_training.device_type
             )
-            self.apply_smart_runsettings(
-                lightgbm_train_step,
-                node_count = config.lightgbm_training.nodes,
-                process_count_per_node = config.lightgbm_training.processes,
-                gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
-                target = config.lightgbm_training.target
-            )
+
+            if enable_sweep:
+                # apply runsettings specific to sweep
+                self.apply_smart_runsettings(
+                    lightgbm_train_step,
+                    gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
+                    target = config.lightgbm_training.target,
+                    node_count=config.lightgbm_training.nodes,
+                    process_count_per_node=config.lightgbm_training.processes,
+                    sweep = True,
+                    primary_metric = "valid_0." + config.lightgbm_training.metric,
+                    goal = config.lightgbm_training.sweep_goal,
+                    algorithm = config.lightgbm_training.sweep_algorithm,
+                    max_total_trials = config.lightgbm_training.sweep_max_total_trials,
+                    max_concurrent_trials = config.lightgbm_training.sweep_max_concurrent_trials,
+                    timeout_minutes = config.lightgbm_training.sweep_timeout_minutes
+                )
+            else:
+                self.apply_smart_runsettings(
+                    lightgbm_train_step,
+                    node_count = config.lightgbm_training.nodes,
+                    process_count_per_node = config.lightgbm_training.processes,
+                    gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
+                    target = config.lightgbm_training.target
+                )
+
             if config.lightgbm_training.override_docker:
                 custom_docker = Docker(file=config.lightgbm_training.override_docker)
                 lightgbm_train_step.runsettings.environment.configure(
@@ -219,9 +312,7 @@ class LightGBMTraining(AMLPipelineHelper):
             test_samples=config.lightgbm_training.test_samples,
             inferencing_samples=config.lightgbm_training.inferencing_samples,
             n_features=config.lightgbm_training.n_features,
-            n_informative=config.lightgbm_training.n_informative,
-            num_iterations=config.lightgbm_training.num_iterations,
-            num_leaves=config.lightgbm_training.num_leaves
+            n_informative=config.lightgbm_training.n_informative
         )
 
         # and we return that function so that helper can run it.
