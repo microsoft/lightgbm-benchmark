@@ -38,22 +38,22 @@ jobs:
         sudo apt-get install libopenmpi-dev
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name : Validate pipelines [inferencing]
+    - name : Validate pipelines [data generation]
       run: >-
-        python pipelines/lightgbm_inferencing.py
+        python pipelines/data_generation.py
         --config-dir ./conf
-        --config-name experiments/benchmark-inferencing
+        --config-name experiments/data-generation
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
         aml.auth="azurecli"
       working-directory: pipelines/azureml/
 
-    - name : Validate pipelines [e2e synthetic]
+    - name : Validate pipelines [inferencing]
       run: >-
-        python pipelines/lightgbm_e2e_synthetic.py
+        python pipelines/lightgbm_inferencing.py
         --config-dir ./conf
-        --config-name experiments/benchmark-e2e-synthetic
+        --config-name experiments/benchmark-inferencing
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
