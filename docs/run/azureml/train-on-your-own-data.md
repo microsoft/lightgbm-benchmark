@@ -13,9 +13,10 @@
 
 There are two ways you could simply get your data into your AzureML workspace.
 
-### Option A: Upload your local data into AzureML
+- Option A: [Upload your local data into AzureML](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-connect-data-ui)
+- Option B: [Create a dataset from an existing storage](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-connect-data-ui)
 
-### Option B: Create a dataset from an existing storage
+For each of those, you need to create a File dataset with your training and testing data, each provided as one unique file.
 
 ## Run training on your train/test datasets
 

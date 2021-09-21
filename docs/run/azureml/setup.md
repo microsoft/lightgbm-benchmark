@@ -75,9 +75,7 @@ The python script will build a pipeline based on the collection of manual script
 {!./pipelines/azureml/conf/experiments/data-generation.yaml!}
 ```
 
-Running the python command should open a browser to your workspace opening the experiment view:
-
-![](../../../.media/data_generation_pipeline.png)
+Running the python command should open a browser to your workspace opening the experiment view.
 
 > In the future, if you don't want to add `aml=myaml compute=myaml` every single time, you can modify the `defaults` section of the yaml config:
 >
