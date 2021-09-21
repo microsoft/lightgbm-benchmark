@@ -1,0 +1,41 @@
+# to execute, run from /pipelines/azureml/
+# > python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True
+
+defaults:
+  - aml: sample
+  - compute: sample
+  - modules: benchmark
+
+# run parameters are command line arguments for running your experiment
+run: # params for running pipeline
+  experiment_name: "data-generation" # IMPORTANT
+  regenerate_outputs: false
+  continue_on_failure: false
+  verbose: false
+  submit: false
+  resume: false
+  canary: false
+  silent: false
+  wait: false
+
+module_loader: # module loading params
+  use_local: "*"
+  force_default_module_version: null
+  force_all_module_version: null
+  local_steps_folder: "../../../../../src/scripts/"
+
+### CUSTOM PARAMETERS ###
+
+data_generation:
+  benchmark_name: "benchmark-dev"
+
+  # DATA
+  learning_task: "regression"
+  train_samples: 100000
+  test_samples: 10000
+  inferencing_samples: 10000
+  n_features: 4000
+  n_informative: 4000
+  data_register_train_as: "synthetic-regr-4000cols-train"
+  data_register_test_as: "synthetic-regr-4000cols-test"
+  data_register_inference_as: "synthetic-regr-4000cols-inference"
