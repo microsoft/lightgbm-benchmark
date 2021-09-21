@@ -8,7 +8,7 @@ defaults:
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
-  experiment_name: "lightgbmbenchmark-training" # IMPORTANT
+  experiment_name: "lightgbm-training-dev" # IMPORTANT
   regenerate_outputs: false
   continue_on_failure: false
   verbose: false
@@ -30,12 +30,10 @@ lightgbm_training:
   benchmark_name: "benchmark-dev"
 
   # DATA
-  learning_task: "regression"
-  train_samples: 100000
-  test_samples: 10000
-  inferencing_samples: 10000
-  n_features: 4000
-  n_informative: 4000
+  train_dataset: "synthetic-regr-4000cols-train"
+  # train_dataset_version: null # use latest if not specified
+  test_dataset: "synthetic-regr-4000cols-test"
+  # test_dataset_version: null # use latest if not specified
 
   # TRAINING
   # fixed training parameters
@@ -43,6 +41,7 @@ lightgbm_training:
   metric: "rmse"
   boosting: "gbdt"
   tree_learner: "data"
+  #training_register_model_as: "synthetic-regr-4000cols-model-sweep"
 
   # "sweepable" training parameters
   num_iterations: "choice(100, 200)"

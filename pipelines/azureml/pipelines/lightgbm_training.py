@@ -48,13 +48,11 @@ class LightGBMTraining(AMLPipelineHelper):
             # NOTE: all those values are REQUIRED in your yaml config file
             benchmark_name: str = MISSING
 
-            # DATA
-            learning_task: str = MISSING
-            train_samples: int = MISSING
-            test_samples: int = MISSING
-            inferencing_samples: int = MISSING
-            n_features: int = MISSING
-            n_informative: int = MISSING
+            # INPUT DATA
+            train_dataset: str = MISSING
+            train_dataset_version: Optional[str] = None
+            test_dataset: str = MISSING
+            test_dataset_version: Optional[str] = None
 
             # TRAINING
             # fixed training parameters
@@ -89,9 +87,6 @@ class LightGBMTraining(AMLPipelineHelper):
             sweep_timeout_minutes: Optional[int] = None
 
             # OUTPUT REGISTRATION
-            data_register_train_as: Optional[str] = None
-            data_register_test_as: Optional[str] = None
-            data_register_inference_as: Optional[str] = None
             training_register_model_as: Optional[str] = None
 
         # return the dataclass itself
@@ -163,7 +158,6 @@ class LightGBMTraining(AMLPipelineHelper):
         enable_sweep = (len(tunable_params.keys())>0)
 
         # Data modules
-        generate_data_module = self.module_load("generate_synthetic_data")
         partition_data_module = self.module_load("partition_data")
 
         # Training modules
@@ -182,18 +176,14 @@ class LightGBMTraining(AMLPipelineHelper):
         benchmark_custom_properties = json.dumps({
             'benchmark_name' : config.lightgbm_training.benchmark_name
         })
-        pipeline_name = f"lightgbm_training_{config.lightgbm_training.learning_task}"
-        pipeline_description = f"LightGBM {config.lightgbm_training.learning_task} distributed training (mpi) on synthetic data"
+        pipeline_name = f"lightgbm_training_{config.lightgbm_training.objective}"
+        pipeline_description = f"LightGBM {config.lightgbm_training.objective} distributed training (mpi) on synthetic data"
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name=pipeline_name, # pythonic name
                       description=pipeline_description,
                       default_datastore=config.compute.noncompliant_datastore)
-        def lightgbm_benchmark_pipeline_function(train_samples=10000,
-                                                 test_samples=1000,
-                                                 inferencing_samples=10000,
-                                                 n_features=4000,
-                                                 n_informative=4000):
+        def lightgbm_training_pipeline_function(train_dataset, test_dataset):
             """Pipeline function for this graph.
 
             Args:
@@ -202,57 +192,27 @@ class LightGBMTraining(AMLPipelineHelper):
             Returns:
                 dict[str->PipelineOutputData]: a dictionary of your pipeline outputs
                     for instance to be consumed by other graphs
-            """
-            generate_data_step = generate_data_module(
-                learning_task = config.lightgbm_training.learning_task,
-                train_samples = train_samples,
-                test_samples = test_samples,
-                inferencing_samples = inferencing_samples,
-                n_features = n_features,
-                n_informative = n_informative,
-                random_state = 5,
-                verbose = False,
-                custom_properties = benchmark_custom_properties
-            )
-            self.apply_smart_runsettings(generate_data_step)
-
-            # optional: save outputs
-            if config.lightgbm_training.data_register_train_as:
-                generate_data_step.outputs.output_train.register_as(
-                    name=config.lightgbm_training.data_register_train_as,
-                    create_new_version=True
-                )                
-            if config.lightgbm_training.data_register_test_as:
-                generate_data_step.outputs.output_test.register_as(
-                    name=config.lightgbm_training.data_register_test_as,
-                    create_new_version=True
-                )                
-            if config.lightgbm_training.data_register_inference_as:
-                generate_data_step.outputs.output_inference.register_as(
-                    name=config.lightgbm_training.data_register_inference_as,
-                    create_new_version=True
-                )                
-            
+            """           
             if config.lightgbm_training.tree_learner == "data" or config.lightgbm_training.tree_learner == "voting":
                 # if using data parallel, train data has to be partitioned first
                 if (config.lightgbm_training.nodes * config.lightgbm_training.processes) > 1:
                     partition_data_step = partition_data_module(
-                        input_data=generate_data_step.outputs.output_train,
+                        input_data=train_dataset,
                         mode="roundrobin",
                         number=(config.lightgbm_training.nodes * config.lightgbm_training.processes)
                     )
                     self.apply_smart_runsettings(partition_data_step)
-                    train_data = partition_data_step.outputs.output_data
+                    partitioned_train_data = train_dataset
                 else:
                     # for other modes, train data has to be one file
-                    train_data = generate_data_step.outputs.output_train
+                    partitioned_train_data = train_dataset
             else:
                 # for other modes, train data has to be one file
-                train_data = generate_data_step.outputs.output_train
+                partitioned_train_data = train_dataset
 
             lightgbm_train_step = lightgbm_train_module(
-                train = train_data,
-                test = generate_data_step.outputs.output_test,
+                train = partitioned_train_data,
+                test = test_dataset,
                 header = False,
                 label_column = "0",
                 #group_column = None,
@@ -317,10 +277,12 @@ class LightGBMTraining(AMLPipelineHelper):
                 )
 
             # return {key: output}'
-            return {}
+            return {
+                'model' : lightgbm_train_step.outputs.model
+            }
 
         # finally return the function itself to be built by helper code
-        return lightgbm_benchmark_pipeline_function
+        return lightgbm_training_pipeline_function
 
 
     def pipeline_instance(self, pipeline_function, config):
@@ -336,14 +298,17 @@ class LightGBMTraining(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
-        # when all inputs are obtained, we call the pipeline function
-        experiment_pipeline = pipeline_function(
-            train_samples=config.lightgbm_training.train_samples,
-            test_samples=config.lightgbm_training.test_samples,
-            inferencing_samples=config.lightgbm_training.inferencing_samples,
-            n_features=config.lightgbm_training.n_features,
-            n_informative=config.lightgbm_training.n_informative
+        train_data = self.dataset_load(
+            name = config.lightgbm_training.train_dataset,
+            version = config.lightgbm_training.train_dataset_version # use latest if None
         )
+        test_data = self.dataset_load(
+            name = config.lightgbm_training.test_dataset,
+            version = config.lightgbm_training.test_dataset_version # use latest if None
+        )
+
+        # when all inputs are obtained, we call the pipeline function
+        experiment_pipeline = pipeline_function(train_data, test_data)
 
         # and we return that function so that helper can run it.
         return experiment_pipeline
