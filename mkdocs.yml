@@ -11,9 +11,11 @@ nav:
     Developer Guide: contribute/developer-guide.md
     Reporting Guide: contribute/reporting-guide.md
 - Run:
-    Install: quickstart/install.md
-    Run manually: quickstart/manual-benchmark.md
-    Run in AzureML: quickstart/azureml-benchmark.md
+    Install: run/install.md
+    Run manually: run/manual-benchmark.md
+    Run in AzureML:
+        Setup: run/azureml/setup.md
+        Train on your data: "run/azureml/train-on-your-own-data.md"
 - Results:
     Latest: results/latest.md
 

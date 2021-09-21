@@ -5,7 +5,7 @@
 - generate synthetic data for running lightgbm
 - run lightgbm training and inferencing scripts to measure wall time
 
-**Requirements** - To enjoy this tutorial, you need to have installed python dependencies locally (see [instructions](../quickstart/install.md)).
+**Requirements** - To enjoy this tutorial, you need to have installed python dependencies locally (see [instructions](../run/install.md)).
 
 ## Generate synthetic data
 
