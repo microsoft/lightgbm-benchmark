@@ -11,7 +11,7 @@ import sys
 import json
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Optional
+from typing import Optional, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
@@ -24,6 +24,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
 from common.sweep import SweepParameterParser
+from common.data import synthetic_data_config
 
 class DataGenerationPipeline(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -48,13 +49,7 @@ class DataGenerationPipeline(AMLPipelineHelper):
             # NOTE: all those values are REQUIRED in your yaml config file
             benchmark_name: str = MISSING
 
-            # DATA
-            learning_task: str = MISSING
-            train_samples: int = MISSING
-            test_samples: int = MISSING
-            inferencing_samples: int = MISSING
-            n_features: int = MISSING
-            n_informative: int = MISSING
+            tasks: List[synthetic_data_config] = MISSING
 
             # OUTPUT REGISTRATION
             data_register_train_as: Optional[str] = None
@@ -108,7 +103,7 @@ class DataGenerationPipeline(AMLPipelineHelper):
             Returns:
                 dict[str->PipelineOutputData]: a dictionary of your pipeline outputs
                     for instance to be consumed by other graphs
-            """
+            """          
             generate_data_step = generate_data_module(
                 learning_task = task,
                 train_samples = train_samples,
@@ -163,15 +158,21 @@ class DataGenerationPipeline(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
-        # when all inputs are obtained, we call the pipeline function
-        experiment_pipeline = pipeline_function(
-            task=config.data_generation.learning_task,
-            train_samples=config.data_generation.train_samples,
-            test_samples=config.data_generation.test_samples,
-            inferencing_samples=config.data_generation.inferencing_samples,
-            n_features=config.data_generation.n_features,
-            n_informative=config.data_generation.n_informative
-        )
+        # Here you should create an instance of a pipeline function (using your custom config dataclass)
+        @dsl.pipeline(name="generate_all_datasets", # pythonic name
+                      description="Generate all datasets for lightgbm benchmark",
+                      default_datastore=config.compute.noncompliant_datastore)
+        def generate_all_tasks():
+            pipeline_function(
+                task=config.data_generation.learning_task,
+                train_samples=config.data_generation.train_samples,
+                test_samples=config.data_generation.test_samples,
+                inferencing_samples=config.data_generation.inferencing_samples,
+                n_features=config.data_generation.n_features,
+                n_informative=config.data_generation.n_informative
+            )
+            
+
 
         # and we return that function so that helper can run it.
         return experiment_pipeline
