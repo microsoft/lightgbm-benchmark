@@ -177,7 +177,7 @@ class GenerateSyntheticDataScript(RunnableScript):
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """
-    GenerateSyntheticDataScript.get_arg_parser()
+    return GenerateSyntheticDataScript.get_arg_parser(parser)
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """

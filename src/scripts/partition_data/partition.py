@@ -82,7 +82,7 @@ class PartitionDataScript(RunnableScript):
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """
-    PartitionDataScript.get_arg_parser()
+    return PartitionDataScript.get_arg_parser(parser)
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """
