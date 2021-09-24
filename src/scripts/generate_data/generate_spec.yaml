@@ -1,0 +1,80 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: generate_synthetic_data
+version: 1.0.0
+display_name: "Generate Synthetic Data (small)"
+type: CommandComponent
+description: "generate synthetic data using scikit-learn make_* functions"
+is_deterministic: true
+
+inputs:
+  learning_task:
+    type: Enum
+    default: "regression"
+    enum:
+      - regression
+      - classification
+  train_samples:
+    type: Integer
+    description: Number of training samples
+    optional: false
+  test_samples:
+    type: Integer
+    description: Number of testing samples
+    optional: false
+  inferencing_samples:
+    type: Integer
+    description: Number of inferencing samples
+    optional: false
+  n_features:
+    type: Integer
+    description: Number of features/columns
+    optional: false
+  n_informative:
+    type: Integer
+    description: Number of informative features
+    optional: false
+  n_redundant:
+    type: Integer
+    description: number of redundant features (for classification)
+    optional: true
+  random_state:
+    type: Integer
+    description: random seed
+    optional: true
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job (as json dict)
+    optional: true
+
+outputs:
+  output_train:
+    type: AnyDirectory
+  output_test:
+    type: AnyDirectory
+  output_inference:
+    type: AnyDirectory
+
+command: >-
+  python generate.py
+  --type {inputs.learning_task}
+  --train_samples {inputs.train_samples}
+  --test_samples {inputs.test_samples}
+  --inferencing_samples {inputs.inferencing_samples}
+  --n_features {inputs.n_features}
+  --n_informative {inputs.n_informative}
+  [--n_redundant {inputs.n_redundant}]
+  [--random_state {inputs.random_state}]
+  --output_train {outputs.output_train}
+  --output_test {outputs.output_test}
+  --output_inference {outputs.output_inference}
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
+
+environment:
+  conda:
+    # conda file path is resolved after additional includes
+    conda_dependencies_file: conda_env.yaml
+  os: Linux

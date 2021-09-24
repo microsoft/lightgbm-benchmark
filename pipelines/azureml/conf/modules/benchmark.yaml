@@ -1,0 +1,26 @@
+# @package _group_
+manifest:
+  - name: "generate_synthetic_data"
+    version: null
+    yaml: "generate_data/generate_spec.yaml"
+  - name: "partition_data"
+    version: null
+    yaml: "partition_data/partition_spec.yaml"
+  - name: "lightgbm_python_train"
+    version: null
+    yaml: "lightgbm_python/train_spec.yaml"
+  - name: "lightgbm_python_train_sweep"
+    version: null
+    yaml: "lightgbm_python/train_sweep_spec.yaml"
+  - name: "lightgbm_python_score"
+    version: null
+    yaml: "lightgbm_python/score_spec.yaml"
+  - name: "lightgbm_python_custom_score"
+    version: null
+    yaml: "lightgbm_python/score_custom_spec.yaml"
+  - name: "treelite_compile"
+    version: null
+    yaml: "treelite_python/compile_spec.yaml"
+  - name: "treelite_score"
+    version: null
+    yaml: "treelite_python/score_spec.yaml"
