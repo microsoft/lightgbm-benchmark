@@ -42,7 +42,7 @@ class RunnableScript():
         """
         # add arguments that are specific to the module
         if parser is None:
-            parser = argparse.ArgumentParser("TODO")
+            parser = argparse.ArgumentParser()
 
         # add generic arguments here
         group_general = parser.add_argument_group("General parameters")
