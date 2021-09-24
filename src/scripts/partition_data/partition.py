@@ -45,10 +45,10 @@ class PartitionDataScript(RunnableScript):
         Notes:
             if parser is None, creates a new parser instance
         """
-        # add arguments that are specific to the script
+        # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
-        # add arguments that are specific to the module
+        # add arguments that are specific to the script
         group = parser.add_argument_group('Partitioning arguments')
         group.add_argument("--input", dest="input", type=input_file_path, required=True, help="file/directory to split")
         group.add_argument("--output", dest="output", type=str, help="location to store partitioned files", required=True)
