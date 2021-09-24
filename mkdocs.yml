@@ -16,6 +16,14 @@ nav:
     Run in AzureML: quickstart/azureml-benchmark.md
 - Results:
     Latest: results/latest.md
+- Reference Docs:
+    - src/common/:
+        - io.py: references/common/io.md
+        - lightgbm.py: references/common/lightgbm.md
+        - metrics.py: references/common/metrics.md
+        - sweep.py: references/common/sweep.md
+    - src/scripts/:
+        - partition_data/partition.py: references/scripts/partition_data/partition.md
 
 theme:
   name: readthedocs
@@ -35,4 +43,19 @@ markdown_extensions:
 
 plugins:
 - search
-- mkdocstrings
+- mkdocstrings:
+    default_handler: python
+    handlers:
+        python:
+            setup_commands:
+            - import sys
+            - sys.path.append("src")
+            rendering:
+                show_source: true
+                show_if_no_docstring: false
+                members_order: "source"
+                show_root_toc_entry: false
+                show_root_heading: false
+    #custom_templates: templates
+    watch:
+      - src/
