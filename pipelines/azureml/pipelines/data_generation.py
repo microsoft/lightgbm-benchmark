@@ -24,7 +24,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
 from common.sweep import SweepParameterParser
-from common.data import synthetic_data_config
+from common.tasks import data_generation_task
 
 class DataGenerationPipeline(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -49,7 +49,7 @@ class DataGenerationPipeline(AMLPipelineHelper):
             # NOTE: all those values are REQUIRED in your yaml config file
             benchmark_name: str = MISSING
 
-            tasks: List[synthetic_data_config] = MISSING
+            tasks: List[data_generation_task] = MISSING
 
             # OUTPUT REGISTRATION
             register_outputs: bool = False
