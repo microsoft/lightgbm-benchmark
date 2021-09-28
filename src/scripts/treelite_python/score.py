@@ -91,7 +91,7 @@ def run(args, unknown_args=[]):
     metrics_logger.set_properties(
         framework = 'treelite_python',
         task = 'score',
-        lightgbm_version = treelite.__version__
+        framework_version = treelite.__version__
     )
 
     # if provided some custom_properties by the outside orchestrator
