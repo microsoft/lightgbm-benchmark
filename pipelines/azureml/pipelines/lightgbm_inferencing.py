@@ -14,16 +14,19 @@ import sys
 import json
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Optional
+from typing import Optional, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
+from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
-LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
 if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
+
+from common.tasks import inferencing_task, inferencing_variants
 
 class LightGBMInferencing(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -46,11 +49,8 @@ class LightGBMInferencing(AMLPipelineHelper):
             See conf/reference/evaluate_qas_model.yaml for an example.
             """
             benchmark_name: str = MISSING
-            data: str = MISSING
-            model: str = MISSING
-
-            predict_disable_shape_check: bool = False
-            os: str = "linux" # linux or windows
+            tasks: List[inferencing_task] = MISSING
+            variants: List[inferencing_variants] = MISSING
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -74,15 +74,8 @@ class LightGBMInferencing(AMLPipelineHelper):
         """
         # Inferencing modules
         lightgbm_score_module = self.module_load("lightgbm_python_score")
-        lightgbm_score_custom_module = self.module_load("lightgbm_python_custom_score")
         treelite_compile_module = self.module_load("treelite_compile")
         treelite_score_module = self.module_load("treelite_score")
-
-        benchmark_custom_properties = json.dumps({
-            'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
-            'benchmark_dataset' : config.lightgbm_inferencing.data,
-            'benchmark_model' : config.lightgbm_inferencing.model,
-        })
 
         pipeline_name = f"lightgbm_inferencing"
         pipeline_description = f"LightGBM inferencing on user defined dataset/model"
@@ -91,7 +84,7 @@ class LightGBMInferencing(AMLPipelineHelper):
         @dsl.pipeline(name=pipeline_name, # pythonic name
                       description=pipeline_description,
                       default_datastore=config.compute.noncompliant_datastore)
-        def lightgbm_inferencing_pipeline_function(data, model):
+        def lightgbm_inferencing_pipeline_function(data, model, benchmark_custom_properties, predict_disable_shape_check):
             """Pipeline function for this graph.
 
             Args:
@@ -101,42 +94,48 @@ class LightGBMInferencing(AMLPipelineHelper):
                 dict[str->PipelineOutputData]: a dictionary of your pipeline outputs
                     for instance to be consumed by other graphs
             """
-            # call module with all the right arguments
-            lightgbm_score_step = lightgbm_score_module(
-                data = data,
-                model = model,
-                predict_disable_shape_check = config.lightgbm_inferencing.predict_disable_shape_check,
-                verbose = False,
-                custom_properties = benchmark_custom_properties
-            )
-            self.apply_smart_runsettings(lightgbm_score_step)
+            pipeline_outputs = {}
+            for variant in config.lightgbm_inferencing.variants:
+                if variant.framework == "treelite_python":
+                    treelite_compile_step = treelite_compile_module(
+                        model = model,
+                        verbose = False,
+                        custom_properties = benchmark_custom_properties
+                    )
+                    self.apply_smart_runsettings(treelite_compile_step)
 
-            lightgbm_score_custom_step = lightgbm_score_custom_module(
-                data = data,
-                model = model,
-                predict_disable_shape_check = config.lightgbm_inferencing.predict_disable_shape_check,
-                verbose = False,
-                custom_properties = benchmark_custom_properties
-            )
-            self.apply_smart_runsettings(lightgbm_score_custom_step)
+                    treelite_score_step = treelite_score_module(
+                        data = data,
+                        compiled_model = treelite_compile_step.outputs.compiled_model,
+                        verbose = False,
+                        custom_properties = benchmark_custom_properties
+                    )
+                    self.apply_smart_runsettings(treelite_score_step)
+                    
+                    # pipeline_outputs[f"{variant}_predictions"] = treelite_score_step.outputs.predictions
 
-            treelite_compile_step = treelite_compile_module(
-                model = model,
-                verbose = False,
-                custom_properties = benchmark_custom_properties
-            )
-            self.apply_smart_runsettings(treelite_compile_step)
+                elif variant.framework == "lightgbm_python":
+                    # call module with all the right arguments
+                    lightgbm_score_step = lightgbm_score_module(
+                        data = data,
+                        model = model,
+                        predict_disable_shape_check = predict_disable_shape_check,
+                        verbose = False,
+                        custom_properties = benchmark_custom_properties
+                    )
+                    self.apply_smart_runsettings(lightgbm_score_step)
 
-            treelite_score_step = treelite_score_module(
-                data = data,
-                compiled_model = treelite_compile_step.outputs.compiled_model,
-                verbose = False,
-                custom_properties = benchmark_custom_properties
-            )
-            self.apply_smart_runsettings(treelite_score_step)
+                    if variant.build:
+                        custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, variant.framework, variant.build))
+                        lightgbm_score_step.runsettings.environment.configure(
+                            docker=custom_docker,
+                            os=variant.os or "Linux" # linux by default
+                        )
+
+                    # pipeline_outputs[f"{variant}_predictions"] = lightgbm_score_step.outputs.predictions
 
             # return {key: output}'
-            return {}
+            return pipeline_outputs
 
         # finally return the function itself to be built by helper code
         return lightgbm_inferencing_pipeline_function
@@ -155,14 +154,31 @@ class LightGBMInferencing(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
-        data = self.dataset_load(config.lightgbm_inferencing.data)
-        model = self.dataset_load(config.lightgbm_inferencing.model)
+        # Here you should create an instance of a pipeline function (using your custom config dataclass)
+        @dsl.pipeline(name="inferencing_all_tasks", # pythonic name
+                      description="Inferencing on all specified tasks",
+                      default_datastore=config.compute.noncompliant_datastore)
+        def inferencing_all_tasks():
+            for inferencing_task in config.lightgbm_inferencing.tasks:
+                data = self.dataset_load(inferencing_task.dataset)
+                model = self.dataset_load(inferencing_task.model)
 
-        # when all inputs are obtained, we call the pipeline function
-        experiment_pipeline = pipeline_function(data=data, model=model)
+                # create custom properties for this task
+                benchmark_custom_properties = json.dumps({
+                    'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
+                    'benchmark_dataset' : inferencing_task.dataset,
+                    'benchmark_model' : inferencing_task.model,
+                })
 
-        # and we return that function so that helper can run it.
-        return experiment_pipeline
+                inferencing_task_subgraph_step = pipeline_function(
+                    data=data,
+                    model=model,
+                    benchmark_custom_properties=benchmark_custom_properties,
+                    predict_disable_shape_check=inferencing_task.predict_disable_shape_check or False
+                )
+
+        # return the instance of this general function
+        return inferencing_all_tasks()
 
 
 # NOTE: main block is necessary only if script is intended to be run from command line
