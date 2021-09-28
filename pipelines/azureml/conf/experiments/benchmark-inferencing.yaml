@@ -28,7 +28,7 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-2210928"
+  benchmark_name: "benchmark-2210928e"
 
   tasks:
     - dataset: "synthetic-regr-4000cols-inference"

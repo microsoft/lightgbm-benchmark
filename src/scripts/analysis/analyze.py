@@ -1,5 +1,3 @@
-import os
-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license. 
 
@@ -115,6 +113,7 @@ def analyze_inferencing(ws, experiment_id, benchmark_id, output_markdown_path):
 
         benchmark_data_entry['framework'] = run_tags['framework']
         benchmark_data_entry['framework_version'] = run_tags.get('framework_version', None)
+        benchmark_data_entry['framework_build'] = run_tags.get('framework_build', None)
 
         run_metrics = run.get_metrics()
         for metric in run_metrics.keys():

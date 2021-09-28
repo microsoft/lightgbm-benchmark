@@ -83,8 +83,9 @@ class LightGBMInferencing(AMLPipelineHelper):
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name=pipeline_name, # pythonic name
                       description=pipeline_description,
-                      default_datastore=config.compute.noncompliant_datastore)
-        def lightgbm_inferencing_pipeline_function(data, model, benchmark_custom_properties, predict_disable_shape_check):
+                      default_datastore=config.compute.noncompliant_datastore,
+                      non_pipeline_parameters=['benchmark_custom_properties'])
+        def lightgbm_inferencing_pipeline_function(benchmark_custom_properties, data, model, predict_disable_shape_check):
             """Pipeline function for this graph.
 
             Args:
@@ -97,10 +98,14 @@ class LightGBMInferencing(AMLPipelineHelper):
             pipeline_outputs = {}
             for variant in config.lightgbm_inferencing.variants:
                 if variant.framework == "treelite_python":
+                    custom_properties = benchmark_custom_properties.copy()
+                    custom_properties.update({
+                        'framework_build' : "n/a"
+                    })
                     treelite_compile_step = treelite_compile_module(
                         model = model,
                         verbose = False,
-                        custom_properties = benchmark_custom_properties
+                        custom_properties = json.dumps(custom_properties)
                     )
                     self.apply_smart_runsettings(treelite_compile_step)
 
@@ -108,20 +113,25 @@ class LightGBMInferencing(AMLPipelineHelper):
                         data = data,
                         compiled_model = treelite_compile_step.outputs.compiled_model,
                         verbose = False,
-                        custom_properties = benchmark_custom_properties
+                        custom_properties = json.dumps(custom_properties)
                     )
                     self.apply_smart_runsettings(treelite_score_step)
                     
                     # pipeline_outputs[f"{variant}_predictions"] = treelite_score_step.outputs.predictions
 
                 elif variant.framework == "lightgbm_python":
+                    custom_properties = benchmark_custom_properties.copy()
+                    custom_properties.update({
+                        'framework_build' : variant.build or "n/a"
+                    })
+
                     # call module with all the right arguments
                     lightgbm_score_step = lightgbm_score_module(
                         data = data,
                         model = model,
                         predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
-                        custom_properties = benchmark_custom_properties
+                        custom_properties = json.dumps(custom_properties)
                     )
                     self.apply_smart_runsettings(lightgbm_score_step)
 
@@ -131,7 +141,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                             docker=custom_docker,
                             os=variant.os or "Linux" # linux by default
                         )
-                        lightgbm_score_step.comment = f"modified build with {variant.build}"
+                        lightgbm_score_step.comment = f"build {variant.build}"
 
                     # pipeline_outputs[f"{variant}_predictions"] = lightgbm_score_step.outputs.predictions
 
@@ -165,17 +175,17 @@ class LightGBMInferencing(AMLPipelineHelper):
                 model = self.dataset_load(inferencing_task.model)
 
                 # create custom properties for this task
-                benchmark_custom_properties = json.dumps({
+                benchmark_custom_properties = {
                     'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
                     'benchmark_dataset' : inferencing_task.dataset,
                     'benchmark_model' : inferencing_task.model,
-                })
+                }
 
                 inferencing_task_subgraph_step = pipeline_function(
                     data=data,
                     model=model,
-                    benchmark_custom_properties=benchmark_custom_properties,
-                    predict_disable_shape_check=inferencing_task.predict_disable_shape_check or False
+                    predict_disable_shape_check=inferencing_task.predict_disable_shape_check or False,
+                    benchmark_custom_properties=benchmark_custom_properties
                 )
 
         # return the instance of this general function
