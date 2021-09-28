@@ -131,6 +131,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                             docker=custom_docker,
                             os=variant.os or "Linux" # linux by default
                         )
+                        lightgbm_score_step.comment = f"modified build with {variant.build}"
 
                     # pipeline_outputs[f"{variant}_predictions"] = lightgbm_score_step.outputs.predictions
 
