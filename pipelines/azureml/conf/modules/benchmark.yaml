@@ -15,6 +15,9 @@ manifest:
   - name: "lightgbm_python_score"
     version: null
     yaml: "lightgbm_python/score_spec.yaml"
+  - name: "lightgbm_python_build_score"
+    version: null
+    yaml: "lightgbm_python/score_build_spec.yaml"
   - name: "lightgbm_python_custom_score"
     version: null
     yaml: "lightgbm_python/score_custom_spec.yaml"

@@ -95,6 +95,7 @@ class LightGBMEndToEnd(AMLPipelineHelper):
 
         # Inferencing modules
         lightgbm_score_module = self.module_load("lightgbm_python_score")
+        lightgbm_score_build_module = self.module_load("lightgbm_python_build_score")
         lightgbm_score_custom_module = self.module_load("lightgbm_python_custom_score")
         treelite_compile_module = self.module_load("treelite_compile")
         treelite_score_module = self.module_load("treelite_score")
@@ -167,6 +168,14 @@ class LightGBMEndToEnd(AMLPipelineHelper):
                 custom_properties = benchmark_custom_properties
             )
             self.apply_smart_runsettings(lightgbm_score_step)
+
+            lightgbm_score_build_step = lightgbm_score_build_module(
+                data = generate_data_step.outputs.output_inference,
+                model = lightgbm_train_step.outputs.model,
+                verbose = False,
+                custom_properties = benchmark_custom_properties
+            )
+            self.apply_smart_runsettings(lightgbm_score_build_step)
 
             lightgbm_score_custom_step = lightgbm_score_custom_module(
                 data = generate_data_step.outputs.output_inference,
