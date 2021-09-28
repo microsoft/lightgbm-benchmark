@@ -11,7 +11,7 @@ import sys
 import json
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Optional
+from typing import Optional, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
@@ -24,6 +24,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
 from common.sweep import SweepParameterParser
+from common.data import synthetic_data_config
 
 class DataGenerationPipeline(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -48,18 +49,11 @@ class DataGenerationPipeline(AMLPipelineHelper):
             # NOTE: all those values are REQUIRED in your yaml config file
             benchmark_name: str = MISSING
 
-            # DATA
-            learning_task: str = MISSING
-            train_samples: int = MISSING
-            test_samples: int = MISSING
-            inferencing_samples: int = MISSING
-            n_features: int = MISSING
-            n_informative: int = MISSING
+            tasks: List[synthetic_data_config] = MISSING
 
             # OUTPUT REGISTRATION
-            data_register_train_as: Optional[str] = None
-            data_register_test_as: Optional[str] = None
-            data_register_inference_as: Optional[str] = None
+            register_outputs: bool = False
+            register_outputs_prefix: str = "synthetic"
 
         # return the dataclass itself
         # for helper class to construct config file
@@ -84,9 +78,6 @@ class DataGenerationPipeline(AMLPipelineHelper):
         # Data modules
         generate_data_module = self.module_load("generate_synthetic_data")
 
-        benchmark_custom_properties = json.dumps({
-            'benchmark_name' : config.data_generation.benchmark_name
-        })
         pipeline_name = f"data_generation"
         pipeline_description = f"Data Generation for the LightGBM benchmark"
 
@@ -99,7 +90,8 @@ class DataGenerationPipeline(AMLPipelineHelper):
                                               test_samples=1000,
                                               inferencing_samples=10000,
                                               n_features=4000,
-                                              n_informative=4000):
+                                              n_informative=4000,
+                                              benchmark_custom_properties=None):
             """Pipeline function for this graph.
 
             Args:
@@ -108,7 +100,7 @@ class DataGenerationPipeline(AMLPipelineHelper):
             Returns:
                 dict[str->PipelineOutputData]: a dictionary of your pipeline outputs
                     for instance to be consumed by other graphs
-            """
+            """          
             generate_data_step = generate_data_module(
                 learning_task = task,
                 train_samples = train_samples,
@@ -121,23 +113,6 @@ class DataGenerationPipeline(AMLPipelineHelper):
                 custom_properties = benchmark_custom_properties
             )
             self.apply_smart_runsettings(generate_data_step)
-
-            # optional: save outputs
-            if config.data_generation.data_register_train_as:
-                generate_data_step.outputs.output_train.register_as(
-                    name=config.data_generation.data_register_train_as,
-                    create_new_version=True
-                )                
-            if config.data_generation.data_register_test_as:
-                generate_data_step.outputs.output_test.register_as(
-                    name=config.data_generation.data_register_test_as,
-                    create_new_version=True
-                )                
-            if config.data_generation.data_register_inference_as:
-                generate_data_step.outputs.output_inference.register_as(
-                    name=config.data_generation.data_register_inference_as,
-                    create_new_version=True
-                )                
 
             # return {key: output}'
             return {
@@ -163,18 +138,49 @@ class DataGenerationPipeline(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
-        # when all inputs are obtained, we call the pipeline function
-        experiment_pipeline = pipeline_function(
-            task=config.data_generation.learning_task,
-            train_samples=config.data_generation.train_samples,
-            test_samples=config.data_generation.test_samples,
-            inferencing_samples=config.data_generation.inferencing_samples,
-            n_features=config.data_generation.n_features,
-            n_informative=config.data_generation.n_informative
-        )
+        benchmark_custom_properties = json.dumps({
+            'benchmark_name' : config.data_generation.benchmark_name
+        })
+
+        # Here you should create an instance of a pipeline function (using your custom config dataclass)
+        @dsl.pipeline(name="generate_all_datasets", # pythonic name
+                      description="Generate all datasets for lightgbm benchmark",
+                      default_datastore=config.compute.noncompliant_datastore)
+        def generate_all_tasks():
+            for generation_task in config.data_generation.tasks:
+                generation_task_subgraph_step = pipeline_function(
+                    task=generation_task.task,
+                    train_samples=generation_task.train_samples,
+                    test_samples=generation_task.test_samples,
+                    inferencing_samples=generation_task.inferencing_samples,
+                    n_features=generation_task.n_features,
+                    n_informative=generation_task.n_informative,
+                    benchmark_custom_properties=benchmark_custom_properties
+                )
+
+                if config.data_generation.register_outputs:
+                    dataset_prefix = "{prefix}-{task}-{cols}cols".format(
+                        prefix=config.data_generation.register_outputs_prefix,
+                        task=generation_task.task,
+                        cols=generation_task.n_features
+                    )
+                    
+                    generation_task_subgraph_step.outputs.train.register_as(
+                        name=f"{dataset_prefix}-train",
+                        create_new_version=True
+                    )  
+                    generation_task_subgraph_step.outputs.test.register_as(
+                        name=f"{dataset_prefix}-test",
+                        create_new_version=True
+                    )  
+                    generation_task_subgraph_step.outputs.inference.register_as(
+                        name=f"{dataset_prefix}-inference",
+                        create_new_version=True
+                    )  
+
 
         # and we return that function so that helper can run it.
-        return experiment_pipeline
+        return generate_all_tasks()
 
 
 # NOTE: main block is necessary only if script is intended to be run from command line
