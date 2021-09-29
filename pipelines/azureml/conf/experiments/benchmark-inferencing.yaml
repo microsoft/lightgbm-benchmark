@@ -28,16 +28,39 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-dev"
+  benchmark_name: "benchmark-2210929b"
 
-  # data: the name of the AML dataset containing inference data
-  data: "synthetic-regr-4000cols-inference"
+  tasks:
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-10trees-31leaves"
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-100trees-31leaves"
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-1000trees-31leaves"
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-5000trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-10trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-100trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-1000trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-5000trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-10trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-100trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-1000trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-5000trees-31leaves"
 
-  # model: the name of the AML dataset containing the lightgbm model
-  model: "synthetic-regr-4000cols-model"
-
-  # predict_disable_shape_check: if false, will except it model schema != inference data schema
-  predict_disable_shape_check: false
-
-  # os: switch from linux module to windows
-  os: "linux"
+  variants:
+    - framework: lightgbm_python
+      build: dockers/lightgbm_cpu_mpi_pip.dockerfile
+    - framework: lightgbm_python
+      build: dockers/lightgbm_cpu_mpi_build.dockerfile
+    - framework: lightgbm_python
+      build: dockers/lightgbm_cpu_mpi_custom.dockerfile
+    - framework: treelite_python
