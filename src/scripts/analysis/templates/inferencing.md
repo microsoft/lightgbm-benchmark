@@ -2,7 +2,7 @@
 
 > The report below has been automatically generated with results from the [lightgbm-benchmark repo](https://github.com/microsoft/lightgbm-benchmark).
 
-IMPORTANT: this is work in progress, to check out current work items check the [project open issues](https://github.com/microsoft/lightgbm-benchmark/issues)
+IMPORTANT: This is work in progress, to check out current work items check the [project open issues](https://github.com/microsoft/lightgbm-benchmark/issues). In particular, **do not trust these numbers yet** until we've removed this header!
 
 ## Variants
 
