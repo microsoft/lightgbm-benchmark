@@ -28,11 +28,33 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-2210928f"
+  benchmark_name: "benchmark-2210929b"
 
   tasks:
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-10trees-31leaves"
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-100trees-31leaves"
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-1000trees-31leaves"
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-5000trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-10trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-100trees-31leaves"
     - dataset: "synthetic-regression-100cols-inference"
       model: "synthetic-regression-100cols-model-1000trees-31leaves"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-5000trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-10trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-100trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-1000trees-31leaves"
+    - dataset: "synthetic-regression-1000cols-inference"
+      model: "synthetic-regression-1000cols-model-5000trees-31leaves"
 
   variants:
     - framework: lightgbm_python
