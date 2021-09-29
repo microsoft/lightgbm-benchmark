@@ -17,7 +17,8 @@ nav:
         Setup: run/azureml/setup.md
         Train on your data: "run/azureml/train-on-your-own-data.md"
 - Results:
-    Latest: results/latest.md
+    Inferencing: results/inferencing.md
+    Manual: results/manual.md
 
 theme:
   name: readthedocs
