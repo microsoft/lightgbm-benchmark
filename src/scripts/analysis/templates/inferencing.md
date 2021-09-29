@@ -17,7 +17,7 @@ IMPORTANT: This is work in progress, to check out current work items check the [
 | &nbsp; |{% for variant in variants %} {{variant[0]}}_{{loop.index}} |{% endfor %}
 | :-- |{% for variant in variants %} :-- |{% endfor %}
 {% for config in configs -%}
-    {%- set outer_loop_index = loop.index -%}
+    {%- set outer_loop_index = loop.index0 -%}
     | trees={{config[0]}}<br/>leaves={{config[1]}}<br/>cols={{config[2]}}<br/> |
-        {%- for variant in variants %} {{ "{:,.4f}".format(metrics[outer_loop_index-1][loop.index-1]) }} |{% endfor %}
+        {%- for variant in variants %} {{ "{:,.4f}".format(metrics[outer_loop_index][loop.index0]) }} |{% endfor %}
 {% endfor %}

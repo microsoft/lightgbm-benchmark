@@ -186,9 +186,10 @@ class AnalysisEngine():
         configs_list = sorted(list(configs))
         metrics_list = [
             [
-                metrics[v][c] for v in variants
-            ] for c in configs
+                metrics[v][c] for v in variants_list
+            ] for c in configs_list
         ]
+
         rendered_report = template_obj.render(
             variants=variants_list,
             configs=sorted(list(configs)),
