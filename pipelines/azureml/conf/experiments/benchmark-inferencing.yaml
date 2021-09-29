@@ -28,11 +28,11 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-2210928e"
+  benchmark_name: "benchmark-2210928f"
 
   tasks:
-    - dataset: "synthetic-regr-4000cols-inference"
-      model: "synthetic-regr-4000cols-model"
+    - dataset: "synthetic-regression-100cols-inference"
+      model: "synthetic-regression-100cols-model-1000trees-31leaves"
 
   variants:
     - framework: lightgbm_python
