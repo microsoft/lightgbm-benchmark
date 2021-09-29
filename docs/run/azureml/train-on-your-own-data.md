@@ -22,34 +22,34 @@ For each of those, you need to create a File dataset with your training and test
 
 > NOTE: We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
 
-1. Go into the subdirectory `pipelines/azureml/`
+1\. Go into the subdirectory `pipelines/azureml/`
 
-2. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below)
+2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below)
 
-    ```yaml
-    {!./pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml!}
-    ```
+``` yaml
+{!./pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml!}
+```
 
-3. Modify the lines below to reflect the name of your input train/test datasets:
+3\. Modify the lines below to reflect the name of your input train/test datasets:
 
-    ```yaml
-    train_dataset: "NAME OF YOUR TRAINING DATASET HERE"
-    test_dataset: "NAME OF YOUR TESTING DATASET HERE"
-    ```
+```yaml
+train_dataset: "NAME OF YOUR TRAINING DATASET HERE"
+test_dataset: "NAME OF YOUR TESTING DATASET HERE"
+```
 
-4. If you want the pipeline to save your model as a dataset, uncomment the line below and name the output accordingly:
+4\. If you want the pipeline to save your model as a dataset, uncomment the line below and name the output accordingly:
 
-    ```yaml
-    training_register_model_as: "my-custom-lightgbm-model"
-    ```
+```yaml
+training_register_model_as: "my-custom-lightgbm-model"
+```
 
     > NOTE: you can decide to register the output of the pipeline later manually from the AzureML portal.
 
-5. Run the training pipeline:
+5\. Run the training pipeline:
 
-    ```bash
-    python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training/cpu run.submit=True aml=myaml compute=myaml
-    ```
+```bash
+python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training/cpu run.submit=True aml=myaml compute=myaml
+```
 
 That's it.
 
