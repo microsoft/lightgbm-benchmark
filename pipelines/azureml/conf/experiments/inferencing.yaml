@@ -1,0 +1,44 @@
+# to execute, run from /pipelines/azureml/
+# > python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/benchmark-inferencing run.submit=True
+
+defaults:
+  - aml: sample
+  - compute: sample
+  - modules: benchmark
+
+# run parameters are command line arguments for running your experiment
+run: # params for running pipeline
+  experiment_name: "lightgbmbenchmark-dev" # IMPORTANT
+  regenerate_outputs: false
+  continue_on_failure: false
+  verbose: false
+  submit: false
+  resume: false
+  canary: false
+  silent: false
+  wait: false
+
+module_loader: # module loading params
+  use_local: "*"
+  force_default_module_version: null
+  force_all_module_version: null
+  local_steps_folder: "../../../../../src/scripts/"
+
+### CUSTOM PARAMETERS ###
+
+lightgbm_inferencing:
+  # name of your particular benchmark
+  benchmark_name: "benchmark-dev"
+
+  tasks:
+    - dataset: "synthetic-regression-10cols-inference"
+      model: "synthetic-regression-10cols-model-10trees-31leaves"
+
+  variants:
+    - framework: lightgbm_python
+      build: dockers/lightgbm_cpu_mpi_pip.dockerfile
+    - framework: lightgbm_python
+      build: dockers/lightgbm_cpu_mpi_build.dockerfile
+    - framework: lightgbm_python
+      build: dockers/lightgbm_cpu_mpi_custom.dockerfile
+    - framework: treelite_python

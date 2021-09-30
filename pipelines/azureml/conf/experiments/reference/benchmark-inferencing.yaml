@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/benchmark-inferencing run.submit=True
+# > python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/reference/benchmark-inferencing run.submit=True
 
 defaults:
   - aml: sample
@@ -8,7 +8,7 @@ defaults:
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
-  experiment_name: "lightgbmbenchmark-dev" # IMPORTANT
+  experiment_name: "lightgbmbenchmark-inferencing" # IMPORTANT
   regenerate_outputs: false
   continue_on_failure: false
   verbose: false
@@ -28,7 +28,7 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-2210929b"
+  #benchmark_name: "" # needs to be provided at runtime (github workflow)
 
   tasks:
     - dataset: "synthetic-regression-10cols-inference"

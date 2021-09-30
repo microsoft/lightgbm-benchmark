@@ -4,6 +4,9 @@
 
 IMPORTANT: This is work in progress, to check out current work items check the [project open issues](https://github.com/microsoft/lightgbm-benchmark/issues). In particular, **do not trust these numbers yet** until we've removed this header!
 
+- benchmark name: {{benchmark_name}}
+- 
+
 ## Variants
 
 | Index | Framework | Version | Build |
