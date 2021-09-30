@@ -8,7 +8,7 @@ defaults:
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
-  experiment_name: "lightgbmbenchmark-dev" # IMPORTANT
+  experiment_name: "benchmark-lightgbm-inferencing-dev" # IMPORTANT
   regenerate_outputs: false
   continue_on_failure: false
   verbose: false
@@ -28,7 +28,7 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-2210929b"
+  benchmark_name: "20210929c" # need to be provided at runtime!
 
   tasks:
     - dataset: "synthetic-regression-10cols-inference"
