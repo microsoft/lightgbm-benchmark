@@ -89,11 +89,22 @@ def get_arg_parser(parser=None):
 
 
 class AnalysisEngine():
+    """
+    Class to run the analysis of multiple AzureML runs
+    and generate a benchmark report
+    """
     def __init__(self):
+        """ Constructor """
+        # list to store lines of data obtained from AzureML runs
         self.benchmark_data = []
+
+        # location of the jinja templates to generate reports
         self.templates_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
 
+        self.logger = logging.getLogger(__name__)
+
     def load_benchmark_data(self, file_path):
+        """ Loads the previously saved benchmark data (and skip fetching) """
         # reset internal data list
         self.benchmark_data = []
 
@@ -103,6 +114,7 @@ class AnalysisEngine():
                 self.benchmark_data.append(json.loads(line))
 
     def save_benchmark_data(self, file_path):
+        """ Saves the fetched benchmark data into a file """
         # create output directory
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -113,93 +125,130 @@ class AnalysisEngine():
                 o_file.write("\n")
 
     def fetch_benchmark_data(self, azureml_ws, experiment_id, **filters):
-        print("*** Fetching Experiment")
+        """ Gets the data from fetching AzureML runs with a given set of filters """
+        self.logger.info("Fetching Experiment")
         experiment = Experiment(workspace=azureml_ws, name=experiment_id)
 
-        print("*** Fetching Benchmark Runs")
+        self.logger.info("Fetching Benchmark Runs")
         benchmark_runs = experiment.get_runs(tags=filters, include_children=True)
 
         # iterate through runs to get all the data we need for the analysis
-        print("*** Iterating through runs")
+        self.logger.info("Iterating through runs")
+        self.benchmark_data = [] # reset internal list
 
-        self.benchmark_data = [] # list of dict for pandas
         for run in benchmark_runs:
             benchmark_data_entry = {}
             run_tags = dict(run.tags)
 
-            benchmark_data_entry['model_name'] = run_tags.get('benchmark_model', None)
-            if benchmark_data_entry['model_name']:
-                model_pattern = r"synthetic-regression-([0-9]+)cols-model-([0-9]+)trees-([0-9]+)leaves"
-                model_matched = re.match(model_pattern, benchmark_data_entry['model_name'])
+            # get the model name from a tag
+            if 'benchmark_model' in run_tags:
+                benchmark_data_entry['benchmark_model'] = run_tags.get('benchmark_model', None)
+            
+            # parse the model name to get number of trees and leaves
+            if 'benchmark_model' in benchmark_data_entry and benchmark_data_entry['benchmark_model']:
+                model_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-model-([0-9]+)trees-([0-9]+)leaves"
+                model_matched = re.match(model_pattern, benchmark_data_entry['benchmark_model'])
                 if model_matched:
-                    benchmark_data_entry['model_trees'] = int(model_matched.group(2))
-                    benchmark_data_entry['model_leaves'] = int(model_matched.group(3))
+                    benchmark_data_entry['dataset_origin'] = model_matched.group(1)
+                    benchmark_data_entry['dataset_task'] = model_matched.group(2)
+                    benchmark_data_entry['model_trees'] = int(model_matched.group(3))
+                    benchmark_data_entry['model_leaves'] = int(model_matched.group(4))
 
-            benchmark_data_entry['dataset_name'] = run_tags.get('benchmark_dataset', None)
-            if benchmark_data_entry['dataset_name']:
-                dataset_pattern = r"synthetic-regression-([0-9]+)cols-inference"
-                dataset_matched = re.match(dataset_pattern, benchmark_data_entry['dataset_name'])
+            # get the dataset name from a tag
+            if 'benchmark_dataset' in run_tags:
+                benchmark_data_entry['benchmark_dataset'] = run_tags.get('benchmark_dataset', None)
+
+            # parse the dataset name for numbers of columns
+            if 'benchmark_dataset' in benchmark_data_entry and benchmark_data_entry['benchmark_dataset']:
+                dataset_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-inference"
+                dataset_matched = re.match(dataset_pattern, benchmark_data_entry['benchmark_dataset'])
                 if dataset_matched:
-                    benchmark_data_entry['dataset_columns'] = int(dataset_matched.group(1))
+                    benchmark_data_entry['dataset_origin'] = dataset_matched.group(1)
+                    benchmark_data_entry['dataset_task'] = dataset_matched.group(2)
+                    benchmark_data_entry['dataset_columns'] = int(dataset_matched.group(3))
 
-            benchmark_data_entry['framework'] = run_tags['framework']
+            # get framework (variant) info
+            benchmark_data_entry['framework'] = run_tags.get('framework', None)
             benchmark_data_entry['framework_version'] = run_tags.get('framework_version', None)
             benchmark_data_entry['framework_build'] = run_tags.get('framework_build', None)
 
-            run_metrics = run.get_metrics()
-            for metric in run_metrics.keys():
-                benchmark_data_entry[metric] = run_metrics[metric]
+            # get all existing metrics in module
+            benchmark_data_entry['metrics'] = dict(run.get_metrics())
 
             benchmark_data_entry['system_cpu_count'] = run_tags['cpu_count']
             benchmark_data_entry['system_os'] = run_tags['system']
             benchmark_data_entry['system_machine'] = run_tags['machine']
 
-            print(benchmark_data_entry)
+            # add to internal list of data
+            self.logger.info(f"Fetched run {run.id}, obtained {len(benchmark_data_entry.keys())} fields including {len(benchmark_data_entry['metrics'].keys())} metrics")
+
+            # add data to internal list for analysis
             self.benchmark_data.append(benchmark_data_entry)
 
         return self.benchmark_data
 
 
     def report_inferencing(self, output_path):
+        """ Uses fetched or load data to produce a reporting for inferencing tasks. """
         # TODO: replace by pandas data operations
+
+        # set of all different scoring frameworks
         variants = set()
-        configs = set()
+
+        # set of all tasks on which frameworks are evaluated
+        tasks = set()
+
+        # dictionary of metrics for each variant*tasks
         metrics = {}
 
+        # gets data we want to report on from the fetched data
         for entry in self.benchmark_data:
+            # key to store metrics for this variant
             variant_key = (entry['framework'],entry['framework_version'],entry['framework_build'])
             variants.add(variant_key)
+            
+            # if not already, create a dict for metrics
             if variant_key not in metrics:
                 metrics[variant_key] = {}
 
-            config_key = (entry['model_trees'], entry['model_leaves'], entry['dataset_columns'])
-            configs.add(config_key)
+            # key to store metrics for this task
+            task_key = (entry['model_trees'], entry['model_leaves'], entry['dataset_columns'])
+            tasks.add(task_key)
 
-            metrics[variant_key][config_key] = entry['time_inferencing']
+            # store the metric at the right location in metrics dict
+            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None)
         
+        # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:
             template_str = i_file.read()
-        
+
+        # use jinja Template
         template_obj = Template(template_str)
 
-        variants_list = sorted(list(variants))
-        configs_list = sorted(list(configs))
+        # prepare data for the template rendering
+        variants_list = sorted(list(variants)) # sorting variants in increasing order (tuple)
+        tasks_list = sorted(list(tasks)) # sorting tasks in increasing order (tuple)
+
+        # create a table of metrics
         metrics_list = [
             [
                 metrics[v][c] for v in variants_list
-            ] for c in configs_list
+            ] for c in tasks_list
         ]
 
+        # render the template
         rendered_report = template_obj.render(
             variants=variants_list,
-            configs=sorted(list(configs)),
+            tasks=sorted(list(tasks)),
             metrics=metrics_list
         )
 
+        # save or print
         if output_path:
             with open(output_path, "w") as o_file:
                 o_file.write(rendered_report)
-
+        else:
+            print(rendered_report)
 
 
 def run(args, unknown_args=[]):
