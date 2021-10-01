@@ -166,15 +166,15 @@ class DataGenerationPipeline(AMLPipelineHelper):
                     )
                     
                     generation_task_subgraph_step.outputs.train.register_as(
-                        name=f"{dataset_prefix}-train",
+                        name=f"{dataset_prefix}-{generation_task.train_samples}samples-train",
                         create_new_version=True
                     )  
                     generation_task_subgraph_step.outputs.test.register_as(
-                        name=f"{dataset_prefix}-test",
+                        name=f"{dataset_prefix}-{generation_task.test_samples}samples-test",
                         create_new_version=True
                     )  
                     generation_task_subgraph_step.outputs.inference.register_as(
-                        name=f"{dataset_prefix}-inference",
+                        name=f"{dataset_prefix}-{generation_task.inferencing_samples}samples-inference",
                         create_new_version=True
                     )  
 
