@@ -29,12 +29,14 @@ module_loader: # module loading params
 lightgbm_training:
   benchmark_name: "benchmark-dev"
 
+  # name of the train/test dataset pairs to train on (can provide multiple as a list)
   tasks:
-    - train_dataset: "synthetic-regr-4000cols-train"
-      test_dataset: "synthetic-regr-4000cols-test"
+    - train_dataset: "synthetic-regression-100cols-100000samples-train"
+      test_dataset: "synthetic-regression-100cols-10000samples-test"
 
+  # set of parameters to train on all tasks
   reference_training:
-    # TRAINING
+    # training params
     objective: "regression"
     metric: "rmse"
     boosting: "gbdt"
@@ -47,12 +49,9 @@ lightgbm_training:
     feature_fraction: 1.0
     #register_model_as: "synthetic-regression-{num_iterations}trees-{num_leaves}leaves"
 
-    # COMPUTE PARAMS
+    # compute params
     #target: null
     device_type: "cpu"
     nodes: 1
     processes: 1
     #override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_pip.dockerfile"
-
-  variants:
-    - num_iterations: 50
