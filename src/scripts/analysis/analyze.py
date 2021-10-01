@@ -182,6 +182,7 @@ class AnalysisEngine():
 
             # add to internal list of data
             self.logger.info(f"Fetched run {run.id}, obtained {len(benchmark_data_entry.keys())} fields including {len(benchmark_data_entry['metrics'].keys())} metrics")
+            print(benchmark_data_entry)
 
             # add data to internal list for analysis
             self.benchmark_data.append(benchmark_data_entry)
@@ -217,7 +218,7 @@ class AnalysisEngine():
             tasks.add(task_key)
 
             # store the metric at the right location in metrics dict
-            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None) / entry['dataset_rows'] * 1000000 # mu secs per query
+            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None) / entry['dataset_samples'] * 1000000 # mu secs per query
         
         # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:

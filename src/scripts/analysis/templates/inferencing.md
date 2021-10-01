@@ -12,12 +12,14 @@ IMPORTANT: This is work in progress, to check out current work items check the [
 | {{variant[0]}}_{{loop.index}} | {{variant[0]}} | {{variant[1]}} | {{variant[2]}} |
 {% endfor %}
 
-## Metric time_inferencing per predict (usecs)
+## Metric time_inferencing per prediction (usecs)
 
 | &nbsp; |{% for variant in variants %} {{variant[0]}}_{{loop.index}} |{% endfor %}
 | :-- |{% for variant in variants %} :-- |{% endfor %}
 {% for task in tasks -%}
     {%- set outer_loop_index = loop.index0 -%}
     | trees={{task[0]}}<br/>leaves={{task[1]}}<br/>cols={{task[2]}}<br/> |
-        {%- for variant in variants %} {{ "{:,.2f}".format(metrics[outer_loop_index][loop.index0]) }} usecs |{% endfor %}
+        {%- for variant in variants-%}
+        {{- " {:,.2f} ".format(metrics[outer_loop_index][loop.index0]) -}} |
+        {%- endfor %}
 {% endfor %}
