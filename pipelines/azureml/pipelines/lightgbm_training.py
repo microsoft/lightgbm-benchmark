@@ -239,12 +239,14 @@ class LightGBMTraining(AMLPipelineHelper):
                     # for other modes, train data has to be one file
                     partitioned_train_data = train_dataset
 
+                # create instance of training module and apply training params
                 lightgbm_train_step = lightgbm_train_module(
                     train = partitioned_train_data,
                     test = test_dataset,
                     **training_params
                 )
 
+                # apply runsettings
                 self.apply_smart_runsettings(
                     lightgbm_train_step,
                     node_count = runsettings['nodes'],

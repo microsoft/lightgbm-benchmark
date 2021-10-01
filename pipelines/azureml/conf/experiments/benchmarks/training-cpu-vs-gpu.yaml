@@ -29,6 +29,7 @@ module_loader: # module loading params
 lightgbm_training:
   benchmark_name: "benchmark-gpu-vs-cpu"
 
+  # list all the train/test pairs to train on
   tasks:
     - train_dataset: "synthetic-regression-10cols-100000samples-train"
       test_dataset: "synthetic-regression-10cols-10000samples-test"
@@ -37,6 +38,8 @@ lightgbm_training:
     - train_dataset: "synthetic-regression-1000cols-100000samples-train"
       test_dataset: "synthetic-regression-1000cols-10000samples-test"
 
+  # reference settings for the benchmark
+  # all variants will be based on this
   reference_training:
     # TRAINING
     objective: "regression"
@@ -57,6 +60,7 @@ lightgbm_training:
     nodes: 1
     processes: 1
 
+  # variant settings override what is in reference_training
   variants:
     - device_type: "gpu"
       override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_gpu_pip.dockerfile"
