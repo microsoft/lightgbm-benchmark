@@ -28,7 +28,7 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "20210929c" # need to be provided at runtime!
+  benchmark_name: "20210930a" # need to be provided at runtime!
 
   tasks:
     - dataset: "synthetic-regression-10cols-10000samples-inference"
