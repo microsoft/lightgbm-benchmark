@@ -160,12 +160,13 @@ class AnalysisEngine():
 
             # parse the dataset name for numbers of columns
             if 'benchmark_dataset' in benchmark_data_entry and benchmark_data_entry['benchmark_dataset']:
-                dataset_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-inference"
+                dataset_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)samples-inference"
                 dataset_matched = re.match(dataset_pattern, benchmark_data_entry['benchmark_dataset'])
                 if dataset_matched:
                     benchmark_data_entry['dataset_origin'] = dataset_matched.group(1)
                     benchmark_data_entry['dataset_task'] = dataset_matched.group(2)
                     benchmark_data_entry['dataset_columns'] = int(dataset_matched.group(3))
+                    benchmark_data_entry['dataset_samples'] = int(dataset_matched.group(4))
 
             # get framework (variant) info
             benchmark_data_entry['framework'] = run_tags.get('framework', None)
@@ -216,7 +217,7 @@ class AnalysisEngine():
             tasks.add(task_key)
 
             # store the metric at the right location in metrics dict
-            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None)
+            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None) / entry['dataset_rows'] * 1000000 # mu secs per query
         
         # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:
