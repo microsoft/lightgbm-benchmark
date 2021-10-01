@@ -11,7 +11,7 @@ import sys
 import json
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Optional
+from typing import Optional, Any, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
@@ -24,6 +24,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
 from common.sweep import SweepParameterParser
+from common.tasks import training_task, training_variant
 
 class LightGBMTraining(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -48,57 +49,26 @@ class LightGBMTraining(AMLPipelineHelper):
             # NOTE: all those values are REQUIRED in your yaml config file
             benchmark_name: str = MISSING
 
-            # INPUT DATA
-            train_dataset: str = MISSING
-            train_dataset_version: Optional[str] = None
-            test_dataset: str = MISSING
-            test_dataset_version: Optional[str] = None
+            # INPUT DATASETS
+            tasks: List[training_task] = MISSING
 
-            # TRAINING
-            # fixed training parameters
-            objective: str = MISSING
-            metric: str = MISSING
-            boosting: str = MISSING
-            tree_learner: str = MISSING
+            # TRAINING PARAMS
+            reference_training: training_variant = MISSING
 
-            # sweepable training parameters
-            # NOTE: need to be str so they can be parsed (ex: 'choice(100,200)')
-            num_iterations: str = MISSING
-            num_leaves: str = MISSING
-            min_data_in_leaf: str = MISSING
-            learning_rate: str = MISSING
-            max_bin: str = MISSING
-            feature_fraction: str = MISSING
-
-            # COMPUTE
-            device_type: str = "cpu"
-            nodes: int = 1
-            processes: int = 1
-            target: Optional[str] = None
-            override_docker: Optional[str] = None
-            override_os: Optional[str] = None
-
-            # SWEEP
-            # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809
-            sweep_algorithm: str = "random"
-            sweep_goal: str = "minimize"
-            sweep_max_total_trials: Optional[int] = None
-            sweep_max_concurrent_trials: Optional[int] = None
-            sweep_timeout_minutes: Optional[int] = None
-
-            # OUTPUT REGISTRATION
-            training_register_model_as: Optional[str] = None
+            # free changing parameters on top of reference
+            variants: Optional[Any] = None
 
         # return the dataclass itself
         # for helper class to construct config file
         return lightgbm_training
 
 
-    def process_sweep_parameters(self, config):
+    def process_sweep_parameters(self, params_dict, sweep_algorithm):
         """Parses config and spots sweepable paraneters
         
         Args:
-            config (DictConfig): configuration object (see get_config_class())
+            params_dict (dict): configuration object (see get_config_class())
+            sweep_algorithm (str): random, grid, bayesian
 
         Returns:
             tunable_params (dict)
@@ -115,17 +85,17 @@ class LightGBMTraining(AMLPipelineHelper):
                 "feature_fraction"
             ],
             cli_prefix=None, # this is not argparse
-            parameter_sampling=config.lightgbm_training.sweep_algorithm
+            parameter_sampling=sweep_algorithm
         )
 
         # provide config as a dictionary to the parser
         sweep_parameters = {
-            "num_iterations": config.lightgbm_training.num_iterations,
-            "num_leaves": config.lightgbm_training.num_leaves,
-            "min_data_in_leaf": config.lightgbm_training.min_data_in_leaf,
-            "learning_rate": config.lightgbm_training.learning_rate,
-            "max_bin": config.lightgbm_training.max_bin,
-            "feature_fraction": config.lightgbm_training.feature_fraction,
+            "num_iterations": params_dict['num_iterations'],
+            "num_leaves": params_dict['num_leaves'],
+            "min_data_in_leaf": params_dict['min_data_in_leaf'],
+            "learning_rate": params_dict['learning_rate'],
+            "max_bin": params_dict['max_bin'],
+            "feature_fraction": params_dict['feature_fraction'],
         }
 
         # parser gonna parse
@@ -154,36 +124,20 @@ class LightGBMTraining(AMLPipelineHelper):
         Returns:
             dsl.pipeline: the function to create your pipeline
         """
-        tunable_params, fixed_params = self.process_sweep_parameters(config)
-        enable_sweep = (len(tunable_params.keys())>0)
-
-        # Data modules
+        # required modules
+        lightgbm_train_module = self.module_load("lightgbm_python_train")
+        lightgbm_train_sweep_module = self.module_load("lightgbm_python_train_sweep")
         partition_data_module = self.module_load("partition_data")
 
-        # Training modules
-        if enable_sweep:
-            # there is at least one sweep parameter, use sweep instead
-            lightgbm_train_module = self.module_load("lightgbm_python_train_sweep")
-            
-            # merge both params to feed into module
-            training_params = fixed_params.copy()
-            training_params.update(tunable_params)
-        else:
-            # there are no sweep parameters, use regular training
-            lightgbm_train_module = self.module_load("lightgbm_python_train")
-            training_params = fixed_params
-
-        benchmark_custom_properties = json.dumps({
-            'benchmark_name' : config.lightgbm_training.benchmark_name
-        })
-        pipeline_name = f"lightgbm_training_{config.lightgbm_training.objective}"
-        pipeline_description = f"LightGBM {config.lightgbm_training.objective} distributed training (mpi) on synthetic data"
+        pipeline_name = f"lightgbm_training_{config.lightgbm_training.reference_training.objective}"
+        pipeline_description = f"LightGBM {config.lightgbm_training.reference_training.objective} distributed training (mpi) on synthetic data"
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name=pipeline_name, # pythonic name
                       description=pipeline_description,
-                      default_datastore=config.compute.noncompliant_datastore)
-        def lightgbm_training_pipeline_function(train_dataset, test_dataset):
+                      default_datastore=config.compute.noncompliant_datastore,
+                      non_pipeline_parameters=['benchmark_custom_properties'])
+        def lightgbm_training_pipeline_function(benchmark_custom_properties, train_dataset, test_dataset):
             """Pipeline function for this graph.
 
             Args:
@@ -192,94 +146,130 @@ class LightGBMTraining(AMLPipelineHelper):
             Returns:
                 dict[str->PipelineOutputData]: a dictionary of your pipeline outputs
                     for instance to be consumed by other graphs
-            """           
-            if config.lightgbm_training.tree_learner == "data" or config.lightgbm_training.tree_learner == "voting":
-                # if using data parallel, train data has to be partitioned first
-                if (config.lightgbm_training.nodes * config.lightgbm_training.processes) > 1:
-                    partition_data_step = partition_data_module(
-                        input_data=train_dataset,
-                        mode="roundrobin",
-                        number=(config.lightgbm_training.nodes * config.lightgbm_training.processes)
-                    )
-                    self.apply_smart_runsettings(partition_data_step)
-                    partitioned_train_data = train_dataset
+            """
+            # create dict of all params for training module
+            reference_training_params = {
+                'header' : False,
+                'label_column' : "0",
+
+                # training params
+                'objective' : config.lightgbm_training.reference_training.objective,
+                'metric' : config.lightgbm_training.reference_training.metric,
+                'boosting' : config.lightgbm_training.reference_training.boosting,
+                'tree_learner' : config.lightgbm_training.reference_training.tree_learner,
+
+                # sweepable params
+                'num_iterations' : config.lightgbm_training.reference_training.num_iterations,
+                'num_leaves' : config.lightgbm_training.reference_training.num_leaves,
+                'min_data_in_leaf' : config.lightgbm_training.reference_training.min_data_in_leaf,
+                'learning_rate' : config.lightgbm_training.reference_training.learning_rate,
+                'max_bin' : config.lightgbm_training.reference_training.max_bin,
+                'feature_fraction' : config.lightgbm_training.reference_training.feature_fraction,
+
+                # generic params
+                'verbose' : False,
+                'custom_properties' : json.dumps(benchmark_custom_properties),
+
+                # compute params
+                'device_type' : config.lightgbm_training.reference_training.device_type,
+            }
+
+            # create a dict with all compute/runsettings
+            reference_runsettings = {
+                'nodes' : config.lightgbm_training.reference_training.nodes,
+                'processes' : config.lightgbm_training.reference_training.processes,
+                'target' : config.lightgbm_training.reference_training.target,
+                'register_model_as' : config.lightgbm_training.reference_training.register_model_as,
+                'override_docker' : config.lightgbm_training.reference_training.override_docker,
+                'override_os' : config.lightgbm_training.reference_training.override_os,
+            }
+
+            # create list of all training params
+            training_variants_params = [
+                reference_training_params.copy()
+            ]
+            runsettings_variants_params = [
+                reference_runsettings.copy()
+            ]
+
+            # create distinct training params for each variant
+            for training_variant in config.lightgbm_training.variants:
+                # create a specific dict of params for the variant
+                variant_params = reference_training_params.copy()
+                variant_runsettings = reference_runsettings.copy()
+
+                variant_config = dict(training_variant)
+
+                # we don't copy everything here in order to not mix up params and
+                for key in variant_params:
+                    if key in variant_config:
+                        variant_params[key] = variant_config[key]
+
+                # we don't copy everything here in order to not mix up params and
+                for key in variant_runsettings:
+                    if key in variant_config:
+                        variant_runsettings[key] = variant_config[key]
+
+                # add to training params list
+                training_variants_params.append(variant_params)
+                runsettings_variants_params.append(variant_runsettings)
+            
+            # iterate to create runsettings
+            for index, variant_training_params in enumerate(training_variants_params):
+                # test if we have sweepable parameters in the learning params
+                print(f"*** lightgbm training variant#{index}: {variant_training_params}")
+
+            # for each training variant, create a module sequence
+            for training_params,runsettings in zip(training_variants_params,runsettings_variants_params):
+                # if we're using multinode, add partitioning
+                if training_params['tree_learner'] == "data" or training_params['tree_learner'] == "voting":
+                    # if using data parallel, train data has to be partitioned first
+                    if (runsettings['nodes'] * runsettings['processes']) > 1:
+                        partition_data_step = partition_data_module(
+                            input_data=train_dataset,
+                            mode="roundrobin",
+                            number=(runsettings['nodes'] * runsettings['processes'])
+                        )
+                        self.apply_smart_runsettings(partition_data_step)
+                        partitioned_train_data = train_dataset
+                    else:
+                        # for other modes, train data has to be one file
+                        partitioned_train_data = train_dataset
                 else:
                     # for other modes, train data has to be one file
                     partitioned_train_data = train_dataset
-            else:
-                # for other modes, train data has to be one file
-                partitioned_train_data = train_dataset
 
-            lightgbm_train_step = lightgbm_train_module(
-                train = partitioned_train_data,
-                test = test_dataset,
-                header = False,
-                label_column = "0",
-                #group_column = None,
-                objective = config.lightgbm_training.objective,
-                metric = config.lightgbm_training.metric,
-                boosting = config.lightgbm_training.boosting,
-                tree_learner = config.lightgbm_training.tree_learner,
-
-                # sweepable params
-                num_iterations = training_params['num_iterations'],
-                num_leaves = training_params['num_leaves'],
-                min_data_in_leaf = training_params['min_data_in_leaf'],
-                learning_rate = training_params['learning_rate'],
-                max_bin = training_params['max_bin'],
-                feature_fraction = training_params['feature_fraction'],
-
-                # generic params
-                verbose = False,
-                custom_properties = benchmark_custom_properties,
-
-                # compute params
-                device_type = config.lightgbm_training.device_type
-            )
-
-            if enable_sweep:
-                # apply runsettings specific to sweep
-                self.apply_smart_runsettings(
-                    lightgbm_train_step,
-                    gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
-                    target = config.lightgbm_training.target,
-                    node_count=config.lightgbm_training.nodes,
-                    process_count_per_node=config.lightgbm_training.processes,
-                    sweep = True,
-                    primary_metric = "valid_0." + config.lightgbm_training.metric,
-                    goal = config.lightgbm_training.sweep_goal,
-                    algorithm = config.lightgbm_training.sweep_algorithm,
-                    max_total_trials = config.lightgbm_training.sweep_max_total_trials,
-                    max_concurrent_trials = config.lightgbm_training.sweep_max_concurrent_trials,
-                    timeout_minutes = config.lightgbm_training.sweep_timeout_minutes
+                lightgbm_train_step = lightgbm_train_module(
+                    train = partitioned_train_data,
+                    test = test_dataset,
+                    **training_params
                 )
-            else:
+
                 self.apply_smart_runsettings(
                     lightgbm_train_step,
-                    node_count = config.lightgbm_training.nodes,
-                    process_count_per_node = config.lightgbm_training.processes,
-                    gpu = (config.lightgbm_training.device_type == 'gpu' or config.lightgbm_training.device_type == 'cuda'),
-                    target = config.lightgbm_training.target
+                    node_count = runsettings['nodes'],
+                    process_count_per_node = runsettings['processes'],
+                    gpu = (training_params['device_type'] == 'gpu' or training_params['device_type'] == 'cuda'),
+                    target = runsettings['target']
                 )
 
             # optional: save output model
-            if config.lightgbm_training.training_register_model_as:
+            if 'register_model_as' in runsettings and runsettings['register_model_as']:
                 lightgbm_train_step.outputs.model.register_as(
-                    name=config.lightgbm_training.training_register_model_as,
+                    name=runsettings['register_model_as'],
                     create_new_version=True
-                )                
+                )
 
-            if config.lightgbm_training.override_docker:
-                custom_docker = Docker(file=config.lightgbm_training.override_docker)
+            # optional: override environment (ex: to test custom builds)
+            if 'override_docker' in runsettings and runsettings['override_docker']:
+                custom_docker = Docker(file=runsettings['override_docker'])
                 lightgbm_train_step.runsettings.environment.configure(
                     docker=custom_docker,
-                    os=config.lightgbm_training.override_os or "Linux"
+                    os=runsettings.get('override_os', 'Linux')
                 )
 
             # return {key: output}'
-            return {
-                'model' : lightgbm_train_step.outputs.model
-            }
+            return {}
 
         # finally return the function itself to be built by helper code
         return lightgbm_training_pipeline_function
@@ -298,20 +288,36 @@ class LightGBMTraining(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
-        train_data = self.dataset_load(
-            name = config.lightgbm_training.train_dataset,
-            version = config.lightgbm_training.train_dataset_version # use latest if None
-        )
-        test_data = self.dataset_load(
-            name = config.lightgbm_training.test_dataset,
-            version = config.lightgbm_training.test_dataset_version # use latest if None
-        )
+        # Here you should create an instance of a pipeline function (using your custom config dataclass)
+        @dsl.pipeline(name="training_all_tasks", # pythonic name
+                      description="Training on all specified tasks",
+                      default_datastore=config.compute.noncompliant_datastore)
+        def training_all_tasks():
+            for training_task in config.lightgbm_training.tasks:
+                train_data = self.dataset_load(
+                    name = training_task.train_dataset,
+                    version = training_task.train_dataset_version # use latest if None
+                )
+                test_data = self.dataset_load(
+                    name = training_task.test_dataset,
+                    version = training_task.test_dataset_version # use latest if None
+                )
 
-        # when all inputs are obtained, we call the pipeline function
-        experiment_pipeline = pipeline_function(train_data, test_data)
+                # create custom properties for this task
+                benchmark_custom_properties = {
+                    'benchmark_name' : config.lightgbm_training.benchmark_name,
+                    'benchmark_train_dataset' : training_task.train_dataset,
+                    'benchmark_test_dataset' : training_task.test_dataset,
+                }
 
-        # and we return that function so that helper can run it.
-        return experiment_pipeline
+                training_task_subgraph_step = pipeline_function(
+                    benchmark_custom_properties=benchmark_custom_properties,
+                    train_dataset=train_data,
+                    test_dataset=test_data
+                )
+
+        # return the instance of this general function
+        return training_all_tasks()
 
 
 # NOTE: main block is necessary only if script is intended to be run from command line
