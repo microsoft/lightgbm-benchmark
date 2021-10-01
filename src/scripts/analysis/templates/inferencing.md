@@ -9,7 +9,15 @@ IMPORTANT: This is work in progress, to check out current work items check the [
 | Index | Framework | Version | Build |
 | :-- | :-- | :-- | :-- |
 {% for variant in variants -%}
-| {{variant[0]}}_{{loop.index}} | {{variant[0]}} | {{variant[1]}} | {{variant[2]}} |
+| {{variant[0]}}_{{loop.index-}}
+| {{variant[0]-}}
+| {{variant[1]-}}
+| {% if variant[2].startswith("dockers/") -%}
+    [{{variant[2]}}](https://github.com/microsoft/lightgbm-benchmark/tree/main/src/scripts/lightgbm_python/{{variant[2]}})
+  {%- else -%}
+    {{variant[2]}}
+  {%- endif -%}
+|
 {% endfor %}
 
 ## Metric time_inferencing per prediction (usecs)
