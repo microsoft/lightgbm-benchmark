@@ -231,7 +231,7 @@ class LightGBMTraining(AMLPipelineHelper):
                             number=(runsettings['nodes'] * runsettings['processes'])
                         )
                         self.apply_smart_runsettings(partition_data_step)
-                        partitioned_train_data = train_dataset
+                        partitioned_train_data = partition_data_step.outputs.output_data
                     else:
                         # for other modes, train data has to be one file
                         partitioned_train_data = train_dataset
