@@ -332,6 +332,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 if runsettings.get('register_model_suffix', None):
                     model_basename += "-" + runsettings.get('register_model_suffix')
                 
+                print(f"Will output model at {model_basename}")
                 lightgbm_train_step.outputs.model.register_as(
                     name=model_basename,
                     create_new_version=True
