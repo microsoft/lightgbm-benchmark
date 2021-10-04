@@ -41,7 +41,9 @@ lightgbm_training:
     metric: "rmse"
     boosting: "gbdt"
     tree_learner: "data"
-    #register_model_as: "synthetic-regression-{num_iterations}trees-{num_leaves}leaves"
+    register_model: True # "{prefix}-{objective}-{cols}cols-{num_iterations}trees-{num_leaves}leaves-{suffix}"
+    register_model_prefix: "synthetic-regression"
+    register_model_suffix: "cpu-sweep"
 
     # "sweepable" training parameters
     num_iterations: "choice(100, 200)"

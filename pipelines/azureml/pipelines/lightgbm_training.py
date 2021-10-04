@@ -188,7 +188,9 @@ class LightGBMTraining(AMLPipelineHelper):
                 'nodes' : config.lightgbm_training.reference_training.nodes,
                 'processes' : config.lightgbm_training.reference_training.processes,
                 'target' : config.lightgbm_training.reference_training.target,
-                'register_model_as' : config.lightgbm_training.reference_training.register_model_as,
+                'register_model' : config.lightgbm_training.reference_training.register_model,
+                'register_model_prefix' : config.lightgbm_training.reference_training.register_model_prefix,
+                'register_model_suffix' : config.lightgbm_training.reference_training.register_model_suffix,
                 'override_docker' : config.lightgbm_training.reference_training.override_docker,
                 'override_os' : config.lightgbm_training.reference_training.override_os,
             }
@@ -319,9 +321,19 @@ class LightGBMTraining(AMLPipelineHelper):
 
 
             # optional: save output model
-            if 'register_model_as' in runsettings and runsettings['register_model_as']:
+            if 'register_model' in runsettings and runsettings['register_model']:
+                # "{prefix}-{objective}-{cols}cols-{num_iterations}trees-{num_leaves}leaves"
+                model_basename = "{prefix}-{objective}-{num_iterations}trees-{num_leaves}leaves".format(
+                    prefix=runsettings['register_model_prefix'],
+                    objective=training_params['objective'],
+                    num_iterations=training_params['num_iterations'],
+                    num_leaves=training_params['num_leaves']
+                )
+                if runsettings.get('register_model_suffix', None):
+                    model_basename += "-" + runsettings.get('register_model_suffix')
+                
                 lightgbm_train_step.outputs.model.register_as(
-                    name=runsettings['register_model_as'],
+                    name=model_basename,
                     create_new_version=True
                 )
 
