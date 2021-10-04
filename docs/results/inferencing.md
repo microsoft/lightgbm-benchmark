@@ -18,15 +18,15 @@ IMPORTANT: This is work in progress, to check out current work items check the [
 
 | &nbsp; | lightgbm_python_1 | lightgbm_python_2 | lightgbm_python_3 | treelite_python_4 |
 | :-- | :-- | :-- | :-- | :-- |
-| trees=10<br/>leaves=10<br/>cols=10<br/> | 5.49 | 7.67 | 7.41 | 0.34 |
-| trees=10<br/>leaves=100<br/>cols=10<br/> | 15.40 | 16.83 | 11.96 | 6.20 |
-| trees=10<br/>leaves=1000<br/>cols=10<br/> | 122.77 | 127.34 | 64.13 | 33.89 |
-| trees=10<br/>leaves=5000<br/>cols=10<br/> | 425.67 | 473.33 | 217.00 | 201.87 |
-| trees=100<br/>leaves=10<br/>cols=100<br/> | 8.88 | 10.04 | 10.81 | 0.36 |
-| trees=100<br/>leaves=100<br/>cols=100<br/> | 19.44 | 19.14 | 14.66 | 6.12 |
-| trees=100<br/>leaves=1000<br/>cols=100<br/> | 185.39 | 179.37 | 110.73 | 101.45 |
-| trees=100<br/>leaves=5000<br/>cols=100<br/> | 514.21 | 497.09 | 300.97 | 289.12 |
-| trees=1000<br/>leaves=10<br/>cols=1000<br/> | 40.33 | 37.42 | 43.68 | 1.88 |
-| trees=1000<br/>leaves=100<br/>cols=1000<br/> | 51.15 | 47.06 | 45.47 | 7.82 |
-| trees=1000<br/>leaves=1000<br/>cols=1000<br/> | 204.33 | 193.04 | 140.70 | 106.86 |
-| trees=1000<br/>leaves=5000<br/>cols=1000<br/> | 720.98 | 658.46 | 429.75 | 467.27 |
+| trees=10<br/>leaves=31<br/>cols=10<br/> | 5.49 | 7.67 | 7.41 | 0.34 |
+| trees=10<br/>leaves=31<br/>cols=100<br/> | 8.88 | 10.04 | 10.81 | 0.36 |
+| trees=10<br/>leaves=31<br/>cols=1000<br/> | 40.33 | 37.42 | 43.68 | 1.88 |
+| trees=100<br/>leaves=31<br/>cols=10<br/> | 15.40 | 16.83 | 11.96 | 6.20 |
+| trees=100<br/>leaves=31<br/>cols=100<br/> | 19.44 | 19.14 | 14.66 | 6.12 |
+| trees=100<br/>leaves=31<br/>cols=1000<br/> | 51.15 | 47.06 | 45.47 | 7.82 |
+| trees=1000<br/>leaves=31<br/>cols=10<br/> | 122.77 | 127.34 | 64.13 | 33.89 |
+| trees=1000<br/>leaves=31<br/>cols=100<br/> | 185.39 | 179.37 | 110.73 | 101.45 |
+| trees=1000<br/>leaves=31<br/>cols=1000<br/> | 204.33 | 193.04 | 140.70 | 106.86 |
+| trees=5000<br/>leaves=31<br/>cols=10<br/> | 425.67 | 473.33 | 217.00 | 201.87 |
+| trees=5000<br/>leaves=31<br/>cols=100<br/> | 514.21 | 497.09 | 300.97 | 289.12 |
+| trees=5000<br/>leaves=31<br/>cols=1000<br/> | 720.98 | 658.46 | 429.75 | 467.27 |
