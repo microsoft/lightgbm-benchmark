@@ -51,4 +51,4 @@ data_generation:
       n_informative: 1000
 
   register_outputs: true
-  register_outputs_prefix: "synthetic" # "{prefix}-{task}-{n_features}cols-{train|test|inference}"
+  register_outputs_prefix: "synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"
