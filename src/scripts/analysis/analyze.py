@@ -151,8 +151,8 @@ class AnalysisEngine():
                 if model_matched:
                     benchmark_data_entry['dataset_origin'] = model_matched.group(1)
                     benchmark_data_entry['dataset_task'] = model_matched.group(2)
-                    benchmark_data_entry['model_trees'] = int(model_matched.group(3))
-                    benchmark_data_entry['model_leaves'] = int(model_matched.group(4))
+                    benchmark_data_entry['model_trees'] = int(model_matched.group(4))
+                    benchmark_data_entry['model_leaves'] = int(model_matched.group(5))
 
             # get the dataset name from a tag
             if 'benchmark_dataset' in run_tags:
