@@ -33,9 +33,12 @@ For each of those, you need to create a File dataset with your training and test
 3\. Modify the lines below to reflect the name of your input train/test datasets:
 
 ```yaml
-train_dataset: "NAME OF YOUR TRAINING DATASET HERE"
-test_dataset: "NAME OF YOUR TESTING DATASET HERE"
+tasks:
+  - train_dataset: "NAME OF YOUR TRAINING DATASET HERE"
+    test_dataset: "NAME OF YOUR TESTING DATASET HERE"
 ```
+
+> Note: `tasks` is actually a list, if you provide multiple pairs, the pipeline will train one model per task pair.
 
 4\. If you want the pipeline to save your model as a dataset, uncomment the line below and name the output accordingly:
 
@@ -65,6 +68,7 @@ To enable multi-node training, simple modify the number of nodes under:
 
 ```yaml
 lightgbm_training:
+  reference_training:
     nodes: 1
 ```
 
@@ -82,6 +86,7 @@ To enable gpu training, modify the options below:
 
 ```yaml
 lightgbm_training:
+  reference_training:
     device_type: "gpu"
 ```
 
@@ -99,6 +104,7 @@ To enable gpu training, modify the options below:
 
 ```yaml
 lightgbm_training:
+  reference_training:
     override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_custom.dockerfile"
 ```
 
@@ -118,6 +124,7 @@ To enable parameter sweep, just change the "sweepable" parameters (see below) to
 
 ```yaml
 lightgbm_training:
+  reference_training:
     # "sweepable" training parameters
     num_iterations: "choice(100, 200)"
     num_leaves: "choice(10,20,30)"
@@ -137,10 +144,49 @@ You can also modify the parameters of Sweep itself, see [documentation on the ro
 
 ```yaml
 lightgbm_training:
+  reference_training:
     # SWEEP
     sweep_algorithm: "random"
     sweep_goal: "minimize"
     sweep_max_total_trials: 10
     sweep_max_concurrent_trials: 10
     sweep_timeout_minutes: 60
+```
+
+## Running multiple variants of training parameters
+
+The training pipeline allows you do benchmark multiple variants of the training parameters.
+
+The structure of `lightbm_training` settings relies on 3 main sections:
+- `tasks` : a list of train/test dataset pairs
+- `reference_training`: parameters used as reference for lightgbm training
+- `variants`: a list of parameter overrides that apply on top of `reference_training` parameters.
+
+So you can create as many tasks and variants as you'd like and run them all into one single pipeline.
+
+An example use case is training on cpu versus gpu. See the example file [training-cpu-vs-gpu.yaml](https://github.com/microsoft/lightgbm-benchmark/tree/main/pipelines/azureml/conf/experiments/benchmarks/training-cpu-vs-gpu.yaml). In this file, the variant just consists in overriding the `device_type` and docker image path:
+
+```yaml
+lightgbm_training:
+  benchmark_name: "benchmark-gpu-vs-cpu"
+
+  # list all the train/test pairs to train on
+  tasks:
+    - train_dataset: "synthetic-regression-10cols-100000samples-train"
+      test_dataset: "synthetic-regression-10cols-10000samples-test"
+    - train_dataset: "synthetic-regression-100cols-100000samples-train"
+      test_dataset: "synthetic-regression-100cols-10000samples-test"
+    - train_dataset: "synthetic-regression-1000cols-100000samples-train"
+      test_dataset: "synthetic-regression-1000cols-10000samples-test"
+
+  # reference settings for the benchmark
+  # all variants will be based on this
+  reference_training:
+    # lots of other params here
+    device_type: "cpu"
+
+  # variant settings override what is in reference_training
+  variants:
+    - device_type: "gpu"
+      override_docker: "....."
 ```
