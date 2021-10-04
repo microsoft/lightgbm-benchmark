@@ -174,6 +174,15 @@ class LightGBMTraining(AMLPipelineHelper):
                 'device_type' : config.lightgbm_training.reference_training.device_type,
             }
 
+            # create specific dict for sweep parameters
+            reference_sweep_params = {
+                'sweep_algorithm': config.lightgbm_training.reference_training.sweep_algorithm,
+                'sweep_goal': config.lightgbm_training.reference_training.sweep_goal,
+                'sweep_max_total_trials': config.lightgbm_training.reference_training.sweep_max_total_trials,
+                'sweep_max_concurrent_trials': config.lightgbm_training.reference_training.sweep_max_concurrent_trials,
+                'sweep_timeout_minutes': config.lightgbm_training.reference_training.sweep_timeout_minutes
+            }
+
             # create a dict with all compute/runsettings
             reference_runsettings = {
                 'nodes' : config.lightgbm_training.reference_training.nodes,
@@ -184,43 +193,74 @@ class LightGBMTraining(AMLPipelineHelper):
                 'override_os' : config.lightgbm_training.reference_training.override_os,
             }
 
-            # create list of all training params
+            # create list of all variants params
             training_variants_params = [
                 reference_training_params.copy()
+            ]
+            sweep_variants_params = [
+                reference_sweep_params.copy()
             ]
             runsettings_variants_params = [
                 reference_runsettings.copy()
             ]
 
-            # create distinct training params for each variant
-            for training_variant in config.lightgbm_training.variants:
-                # create a specific dict of params for the variant
-                variant_params = reference_training_params.copy()
-                variant_runsettings = reference_runsettings.copy()
+            # if there's any variant specified
+            if config.lightgbm_training.variants:
+                # create distinct training params for each variant
+                for training_variant in config.lightgbm_training.variants:
+                    # create a specific dict of params for the variant
+                    variant_params = reference_training_params.copy()
+                    variant_sweep_params = reference_sweep_params.copy()
+                    variant_runsettings = reference_runsettings.copy()
 
-                variant_config = dict(training_variant)
+                    variant_config = dict(training_variant)
 
-                # we don't copy everything here in order to not mix up params and
-                for key in variant_params:
-                    if key in variant_config:
-                        variant_params[key] = variant_config[key]
+                    # we don't copy everything here in order to not mix up params and runsettings
+                    for key in variant_params:
+                        if key in variant_config:
+                            variant_params[key] = variant_config[key]
 
-                # we don't copy everything here in order to not mix up params and
-                for key in variant_runsettings:
-                    if key in variant_config:
-                        variant_runsettings[key] = variant_config[key]
+                    # we don't copy everything here in order to not mix up params and runsettings
+                    for key in variant_sweep_params:
+                        if key in variant_config:
+                            variant_sweep_params[key] = variant_config[key]
 
-                # add to training params list
-                training_variants_params.append(variant_params)
-                runsettings_variants_params.append(variant_runsettings)
+                    # we don't copy everything here in order to not mix up params and runsettings
+                    for key in variant_runsettings:
+                        if key in variant_config:
+                            variant_runsettings[key] = variant_config[key]
+
+                    # add to training params list
+                    training_variants_params.append(variant_params)
+                    sweep_variants_params.append(variant_sweep_params)
+                    runsettings_variants_params.append(variant_runsettings)
             
-            # iterate to create runsettings
+            # for each variant, check if sweep needs to be applied
             for index, variant_training_params in enumerate(training_variants_params):
+                # extract and construct "sweepable" params
+                tunable_params, fixed_params = self.process_sweep_parameters(
+                    variant_training_params,
+                    sweep_variants_params[index]['sweep_algorithm']
+                )
+
                 # test if we have sweepable parameters in the learning params
+                if len(tunable_params) > 0:
+                    # create runsettings
+                    runsettings = runsettings_variants_params[index]
+
+                    runsettings['sweep'] = True
+
+                    # copy constructed sweep params into variant training params
+                    for key in tunable_params:
+                        variant_training_params[key] = tunable_params[key]
+
                 print(f"*** lightgbm training variant#{index}: {variant_training_params}")
+                print(f"*** lightgbm sweep variant#{index}: {sweep_variants_params[index]}")
+                print(f"*** lightgbm runsettings variant#{index}: {runsettings_variants_params[index]}")
+
 
             # for each training variant, create a module sequence
-            for training_params,runsettings in zip(training_variants_params,runsettings_variants_params):
+            for training_params,sweep_params,runsettings in zip(training_variants_params,sweep_variants_params,runsettings_variants_params):
                 # if we're using multinode, add partitioning
                 if training_params['tree_learner'] == "data" or training_params['tree_learner'] == "voting":
                     # if using data parallel, train data has to be partitioned first
@@ -240,20 +280,43 @@ class LightGBMTraining(AMLPipelineHelper):
                     partitioned_train_data = train_dataset
 
                 # create instance of training module and apply training params
-                lightgbm_train_step = lightgbm_train_module(
-                    train = partitioned_train_data,
-                    test = test_dataset,
-                    **training_params
-                )
+                if runsettings.get('sweep', None):
+                    # apply training parameters (including sweepable params)
+                    lightgbm_train_step = lightgbm_train_sweep_module(
+                        train = partitioned_train_data,
+                        test = test_dataset,
+                        **training_params
+                    )
+                    # apply runsettings
+                    self.apply_smart_runsettings(
+                        lightgbm_train_step,
+                        node_count = runsettings['nodes'],
+                        process_count_per_node = runsettings['processes'],
+                        gpu = (training_params['device_type'] == 'gpu' or training_params['device_type'] == 'cuda'),
+                        target = runsettings['target'],
+                        sweep = True,
+                        algorithm = sweep_params['sweep_algorithm'],
+                        goal = sweep_params['sweep_goal'],
+                        max_total_trials = sweep_params['sweep_max_total_trials'],
+                        max_concurrent_trials = sweep_params['sweep_max_concurrent_trials'],
+                        timeout_minutes = sweep_params['sweep_timeout_minutes']
+                    )
+                else:
+                    # apply training params
+                    lightgbm_train_step = lightgbm_train_module(
+                        train = partitioned_train_data,
+                        test = test_dataset,
+                        **training_params
+                    )
+                    # apply runsettings
+                    self.apply_smart_runsettings(
+                        lightgbm_train_step,
+                        node_count = runsettings['nodes'],
+                        process_count_per_node = runsettings['processes'],
+                        gpu = (training_params['device_type'] == 'gpu' or training_params['device_type'] == 'cuda'),
+                        target = runsettings['target']
+                    )
 
-                # apply runsettings
-                self.apply_smart_runsettings(
-                    lightgbm_train_step,
-                    node_count = runsettings['nodes'],
-                    process_count_per_node = runsettings['processes'],
-                    gpu = (training_params['device_type'] == 'gpu' or training_params['device_type'] == 'cuda'),
-                    target = runsettings['target']
-                )
 
             # optional: save output model
             if 'register_model_as' in runsettings and runsettings['register_model_as']:

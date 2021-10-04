@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training_sweep/cpu run.submit=True
+# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training/sweep run.submit=True
 
 defaults:
   - aml: sample
