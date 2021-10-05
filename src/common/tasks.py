@@ -68,6 +68,6 @@ class training_variant:
     sweep_timeout_minutes: Optional[int] = None
 
     # OUTPUT REGISTRATION
-    register_model: bool = False # "{prefix}-{objective}-{cols}cols-{num_iterations}trees-{num_leaves}leaves-{suffix}"
+    register_model: bool = False # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
     register_model_prefix: Optional[str] = None
     register_model_suffix: Optional[str] = None
