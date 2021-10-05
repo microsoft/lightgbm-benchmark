@@ -235,7 +235,7 @@ def run(args, unknown_args=[]):
     # below: initialize reporting of metrics with a custom session name
     metrics_logger = MetricsLogger(
         "lightgbm_python.train",
-        metrics_prefix=f"node_{mpi_config.world_rank}/" if mpi_config.mpi_available else None
+        metrics_prefix=f"node_{mpi_config.world_rank}/"
     )
     callbacks_handler = LightGBMCallbackHandler(metrics_logger = metrics_logger)
 
@@ -259,7 +259,7 @@ def run(args, unknown_args=[]):
         metrics_logger.set_platform_properties()
 
         # log lgbm parameters
-        #metrics_logger.log_parameters(**lgbm_params)
+        metrics_logger.log_parameters(**lgbm_params)
 
     # register logger for lightgbm logs
     lightgbm.register_logger(logger)
