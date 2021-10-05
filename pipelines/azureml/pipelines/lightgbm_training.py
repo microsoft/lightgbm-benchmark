@@ -20,7 +20,6 @@ from azure.ml.component.environment import Docker
 LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
 
 if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
-    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
 from common.sweep import SweepParameterParser
@@ -130,7 +129,7 @@ class LightGBMTraining(AMLPipelineHelper):
         partition_data_module = self.module_load("partition_data")
 
         pipeline_name = f"lightgbm_training_{config.lightgbm_training.reference_training.objective}"
-        pipeline_description = f"LightGBM {config.lightgbm_training.reference_training.objective} distributed training (mpi) on synthetic data"
+        pipeline_description = f"LightGBM {config.lightgbm_training.reference_training.objective} distributed training (mpi)"
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name=pipeline_name, # pythonic name
@@ -168,7 +167,7 @@ class LightGBMTraining(AMLPipelineHelper):
 
                 # generic params
                 'verbose' : False,
-                'custom_properties' : json.dumps(benchmark_custom_properties),
+                'custom_properties' : benchmark_custom_properties,
 
                 # compute params
                 'device_type' : config.lightgbm_training.reference_training.device_type,
@@ -256,13 +255,14 @@ class LightGBMTraining(AMLPipelineHelper):
                     for key in tunable_params:
                         variant_training_params[key] = tunable_params[key]
 
+                # some debug outputs to expose variant parameters
                 print(f"*** lightgbm training variant#{index}: {variant_training_params}")
                 print(f"*** lightgbm sweep variant#{index}: {sweep_variants_params[index]}")
                 print(f"*** lightgbm runsettings variant#{index}: {runsettings_variants_params[index]}")
 
 
             # for each training variant, create a module sequence
-            for training_params,sweep_params,runsettings in zip(training_variants_params,sweep_variants_params,runsettings_variants_params):
+            for variant_index,(training_params,sweep_params,runsettings) in enumerate(zip(training_variants_params,sweep_variants_params,runsettings_variants_params)):
                 # if we're using multinode, add partitioning
                 if training_params['tree_learner'] == "data" or training_params['tree_learner'] == "voting":
                     # if using data parallel, train data has to be partitioned first
@@ -280,6 +280,15 @@ class LightGBMTraining(AMLPipelineHelper):
                 else:
                     # for other modes, train data has to be one file
                     partitioned_train_data = train_dataset
+
+                # NOTE: last minute addition to custom_properties before transforming into json for tagging
+                # adding variant_index to spot which variant is the reference
+                training_params['custom_properties']['variant_index'] = variant_index
+                # adding build settings (docker+os)
+                training_params['custom_properties']['build'] = runsettings.get('override_docker') or "n/a"
+                training_params['custom_properties']['build_os'] = runsettings.get('override_os') or "n/a"                
+                # passing as json string that each module parses to digest as tags/properties
+                training_params['custom_properties'] = json.dumps(training_params['custom_properties'])
 
                 # create instance of training module and apply training params
                 if runsettings.get('sweep', None):
@@ -319,31 +328,36 @@ class LightGBMTraining(AMLPipelineHelper):
                         target = runsettings['target']
                     )
 
-
-            # optional: save output model
-            if 'register_model' in runsettings and runsettings['register_model']:
-                # "{prefix}-{objective}-{cols}cols-{num_iterations}trees-{num_leaves}leaves"
-                model_basename = "{prefix}-{objective}-{num_iterations}trees-{num_leaves}leaves".format(
-                    prefix=runsettings['register_model_prefix'],
-                    objective=training_params['objective'],
-                    num_iterations=training_params['num_iterations'],
-                    num_leaves=training_params['num_leaves']
-                )
-                if runsettings.get('register_model_suffix', None):
-                    model_basename += "-" + runsettings.get('register_model_suffix')
-                
-                print(f"Will output model at {model_basename}")
-                lightgbm_train_step.outputs.model.register_as(
-                    name=model_basename,
-                    create_new_version=True
-                )
-
             # optional: override environment (ex: to test custom builds)
             if 'override_docker' in runsettings and runsettings['override_docker']:
-                custom_docker = Docker(file=runsettings['override_docker'])
+                custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, "lightgbm_python", runsettings['override_docker']))
                 lightgbm_train_step.runsettings.environment.configure(
                     docker=custom_docker,
                     os=runsettings.get('override_os', 'Linux')
+                )
+
+            # optional: save output model
+            if 'register_model' in runsettings and runsettings['register_model']:
+                # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
+                model_basename = "{num_iterations}trees-{num_leaves}leaves".format(
+                    num_iterations=training_params['num_iterations'],
+                    num_leaves=training_params['num_leaves']
+                )
+                # prepend task_key if given
+                if benchmark_custom_properties.get('benchmark_task_key', None):
+                    model_basename = benchmark_custom_properties['benchmark_task_key'] + "-" + model_basename
+                # prepend prefix if given
+                if runsettings.get('register_model_prefix', None):
+                    model_basename = runsettings['register_model_prefix'] + "-" + model_basename
+                # append suffix if given
+                if runsettings.get('register_model_suffix', None):
+                    model_basename += "-" + runsettings.get('register_model_suffix')
+
+                print(f"*** Will output model at {model_basename}")
+                # auto-register output with model basename
+                lightgbm_train_step.outputs.model.register_as(
+                    name=model_basename,
+                    create_new_version=True
                 )
 
             # return {key: output}'
@@ -366,29 +380,36 @@ class LightGBMTraining(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
-        # Here you should create an instance of a pipeline function (using your custom config dataclass)
+        # creating an overall pipeline using pipeline_function for each task given
         @dsl.pipeline(name="training_all_tasks", # pythonic name
                       description="Training on all specified tasks",
                       default_datastore=config.compute.noncompliant_datastore)
         def training_all_tasks():
+            # loop on all training tasks
             for training_task in config.lightgbm_training.tasks:
+                # load the given train dataset
                 train_data = self.dataset_load(
                     name = training_task.train_dataset,
                     version = training_task.train_dataset_version # use latest if None
                 )
+                # load the given test dataset
                 test_data = self.dataset_load(
                     name = training_task.test_dataset,
                     version = training_task.test_dataset_version # use latest if None
                 )
 
                 # create custom properties for this task
+                # they will be passed on to each job as tags
                 benchmark_custom_properties = {
                     'benchmark_name' : config.lightgbm_training.benchmark_name,
                     'benchmark_train_dataset' : training_task.train_dataset,
                     'benchmark_test_dataset' : training_task.test_dataset,
+                    'benchmark_task_key' : training_task.task_key
                 }
 
+                # call pipeline_function as a subgraph here
                 training_task_subgraph_step = pipeline_function(
+                    # NOTE: benchmark_custom_properties is not an actual pipeline input, just passed to the python code
                     benchmark_custom_properties=benchmark_custom_properties,
                     train_dataset=train_data,
                     test_dataset=test_data
