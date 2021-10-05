@@ -6,6 +6,7 @@ from typing import Optional
 class inferencing_task:
     dataset: str = MISSING
     model: str = MISSING
+    task_key: Optional[str] = None
     predict_disable_shape_check: bool = False
 
 @dataclass
@@ -17,6 +18,7 @@ class inferencing_variants:
 @dataclass
 class data_generation_task:
     task: str = MISSING
+    task_key: Optional[str] = None
     train_samples: int = MISSING
     test_samples: int = MISSING
     inferencing_samples: int = MISSING
@@ -29,6 +31,7 @@ class training_task:
     train_dataset_version: Optional[str] = None
     test_dataset: str = MISSING
     test_dataset_version: Optional[str] = None
+    task_key: Optional[str] = None
 
 @dataclass
 class training_variant:
@@ -65,4 +68,6 @@ class training_variant:
     sweep_timeout_minutes: Optional[int] = None
 
     # OUTPUT REGISTRATION
-    register_model_as: Optional[str] = None
+    register_model: bool = False # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
+    register_model_prefix: Optional[str] = None
+    register_model_suffix: Optional[str] = None
