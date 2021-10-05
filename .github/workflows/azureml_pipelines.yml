@@ -53,7 +53,7 @@ jobs:
       run: >-
         python pipelines/lightgbm_inferencing.py
         --config-dir ./conf
-        --config-name experiments/benchmark-inferencing
+        --config-name experiments/lightgbm-inferencing
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
