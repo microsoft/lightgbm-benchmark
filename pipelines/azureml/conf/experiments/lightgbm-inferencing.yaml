@@ -1,3 +1,6 @@
+# This experiment runs multiple variants of lightgbm inferencing + treelite
+# on a given user-defined dataset and model
+#
 # to execute, run from /pipelines/azureml/
 # > python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/lightgbm-inferencing run.submit=True
 

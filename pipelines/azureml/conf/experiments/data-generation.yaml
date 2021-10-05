@@ -1,3 +1,6 @@
+# This experiment generates multiple synthetic datasets for regression
+# with varying number of features
+#
 # to execute, run from /pipelines/azureml/
 # > python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True
 
