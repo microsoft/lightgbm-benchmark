@@ -100,6 +100,11 @@ def run(args, unknown_args=[]):
     # add properties about environment of this script
     metrics_logger.set_platform_properties()
 
+    # record relevant parameters
+    metrics_logger.log_parameters(
+        num_threads=args.num_threads
+    )
+
     # register logger for lightgbm logs
     lightgbm.register_logger(logger)
 

@@ -11,17 +11,21 @@ nav:
     Developer Guide: contribute/developer-guide.md
     Reporting Guide: contribute/reporting-guide.md
 - Run:
-    Install: quickstart/install.md
-    Run manually: quickstart/manual-benchmark.md
-    Run in AzureML: quickstart/azureml-benchmark.md
+    Install: run/install.md
+    Run manually: run/manual-benchmark.md
+    Run in AzureML:
+        Setup: run/azureml/setup.md
+        Train on your data: "run/azureml/train-on-your-own-data.md"
 - Results:
-    Latest: results/latest.md
+    Inferencing: results/inferencing.md
+    Manual: results/manual.md
 - Reference Docs:
     - src/common/:
         - io.py: references/common/io.md
         - lightgbm.py: references/common/lightgbm.md
         - metrics.py: references/common/metrics.md
         - sweep.py: references/common/sweep.md
+        - tasks.py: references/common/tasks.md
     - src/scripts/:
         - partition_data/partition.py: references/scripts/partition_data/partition.md
 

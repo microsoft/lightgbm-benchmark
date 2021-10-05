@@ -30,12 +30,25 @@ data_generation:
   benchmark_name: "benchmark-dev"
 
   # DATA
-  learning_task: "regression"
-  train_samples: 100000
-  test_samples: 10000
-  inferencing_samples: 10000
-  n_features: 4000
-  n_informative: 4000
-  data_register_train_as: "synthetic-regr-4000cols-train"
-  data_register_test_as: "synthetic-regr-4000cols-test"
-  data_register_inference_as: "synthetic-regr-4000cols-inference"
+  tasks:
+    - task: "regression"
+      train_samples: 100000
+      test_samples: 10000
+      inferencing_samples: 10000
+      n_features: 10
+      n_informative: 10
+    - task: "regression"
+      train_samples: 100000
+      test_samples: 10000
+      inferencing_samples: 10000
+      n_features: 100
+      n_informative: 100
+    - task: "regression"
+      train_samples: 100000
+      test_samples: 10000
+      inferencing_samples: 10000
+      n_features: 1000
+      n_informative: 1000
+
+  register_outputs: true
+  register_outputs_prefix: "synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"
