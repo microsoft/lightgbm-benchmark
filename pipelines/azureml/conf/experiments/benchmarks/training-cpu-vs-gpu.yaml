@@ -72,4 +72,4 @@ lightgbm_training:
   variants:
     - device_type: "gpu"
       register_model_suffix: "gpu"
-      override_docker: "dockers/lightgbm_gpu_pip.dockerfile"
+      override_docker: "dockers/lightgbm_gpu_pip.dockerfile" # relative to lightgbm_python folder
