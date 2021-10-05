@@ -12,21 +12,22 @@ import argparse
 import logging
 from distutils.util import strtobool
 from jinja2 import Template
+import mlflow
+import pandas as pd
+import numpy as np
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    logging.debug(f"Adding {COMMON_ROOT} to PYTHONPATH")
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
 from common.metrics import MetricsLogger
 from common.io import input_file_path
 from shrike.pipeline.aml_connect import add_cli_args, azureml_connect_cli
-from azureml.core import Experiment
-from azureml.pipeline.core import PipelineRun
 
 
 def get_arg_parser(parser=None):
@@ -45,14 +46,12 @@ def get_arg_parser(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(__doc__)
 
-    group_aml = parser.add_argument_group("AzureML Connect")
-    add_cli_args(group_aml)
-
-    group_exp = parser.add_argument_group("AzureML Experiment")
+    group_exp = parser.add_argument_group("MLFlow Experiment")
     group_exp.add_argument("--experiment-id", dest="experiment_id",
         required=True, type=str)
     group_exp.add_argument("--benchmark-id", dest="benchmark_id",
         required=True, type=str)
+    group_aml = parser.add_argument("--mlflow-target", dest="mlflow_target", required=False, type=str, choices=['azureml', 'local'], default='local')
 
     group_data = parser.add_argument_group("Data operations")
     group_data.add_argument("--data-load", dest="data_load",
@@ -85,6 +84,9 @@ def get_arg_parser(parser=None):
         help="set True to show DEBUG logs",
     )
 
+    group_aml = parser.add_argument_group("AzureML Connect (if using --mlflow-target azureml)")
+    add_cli_args(group_aml)
+
     return parser
 
 
@@ -96,7 +98,10 @@ class AnalysisEngine():
     def __init__(self):
         """ Constructor """
         # list to store lines of data obtained from AzureML runs
-        self.benchmark_data = []
+        self.benchmark_data = None
+        self.variants = None
+        self.models = None
+        self.datasets = None
 
         # location of the jinja templates to generate reports
         self.templates_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
@@ -124,84 +129,70 @@ class AnalysisEngine():
                 o_file.write(json.dumps(entry))
                 o_file.write("\n")
 
-    def fetch_benchmark_data(self, azureml_ws, experiment_id, **filters):
+    def fetch_benchmark_data(self, experiment_id, filter_string):
         """ Gets the data from fetching AzureML runs with a given set of filters """
         self.logger.info("Fetching Experiment")
-        experiment = Experiment(workspace=azureml_ws, name=experiment_id)
+        mlflow.set_experiment(experiment_id)
 
         self.logger.info("Fetching Benchmark Runs")
-        benchmark_runs = experiment.get_runs(tags=filters, include_children=True)
+        # NOTE: returns a pandas dataframe
+        self.benchmark_data = mlflow.search_runs(
+            filter_string=filter_string
+        )
 
-        # iterate through runs to get all the data we need for the analysis
-        self.logger.info("Iterating through runs")
-        self.benchmark_data = [] # reset internal list
+        # extract variants
+        self.variants = self.benchmark_data[
+            [
+                # select variant specific columns/tags
+                'tags.variant_index',
+                'tags.framework',
+                'tags.framework_version',
+                'tags.framework_build',
+                'tags.framework_build_os'
+            ]
+        ].drop_duplicates().set_index('tags.variant_index') # reduce to unique rows
 
-        for run in benchmark_runs:
-            benchmark_data_entry = {}
-            run_tags = dict(run.tags)
+        print("*** VARIANTS ***")
+        print(self.variants.to_markdown())
 
-            # get the model name from a tag
-            if 'benchmark_model' in run_tags:
-                benchmark_data_entry['benchmark_model'] = run_tags.get('benchmark_model', None)
-            
-            # parse the model name to get number of trees and leaves
-            if 'benchmark_model' in benchmark_data_entry and benchmark_data_entry['benchmark_model']:
-                model_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-model-([0-9]+)trees-([0-9]+)leaves"
-                model_matched = re.match(model_pattern, benchmark_data_entry['benchmark_model'])
-                if model_matched:
-                    benchmark_data_entry['dataset_origin'] = model_matched.group(1)
-                    benchmark_data_entry['dataset_task'] = model_matched.group(2)
-                    benchmark_data_entry['model_trees'] = int(model_matched.group(4))
-                    benchmark_data_entry['model_leaves'] = int(model_matched.group(5))
+        # extract all model information
+        if 'tags.benchmark_model' in self.benchmark_data.columns:
+            models = self.benchmark_data[['tags.benchmark_model']].drop_duplicates()
+            model_info = models['tags.benchmark_model'].str.extract(r"model-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)trees-([0-9]+)leaves")
+            model_info.columns = ['model_origin', 'model_task', 'model_columns', 'model_trees', 'model_leaves']
+            self.models = models.join(model_info)
+            print("*** MODELS ***")
+            print(self.models.to_markdown())
 
-            # get the dataset name from a tag
-            if 'benchmark_dataset' in run_tags:
-                benchmark_data_entry['benchmark_dataset'] = run_tags.get('benchmark_dataset', None)
-
-            # parse the dataset name for numbers of columns
-            if 'benchmark_dataset' in benchmark_data_entry and benchmark_data_entry['benchmark_dataset']:
-                dataset_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)samples-inference"
-                dataset_matched = re.match(dataset_pattern, benchmark_data_entry['benchmark_dataset'])
-                if dataset_matched:
-                    benchmark_data_entry['dataset_origin'] = dataset_matched.group(1)
-                    benchmark_data_entry['dataset_task'] = dataset_matched.group(2)
-                    benchmark_data_entry['dataset_columns'] = int(dataset_matched.group(3))
-                    benchmark_data_entry['dataset_samples'] = int(dataset_matched.group(4))
-
-            # get framework (variant) info
-            benchmark_data_entry['framework'] = run_tags.get('framework', None)
-            benchmark_data_entry['framework_version'] = run_tags.get('framework_version', None)
-            benchmark_data_entry['framework_build'] = run_tags.get('framework_build', None)
-
-            # get all existing metrics in module
-            benchmark_data_entry['metrics'] = dict(run.get_metrics())
-
-            benchmark_data_entry['system_cpu_count'] = run_tags['cpu_count']
-            benchmark_data_entry['system_os'] = run_tags['system']
-            benchmark_data_entry['system_machine'] = run_tags['machine']
-
-            # add to internal list of data
-            self.logger.info(f"Fetched run {run.id}, obtained {len(benchmark_data_entry.keys())} fields including {len(benchmark_data_entry['metrics'].keys())} metrics")
-            print(benchmark_data_entry)
-
-            # add data to internal list for analysis
-            self.benchmark_data.append(benchmark_data_entry)
+        # extract all dataset information
+        if 'tags.benchmark_dataset' in self.benchmark_data.columns:
+            datasets = self.benchmark_data[['tags.benchmark_dataset']].drop_duplicates()
+            dataset_info = datasets['tags.benchmark_dataset'].str.extract(r"data-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)samples-([a-zA-Z0-9]+)")
+            dataset_info.columns = ['dataset_origin', 'dataset_task', 'dataset_columns', 'dataset_samples', 'dataset_benchmark_task']
+            self.datasets = datasets.join(dataset_info)
+            print("*** DATASETS ***")
+            print(self.datasets.to_markdown())
 
         return self.benchmark_data
 
 
     def report_inferencing(self, output_path):
         """ Uses fetched or load data to produce a reporting for inferencing tasks. """
-        # TODO: replace by pandas data operations
-
-        # set of all different scoring frameworks
-        variants = set()
-
         # set of all tasks on which frameworks are evaluated
-        tasks = set()
+        #tasks = self.benchmark_data.join(
+        #    self.datasets,
+        #    on=['tags.benchmark_dataset']
+        #)
 
-        # dictionary of metrics for each variant*tasks
-        metrics = {}
+        metrics = self.benchmark_data.pivot(
+            index=['tags.benchmark_model', 'tags.benchmark_dataset'],
+            columns=['tags.variant_index'],
+            values=['metrics.time_inferencing'],
+            #aggfunc=np.sum
+        )
+        print(metrics.to_markdown())
+        raise NotImplementedError()
+
 
         # gets data we want to report on from the fetched data
         for entry in self.benchmark_data:
@@ -269,16 +260,20 @@ def run(args, unknown_args=[]):
         if args.data_load:
             analysis_engine.load_benchmark_data(args.data_load)
         else:
-            # use helper to connect to AzureML
-            print("Connecting to AzureML...")
-            ws = azureml_connect_cli(args)
+            if args.mlflow_target == 'azureml':
+                # use helper to connect to AzureML
+                print("Connecting to AzureML...")
+                ws = azureml_connect_cli(args)
+                mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+            elif args.mlflow_target == 'local':
+                pass # nothing to do here
+            else:
+                raise NotImplementedError(f"--mlflow-target {args.mlflow_target} is not implemented (yet)")
 
             # querying runs for specific filters
             analysis_engine.fetch_benchmark_data(
-                azureml_ws=ws,
                 experiment_id=args.experiment_id,
-                benchmark_name=args.benchmark_id,
-                task='score'
+                filter_string=f"tags.task = 'score' and tags.benchmark_name = '{args.benchmark_id}'"
             )
         
         if args.data_save:
