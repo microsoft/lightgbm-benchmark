@@ -39,7 +39,7 @@ lightgbm_training:
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
     - train_dataset: "data-synthetic-regression-1000cols-100000samples-train"
       test_dataset: "data-synthetic-regression-1000cols-10000samples-test"
-      task_key: "synthetic-regression-100cols" # optional, user to register outputs
+      task_key: "synthetic-regression-1000cols" # optional, user to register outputs
 
   # NOTE: this example uses only 1 training (reference)
   # see other config files for creating training variants
