@@ -4,8 +4,6 @@ The LightGBM benchmark aims at providing tools and automation to compare impleme
 
 The goal is to support the community of developers of LightGBM by providing tools and a methodology for evaluating new releases of LightGBM on a standard and reproducible benchmark.
 
-> WARNING: this repository is in a very early stage.
-
 ## Documentation
 
 Please find the full documentation of this project at [microsoft.github.io/lightgbm-benchmark](https://microsoft.github.io/lightgbm-benchmark)

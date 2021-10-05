@@ -20,7 +20,8 @@ For each of those, you need to create a File dataset with your training and test
 
 ## Run training on your train/test datasets
 
-> NOTE: We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
+!!! info
+    We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
 
 1\. Go into the subdirectory `pipelines/azureml/`
 
@@ -38,7 +39,8 @@ tasks:
     test_dataset: "NAME OF YOUR TESTING DATASET HERE"
 ```
 
-> Note: `tasks` is actually a list, if you provide multiple pairs, the pipeline will train one model per task pair.
+!!! hint
+    `tasks` is actually a list, if you provide multiple pairs, the pipeline will train one model per task pair.
 
 4\. If you want the pipeline to save your model as a dataset, uncomment the line below and name the output accordingly:
 
@@ -62,7 +64,8 @@ The benchmark training pipeline is entirely configurable. There are a few key pa
 
 ### Scalable multi node training using mpi
 
-> Check out example config file `conf/experiments/lightgbm_training/cpu.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training/cpu.yaml`.
 
 To enable multi-node training, simple modify the number of nodes under:
 
@@ -80,7 +83,8 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 
 ### Gpu training (experimental)
 
-> Check out example config file `conf/experiments/lightgbm_training/gpu.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training/gpu.yaml`.
 
 To enable gpu training, modify the options below:
 
@@ -98,7 +102,8 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 
 ### Running a custom lightgbm build (experimental)
 
-> Check out example config file `conf/experiments/lightgbm_training/cpu-custom.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training/cpu-custom.yaml`.
 
 To enable gpu training, modify the options below:
 
@@ -118,7 +123,8 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 
 AzureML has a feature to [tune model hyperparameters](https://docs.microsoft.com/en-us/azure/machine-learning/algorithm-module-reference/tune-model-hyperparameters), we've implemented it in this training pipeline.
 
-> Check out example config file `conf/experiments/lightgbm_training_sweep/cpu.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training_sweep/cpu.yaml`.
 
 To enable parameter sweep, just change the "sweepable" parameters (see below) to use the [syntax allowed by AzureML sweep](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-tune-hyperparameters#define-the-search-space):
 

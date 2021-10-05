@@ -58,11 +58,13 @@ From now on, when you'll want to run a pipeline, use arguments `aml=myaml comput
 
 ## Verify your setup: run a sample pipeline in your workspace
 
-> We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
+!!! note
+    We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
 
 Running a pipeline consists in launching a python script with a pipeline configuration file.
 
-> :**IMPORTANT**: to execute, run from the `pipelines/azureml/` subdirectory
+!!! warning
+    To execute, run from the `pipelines/azureml/` subdirectory
 
 For instance, when you run:
 ```bash
@@ -77,11 +79,11 @@ The python script will build a pipeline based on the collection of manual script
 
 Running the python command should open a browser to your workspace opening the experiment view.
 
-> In the future, if you don't want to add `aml=myaml compute=myaml` every single time, you can modify the `defaults` section of the yaml config:
->
-> ```yaml
-> defaults:
->   - aml: myaml
->   - compute: myaml
->   - modules: benchmark
-> ```
+!!! note
+    In the future, if you don't want to add `aml=myaml compute=myaml` every single time, you can modify the `defaults` section of the yaml config:
+    ```yaml
+    defaults:
+    - aml: myaml
+    - compute: myaml
+    - modules: benchmark
+    ```
