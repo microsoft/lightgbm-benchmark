@@ -96,12 +96,15 @@ class LightGBMInferencing(AMLPipelineHelper):
                     for instance to be consumed by other graphs
             """
             pipeline_outputs = {}
-            for variant in config.lightgbm_inferencing.variants:
+            for variant_index, variant in enumerate(config.lightgbm_inferencing.variants):
+                custom_properties = benchmark_custom_properties.copy()
+                custom_properties.update({
+                    'framework_build' : variant.build or "n/a",
+                    'framework_build_os' : variant.os or "n/a",
+                    'variant_index' : variant_index
+                })
+
                 if variant.framework == "treelite_python":
-                    custom_properties = benchmark_custom_properties.copy()
-                    custom_properties.update({
-                        'framework_build' : "n/a"
-                    })
                     treelite_compile_step = treelite_compile_module(
                         model = model,
                         verbose = False,
@@ -109,41 +112,35 @@ class LightGBMInferencing(AMLPipelineHelper):
                     )
                     self.apply_smart_runsettings(treelite_compile_step)
 
-                    treelite_score_step = treelite_score_module(
+                    inferencing_step = treelite_score_module(
                         data = data,
                         compiled_model = treelite_compile_step.outputs.compiled_model,
                         verbose = False,
                         custom_properties = json.dumps(custom_properties)
                     )
-                    self.apply_smart_runsettings(treelite_score_step)
-                    
-                    # pipeline_outputs[f"{variant}_predictions"] = treelite_score_step.outputs.predictions
+                    self.apply_smart_runsettings(inferencing_step)
 
                 elif variant.framework == "lightgbm_python":
-                    custom_properties = benchmark_custom_properties.copy()
-                    custom_properties.update({
-                        'framework_build' : variant.build or "n/a"
-                    })
-
                     # call module with all the right arguments
-                    lightgbm_score_step = lightgbm_score_module(
+                    inferencing_step = lightgbm_score_module(
                         data = data,
                         model = model,
                         predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
                         custom_properties = json.dumps(custom_properties)
                     )
-                    self.apply_smart_runsettings(lightgbm_score_step)
+                    self.apply_smart_runsettings(inferencing_step)
 
-                    if variant.build:
-                        custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, variant.framework, variant.build))
-                        lightgbm_score_step.runsettings.environment.configure(
-                            docker=custom_docker,
-                            os=variant.os or "Linux" # linux by default
-                        )
-                        lightgbm_score_step.comment = f"build {variant.build}"
+                else:
+                    raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
 
-                    # pipeline_outputs[f"{variant}_predictions"] = lightgbm_score_step.outputs.predictions
+                if variant.build:
+                    custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, variant.framework, variant.build))
+                    inferencing_step.runsettings.environment.configure(
+                        docker=custom_docker,
+                        os=variant.os or "Linux" # linux by default
+                    )
+                    inferencing_step.comment = f"build {variant.build}"
 
             # return {key: output}'
             return pipeline_outputs
