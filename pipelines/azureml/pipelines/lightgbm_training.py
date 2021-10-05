@@ -285,8 +285,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 # adding variant_index to spot which variant is the reference
                 training_params['custom_properties']['variant_index'] = variant_index
                 # adding build settings (docker+os)
-                training_params['custom_properties']['build'] = runsettings.get('override_docker') or "n/a"
-                training_params['custom_properties']['build_os'] = runsettings.get('override_os') or "n/a"                
+                training_params['custom_properties']['framework_build'] = runsettings.get('override_docker') or "n/a"
+                training_params['custom_properties']['framework_build_os'] = runsettings.get('override_os') or "n/a"
                 # passing as json string that each module parses to digest as tags/properties
                 training_params['custom_properties'] = json.dumps(training_params['custom_properties'])
 
@@ -328,37 +328,37 @@ class LightGBMTraining(AMLPipelineHelper):
                         target = runsettings['target']
                     )
 
-            # optional: override environment (ex: to test custom builds)
-            if 'override_docker' in runsettings and runsettings['override_docker']:
-                custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, "lightgbm_python", runsettings['override_docker']))
-                lightgbm_train_step.runsettings.environment.configure(
-                    docker=custom_docker,
-                    os=runsettings.get('override_os', 'Linux')
-                )
+                # optional: override environment (ex: to test custom builds)
+                if 'override_docker' in runsettings and runsettings['override_docker']:
+                    custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, "lightgbm_python", runsettings['override_docker']))
+                    lightgbm_train_step.runsettings.environment.configure(
+                        docker=custom_docker,
+                        os=runsettings.get('override_os', 'Linux')
+                    )
 
-            # optional: save output model
-            if 'register_model' in runsettings and runsettings['register_model']:
-                # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
-                model_basename = "{num_iterations}trees-{num_leaves}leaves".format(
-                    num_iterations=training_params['num_iterations'],
-                    num_leaves=training_params['num_leaves']
-                )
-                # prepend task_key if given
-                if benchmark_custom_properties.get('benchmark_task_key', None):
-                    model_basename = benchmark_custom_properties['benchmark_task_key'] + "-" + model_basename
-                # prepend prefix if given
-                if runsettings.get('register_model_prefix', None):
-                    model_basename = runsettings['register_model_prefix'] + "-" + model_basename
-                # append suffix if given
-                if runsettings.get('register_model_suffix', None):
-                    model_basename += "-" + runsettings.get('register_model_suffix')
+                # optional: save output model
+                if 'register_model' in runsettings and runsettings['register_model']:
+                    # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
+                    model_basename = "{num_iterations}trees-{num_leaves}leaves".format(
+                        num_iterations=training_params['num_iterations'],
+                        num_leaves=training_params['num_leaves']
+                    )
+                    # prepend task_key if given
+                    if benchmark_custom_properties.get('benchmark_task_key', None):
+                        model_basename = benchmark_custom_properties['benchmark_task_key'] + "-" + model_basename
+                    # prepend prefix if given
+                    if runsettings.get('register_model_prefix', None):
+                        model_basename = runsettings['register_model_prefix'] + "-" + model_basename
+                    # append suffix if given
+                    if runsettings.get('register_model_suffix', None):
+                        model_basename += "-" + runsettings.get('register_model_suffix')
 
-                print(f"*** Will output model at {model_basename}")
-                # auto-register output with model basename
-                lightgbm_train_step.outputs.model.register_as(
-                    name=model_basename,
-                    create_new_version=True
-                )
+                    print(f"*** Will output model at {model_basename}")
+                    # auto-register output with model basename
+                    lightgbm_train_step.outputs.model.register_as(
+                        name=model_basename,
+                        create_new_version=True
+                    )
 
             # return {key: output}'
             return {}

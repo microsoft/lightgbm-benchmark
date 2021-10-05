@@ -1,3 +1,6 @@
+# This experiment generates multiple synthetic datasets for regression
+# with varying number of features
+#
 # to execute, run from /pipelines/azureml/
 # > python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True
 
@@ -51,4 +54,4 @@ data_generation:
       n_informative: 1000
 
   register_outputs: true
-  register_outputs_prefix: "synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"
+  register_outputs_prefix: "data-synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"

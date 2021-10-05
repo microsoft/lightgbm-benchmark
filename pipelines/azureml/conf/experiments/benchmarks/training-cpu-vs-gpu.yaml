@@ -27,19 +27,19 @@ module_loader: # module loading params
 ### CUSTOM PARAMETERS ###
 
 lightgbm_training:
-  benchmark_name: "benchmark-gpu-vs-cpu"
+  benchmark_name: "benchmark-gpu-vs-cpu" # need to be provided at runtime!
 
   # list all the train/test pairs to train on
   tasks:
-    - train_dataset: "synthetic-regression-10cols-100000samples-train"
-      test_dataset: "synthetic-regression-10cols-10000samples-test"
+    - train_dataset: "data-synthetic-regression-10cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-10cols-10000samples-test"
       task_key: "synthetic-regression-10cols" # optional, user to register outputs
-    - train_dataset: "synthetic-regression-100cols-100000samples-train"
-      test_dataset: "synthetic-regression-100cols-10000samples-test"
+    - train_dataset: "data-synthetic-regression-100cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-100cols-10000samples-test"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
-    - train_dataset: "synthetic-regression-1000cols-100000samples-train"
-      test_dataset: "synthetic-regression-1000cols-10000samples-test"
-      task_key: "synthetic-regression-100cols" # optional, user to register outputs
+    - train_dataset: "data-synthetic-regression-1000cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-1000cols-10000samples-test"
+      task_key: "synthetic-regression-1000cols" # optional, user to register outputs
 
   # reference settings for the benchmark
   # all variants are defined as diffs of these parameters
