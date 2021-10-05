@@ -54,7 +54,7 @@ lightgbm_training:
     # model registration
     # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
     register_model: True
-    register_model_prefix: null
+    register_model_prefix: "model"
     register_model_suffix: "cpu-sweep"
 
     # compute parameters
