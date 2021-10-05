@@ -28,6 +28,7 @@ markdown_extensions:
 - pymdownx.tabbed
 - pymdownx.superfences
 - pymdownx.snippets
+- admonition
 - pymdownx.highlight:
     use_pygments: true
     linenums: true

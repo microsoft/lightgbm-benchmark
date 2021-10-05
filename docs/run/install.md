@@ -39,4 +39,5 @@ Those scripts are intended to run LightGBM from the command line. Using them req
 
 To build those locally, use [instructions from LightGBM](https://lightgbm.readthedocs.io/en/latest/Installation-Guide.html#installation-guide).
 
-> NOTE: the `/build/` directory has been added to `.gitignore` to allow you to build local dependencies without pushing them in git.
+!!! note
+    The `/build/` directory has been added to `.gitignore` to allow you to build local dependencies without pushing them in git.
