@@ -285,8 +285,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 # adding variant_index to spot which variant is the reference
                 training_params['custom_properties']['variant_index'] = variant_index
                 # adding build settings (docker+os)
-                training_params['custom_properties']['build'] = runsettings.get('override_docker') or "n/a"
-                training_params['custom_properties']['build_os'] = runsettings.get('override_os') or "n/a"                
+                training_params['custom_properties']['framework_build'] = runsettings.get('override_docker') or "n/a"
+                training_params['custom_properties']['framework_build_os'] = runsettings.get('override_os') or "n/a"
                 # passing as json string that each module parses to digest as tags/properties
                 training_params['custom_properties'] = json.dumps(training_params['custom_properties'])
 

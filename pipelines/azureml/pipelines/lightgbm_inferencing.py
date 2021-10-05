@@ -96,19 +96,26 @@ class LightGBMInferencing(AMLPipelineHelper):
                     for instance to be consumed by other graphs
             """
             pipeline_outputs = {}
+
+            # loop through all inferencing variants
             for variant_index, variant in enumerate(config.lightgbm_inferencing.variants):
+                # add last minute custom proeprties
                 custom_properties = benchmark_custom_properties.copy()
                 custom_properties.update({
+                    # adding build settings (docker+os)
                     'framework_build' : variant.build or "n/a",
                     'framework_build_os' : variant.os or "n/a",
+                    # adding variant_index to spot which variant is the reference
                     'variant_index' : variant_index
                 })
+                # passing as json string that each module parses to digest as tags/properties
+                custom_properties = json.dumps(custom_properties)
 
                 if variant.framework == "treelite_python":
                     treelite_compile_step = treelite_compile_module(
                         model = model,
                         verbose = False,
-                        custom_properties = json.dumps(custom_properties)
+                        custom_properties = custom_properties
                     )
                     self.apply_smart_runsettings(treelite_compile_step)
 
@@ -116,7 +123,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                         data = data,
                         compiled_model = treelite_compile_step.outputs.compiled_model,
                         verbose = False,
-                        custom_properties = json.dumps(custom_properties)
+                        custom_properties = custom_properties
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
@@ -127,7 +134,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                         model = model,
                         predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
-                        custom_properties = json.dumps(custom_properties)
+                        custom_properties = custom_properties
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
