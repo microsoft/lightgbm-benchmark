@@ -1,5 +1,5 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training/cpu run.submit=True
+# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/benchmarks/training-cpu-vs-gpu run.submit=True
 
 defaults:
   - aml: sample
@@ -8,7 +8,7 @@ defaults:
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
-  experiment_name: "lightgbm-training-dev" # IMPORTANT
+  experiment_name: "benchmark-lightgbm-training" # IMPORTANT
   regenerate_outputs: false
   continue_on_failure: false
   verbose: false
@@ -27,16 +27,22 @@ module_loader: # module loading params
 ### CUSTOM PARAMETERS ###
 
 lightgbm_training:
-  benchmark_name: "benchmark-dev"
+  benchmark_name: "benchmark-gpu-vs-cpu" # need to be provided at runtime!
 
   # list all the train/test pairs to train on
   tasks:
+    - train_dataset: "data-synthetic-regression-10cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-10cols-10000samples-test"
+      task_key: "synthetic-regression-10cols" # optional, user to register outputs
     - train_dataset: "data-synthetic-regression-100cols-100000samples-train"
       test_dataset: "data-synthetic-regression-100cols-10000samples-test"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
+    - train_dataset: "data-synthetic-regression-1000cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-1000cols-10000samples-test"
+      task_key: "synthetic-regression-1000cols" # optional, user to register outputs
 
-  # NOTE: this example uses only 1 training (reference)
-  # see other config files for creating training variants
+  # reference settings for the benchmark
+  # all variants are defined as diffs of these parameters
   reference_training:
     # lightgbm training parameters
     objective: "regression"
@@ -54,10 +60,16 @@ lightgbm_training:
     # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
     register_model: True
     register_model_prefix: "model"
-    register_model_suffix: null
+    register_model_suffix: "cpu"
 
     # compute parameters
     #target: null # optional: force target for this training job
     device_type: "cpu"
     nodes: 1
     processes: 1
+
+  # variant settings override specific parameters of reference_training
+  variants:
+    - device_type: "gpu"
+      register_model_suffix: "gpu"
+      override_docker: "dockers/lightgbm_gpu_pip.dockerfile" # relative to lightgbm_python folder
