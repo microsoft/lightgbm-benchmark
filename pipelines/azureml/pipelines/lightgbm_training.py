@@ -417,7 +417,7 @@ class LightGBMTraining(AMLPipelineHelper):
                         version = training_task.train_dataset_version # use latest if None
                     )
                 elif training_task.train_datastore and training_task.train_datastore_path:
-                    train_data = dataset_from_dstore_path(self.workspace(), training_task.train_datastore, training_task.train_datastore_path)
+                    train_data = dataset_from_dstore_path(self.workspace(), training_task.train_datastore, training_task.train_datastore_path, validate=training_task.train_datastore_path_validate)
                 else:
                     raise ValueError(f"In training_task {training_task}, you need to provide either train_dataset or train_datastore+train_datastore_path")
 
@@ -428,7 +428,7 @@ class LightGBMTraining(AMLPipelineHelper):
                         version = training_task.test_dataset_version # use latest if None
                     )
                 elif training_task.test_datastore and training_task.test_datastore_path:
-                    test_data = dataset_from_dstore_path(self.workspace(), training_task.test_datastore, training_task.test_datastore_path)
+                    test_data = dataset_from_dstore_path(self.workspace(), training_task.test_datastore, training_task.test_datastore_path, validate=training_task.test_datastore_path_validate)
                 else:
                     raise ValueError(f"In training_task {training_task}, you need to provide either test_dataset or test_datastore+test_datastore_path")
 

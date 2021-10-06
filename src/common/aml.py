@@ -1,7 +1,7 @@
 import logging
 from azureml.core import Datastore, Dataset
 
-def dataset_from_dstore_path(workspace, datastore, datastore_path):
+def dataset_from_dstore_path(workspace, datastore, datastore_path, validate=True):
     """ Obtains a local reference for a given datastore and path
     
     Args:
@@ -20,6 +20,6 @@ def dataset_from_dstore_path(workspace, datastore, datastore_path):
     remote_ds_path = [(datastore, datastore_path)]
 
     logger.info(f"Registering as dataset...")
-    remote_dataset = Dataset.File.from_files(path=remote_ds_path, validate=True)
+    remote_dataset = Dataset.File.from_files(path=remote_ds_path, validate=validate)
 
     return remote_dataset
