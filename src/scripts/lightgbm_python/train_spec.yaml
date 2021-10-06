@@ -75,6 +75,10 @@ inputs:
       - data
       - voting
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#tree_learner"
+  eval_at:
+    type: String
+    optional: True
+    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#eval_at"
   num_iterations:
     type: Integer
     min: 1
@@ -137,6 +141,7 @@ launcher:
     --device_type {inputs.device_type}
     --objective {inputs.objective}
     --metric {inputs.metric}
+    [--eval_at {inputs.eval_at}]
     --boosting {inputs.boosting}
     --tree_learner {inputs.tree_learner}
     --num_trees {inputs.num_iterations}

@@ -45,12 +45,17 @@ class training_task:
 
 @dataclass
 class training_variant:
-    # TRAINING
+    # input parametes
+    header: bool = False
+    label_column: Optional[str] = "0"
+    group_column: Optional[str] = None
+
     # fixed training parameters
     objective: str = MISSING
     metric: str = MISSING
     boosting: str = MISSING
     tree_learner: str = MISSING
+    eval_at: Optional[str] = None
 
     # sweepable training parameters
     # NOTE: need to be str so they can be parsed (ex: 'choice(100,200)')

@@ -150,8 +150,9 @@ class LightGBMTraining(AMLPipelineHelper):
             """
             # create dict of all params for training module
             reference_training_params = {
-                'header' : False,
-                'label_column' : "0",
+                'header' : config.lightgbm_training.reference_training.header,
+                'label_column' : config.lightgbm_training.reference_training.label_column,
+                'group_column' : config.lightgbm_training.reference_training.group_column,
 
                 # training params
                 'objective' : config.lightgbm_training.reference_training.objective,

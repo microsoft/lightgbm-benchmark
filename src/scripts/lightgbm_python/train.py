@@ -62,6 +62,7 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--metric", required=True, type=str)
     group_lgbm.add_argument("--boosting_type", required=True, type=str)
     group_lgbm.add_argument("--tree_learner", required=True, type=str)
+    group_lgbm.add_argument("--eval_at", required=False, type=str, default="1,2,3,4,5")
     group_lgbm.add_argument("--num_trees", required=True, type=int)
     group_lgbm.add_argument("--num_leaves", required=True, type=int)
     group_lgbm.add_argument("--min_data_in_leaf", required=True, type=int)
