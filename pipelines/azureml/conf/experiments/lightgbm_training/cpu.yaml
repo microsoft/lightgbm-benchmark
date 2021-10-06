@@ -38,9 +38,15 @@ lightgbm_training:
   # NOTE: this example uses only 1 training (reference)
   # see other config files for creating training variants
   reference_training:
+    # input parameters
+    header: false
+    label_column: "0"
+    group_column: null
+
     # lightgbm training parameters
     objective: "regression"
     metric: "rmse"
+    eval_at: "1,3,5"
     boosting: "gbdt"
     tree_learner: "data"
     num_iterations: 100
