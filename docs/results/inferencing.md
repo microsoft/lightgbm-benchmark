@@ -8,27 +8,26 @@
 
 ## Variants
 
-| Index | Framework | Version | Build |
-| :-- | :-- | :-- | :-- |
-| lightgbm_python_1| lightgbm_python| 3.2.1| [dockers/lightgbm_cpu_mpi_pip.dockerfile](https://github.com/microsoft/lightgbm-benchmark/tree/main/src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_pip.dockerfile)|
-| lightgbm_python_2| lightgbm_python| 3.2.1.99| [dockers/lightgbm_cpu_mpi_build.dockerfile](https://github.com/microsoft/lightgbm-benchmark/tree/main/src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_build.dockerfile)|
-| lightgbm_python_3| lightgbm_python| 3.2.1.99| [dockers/lightgbm_cpu_mpi_custom.dockerfile](https://github.com/microsoft/lightgbm-benchmark/tree/main/src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_custom.dockerfile)|
-| treelite_python_4| treelite_python| 1.3.0| n/a|
-
+| variant_id        | framework       | version   | build                                      | os    |
+|:------------------|:----------------|:----------|:-------------------------------------------|:------|
+| lightgbm_python#0 | lightgbm_python | 3.2.1     | dockers/lightgbm_cpu_mpi_pip.dockerfile    | Linux |
+| lightgbm_python#2 | lightgbm_python | 3.2.1.99  | dockers/lightgbm_cpu_mpi_custom.dockerfile | Linux |
+| lightgbm_python#1 | lightgbm_python | 3.2.1.99  | dockers/lightgbm_cpu_mpi_build.dockerfile  | Linux |
+| treelite_python#3 | treelite_python | 1.3.0     | n/a                                        | Linux |
 
 ## Metric time_inferencing per prediction (usecs)
 
-| &nbsp; | lightgbm_python_1 | lightgbm_python_2 | lightgbm_python_3 | treelite_python_4 |
-| :-- | :-- | :-- | :-- | :-- |
-| trees=10<br/>leaves=31<br/>cols=10<br/> | 5.49 | 7.67 | 7.41 | 0.34 |
-| trees=10<br/>leaves=31<br/>cols=100<br/> | 8.88 | 10.04 | 10.81 | 0.36 |
-| trees=10<br/>leaves=31<br/>cols=1000<br/> | 40.33 | 37.42 | 43.68 | 1.88 |
-| trees=100<br/>leaves=31<br/>cols=10<br/> | 15.40 | 16.83 | 11.96 | 6.20 |
-| trees=100<br/>leaves=31<br/>cols=100<br/> | 19.44 | 19.14 | 14.66 | 6.12 |
-| trees=100<br/>leaves=31<br/>cols=1000<br/> | 51.15 | 47.06 | 45.47 | 7.82 |
-| trees=1000<br/>leaves=31<br/>cols=10<br/> | 122.77 | 127.34 | 64.13 | 33.89 |
-| trees=1000<br/>leaves=31<br/>cols=100<br/> | 185.39 | 179.37 | 110.73 | 101.45 |
-| trees=1000<br/>leaves=31<br/>cols=1000<br/> | 204.33 | 193.04 | 140.70 | 106.86 |
-| trees=5000<br/>leaves=31<br/>cols=10<br/> | 425.67 | 473.33 | 217.00 | 201.87 |
-| trees=5000<br/>leaves=31<br/>cols=100<br/> | 514.21 | 497.09 | 300.97 | 289.12 |
-| trees=5000<br/>leaves=31<br/>cols=1000<br/> | 720.98 | 658.46 | 429.75 | 467.27 |
+| inferencing task config                |   lightgbm_python#0 |   lightgbm_python#1 |   lightgbm_python#2 |   treelite_python#3 |
+|:---------------------------------------|--------------------:|--------------------:|--------------------:|--------------------:|
+| 10 trees<br/>31 leaves<br/>10 cols     |             4.46353 |             6.86219 |             6.30934 |            0.362396 |
+| 10 trees<br/>31 leaves<br/>100 cols    |             8.64604 |             9.04746 |             9.81698 |            0.518346 |
+| 10 trees<br/>31 leaves<br/>1000 cols   |            36.27    |            39.7902  |            39.3422  |            1.89013  |
+| 100 trees<br/>31 leaves<br/>10 cols    |            15.1912  |            15.9602  |            13.2037  |            5.15461  |
+| 100 trees<br/>31 leaves<br/>100 cols   |            19.3119  |            21.9855  |            13.4163  |            5.64711  |
+| 100 trees<br/>31 leaves<br/>1000 cols  |            44.6079  |            48.9864  |            48.1159  |            6.98378  |
+| 1000 trees<br/>31 leaves<br/>10 cols   |           110.55    |           111.39    |            59.1312  |           32.3749   |
+| 1000 trees<br/>31 leaves<br/>100 cols  |           161.12    |           183.413   |            95.6368  |           96.5918   |
+| 1000 trees<br/>31 leaves<br/>1000 cols |           190.81    |           199.568   |           120.469   |          105.153    |
+| 5000 trees<br/>31 leaves<br/>10 cols   |           406.119   |           400.482   |           243.836   |          189.392    |
+| 5000 trees<br/>31 leaves<br/>100 cols  |           519.317   |           516.659   |           301.009   |          288.075    |
+| 5000 trees<br/>31 leaves<br/>1000 cols |           699.416   |           714.399   |           378.438   |          444.761    |

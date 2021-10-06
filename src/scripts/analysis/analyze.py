@@ -181,8 +181,8 @@ class AnalysisEngine():
 
         # create a readable name for each task configuration
         self.benchmark_data['inferencing task config'] = (
-            self.benchmark_data['model_trees'] + " trees, "
-            + self.benchmark_data['model_leaves'] + " leaves, "
+            self.benchmark_data['model_trees'] + " trees<br/>"
+            + self.benchmark_data['model_leaves'] + " leaves<br/>"
             + self.benchmark_data['model_columns'] + " cols"
         )
 
