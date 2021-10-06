@@ -114,9 +114,7 @@ class AnalysisEngine():
         self.benchmark_data = []
 
         # read line by line json
-        with open(file_path, "r") as i_file:
-            for line in i_file:
-                self.benchmark_data.append(json.loads(line))
+        self.benchmark_data = pd.read_json(file_path)
 
     def save_benchmark_data(self, file_path):
         """ Saves the fetched benchmark data into a file """
@@ -124,10 +122,7 @@ class AnalysisEngine():
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # write data line by line in json
-        with open(file_path, "w") as o_file:
-            for entry in self.benchmark_data:
-                o_file.write(json.dumps(entry))
-                o_file.write("\n")
+        self.benchmark_data.to_json(file_path)
 
     def fetch_benchmark_data(self, experiment_id, filter_string):
         """ Gets the data from fetching AzureML runs with a given set of filters """
@@ -140,77 +135,66 @@ class AnalysisEngine():
             filter_string=filter_string
         )
 
-        # extract variants
-        self.variants = self.benchmark_data[
-            [
-                # select variant specific columns/tags
-                'tags.variant_index',
-                'tags.framework',
-                'tags.framework_version',
-                'tags.framework_build',
-                'tags.framework_build_os'
-            ]
-        ].drop_duplicates().set_index('tags.variant_index') # reduce to unique rows
-
-        print("*** VARIANTS ***")
-        print(self.variants.to_markdown())
-
-        # extract all model information
+        # extract all model information if present
         if 'tags.benchmark_model' in self.benchmark_data.columns:
             models = self.benchmark_data[['tags.benchmark_model']].drop_duplicates()
             model_info = models['tags.benchmark_model'].str.extract(r"model-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)trees-([0-9]+)leaves")
             model_info.columns = ['model_origin', 'model_task', 'model_columns', 'model_trees', 'model_leaves']
-            self.models = models.join(model_info)
-            print("*** MODELS ***")
-            print(self.models.to_markdown())
+            models = models.join(model_info)
+            self.benchmark_data = pd.merge(self.benchmark_data, models, how='left', on='tags.benchmark_model')
+            #print("*** MODELS ***")
+            #print(models.to_markdown())
 
-        # extract all dataset information
+        # extract all dataset information if present
         if 'tags.benchmark_dataset' in self.benchmark_data.columns:
             datasets = self.benchmark_data[['tags.benchmark_dataset']].drop_duplicates()
             dataset_info = datasets['tags.benchmark_dataset'].str.extract(r"data-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)samples-([a-zA-Z0-9]+)")
             dataset_info.columns = ['dataset_origin', 'dataset_task', 'dataset_columns', 'dataset_samples', 'dataset_benchmark_task']
-            self.datasets = datasets.join(dataset_info)
-            print("*** DATASETS ***")
-            print(self.datasets.to_markdown())
+            datasets = datasets.join(dataset_info)
+            self.benchmark_data = pd.merge(self.benchmark_data, datasets, how='left', on='tags.benchmark_dataset')
+            #print("*** DATASETS ***")
+            #print(datasets.to_markdown())
 
         return self.benchmark_data
 
 
     def report_inferencing(self, output_path):
         """ Uses fetched or load data to produce a reporting for inferencing tasks. """
-        # set of all tasks on which frameworks are evaluated
-        #tasks = self.benchmark_data.join(
-        #    self.datasets,
-        #    on=['tags.benchmark_dataset']
-        #)
+        # create variant readable id
+        self.benchmark_data['variant_id'] = self.benchmark_data['tags.framework'] + "#" + self.benchmark_data['tags.variant_index']
 
-        metrics = self.benchmark_data.pivot(
-            index=['tags.benchmark_model', 'tags.benchmark_dataset'],
-            columns=['tags.variant_index'],
-            values=['metrics.time_inferencing'],
-            #aggfunc=np.sum
+        # extract variants
+        variants = self.benchmark_data[
+            [
+                # select variant specific columns/tags
+                'variant_id',
+                'tags.framework',
+                'tags.framework_version',
+                'tags.framework_build',
+                'tags.framework_build_os'
+            ]
+        ].drop_duplicates().set_index('variant_id')
+        variants.columns = ['framework', 'version', 'build', 'os']
+
+        # reduce time_inferencing to predict time per request, in micro seconds
+        self.benchmark_data['predict_time_usecs'] = self.benchmark_data['metrics.time_inferencing'].astype(float) / self.benchmark_data['dataset_samples'].astype(int) * 1000000
+
+        # create a readable name for each task configuration
+        self.benchmark_data['inferencing task config'] = (
+            self.benchmark_data['model_trees'] + " trees, "
+            + self.benchmark_data['model_leaves'] + " leaves, "
+            + self.benchmark_data['model_columns'] + " cols"
         )
-        print(metrics.to_markdown())
-        raise NotImplementedError()
 
+        # pivot metrics table
+        metrics = self.benchmark_data.pivot(
+            index=['inferencing task config'],
+            columns=['variant_id'],
+            values=['predict_time_usecs']
+        )
+        # rename columns to have only variant_id
+        metrics.columns = [ col[1] for col in metrics.columns ]
 
-        # gets data we want to report on from the fetched data
-        for entry in self.benchmark_data:
-            # key to store metrics for this variant
-            variant_key = (entry['framework'],entry['framework_version'],entry['framework_build'])
-            variants.add(variant_key)
-            
-            # if not already, create a dict for metrics
-            if variant_key not in metrics:
-                metrics[variant_key] = {}
-
-            # key to store metrics for this task
-            task_key = (entry['model_trees'], entry['model_leaves'], entry['dataset_columns'])
-            tasks.add(task_key)
-
-            # store the metric at the right location in metrics dict
-            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None) / entry['dataset_samples'] * 1000000 # mu secs per query
-        
         # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:
             template_str = i_file.read()
@@ -218,22 +202,10 @@ class AnalysisEngine():
         # use jinja Template
         template_obj = Template(template_str)
 
-        # prepare data for the template rendering
-        variants_list = sorted(list(variants)) # sorting variants in increasing order (tuple)
-        tasks_list = sorted(list(tasks)) # sorting tasks in increasing order (tuple)
-
-        # create a table of metrics
-        metrics_list = [
-            [
-                metrics[v][c] for v in variants_list
-            ] for c in tasks_list
-        ]
-
         # render the template
         rendered_report = template_obj.render(
-            variants=variants_list,
-            tasks=sorted(list(tasks)),
-            metrics=metrics_list
+            variants_table=variants.to_markdown(),
+            metrics_table=metrics.to_markdown()
         )
 
         # save or print
