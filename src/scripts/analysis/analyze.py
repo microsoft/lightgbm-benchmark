@@ -12,21 +12,22 @@ import argparse
 import logging
 from distutils.util import strtobool
 from jinja2 import Template
+import mlflow
+import pandas as pd
+import numpy as np
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    logging.debug(f"Adding {COMMON_ROOT} to PYTHONPATH")
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
 from common.metrics import MetricsLogger
 from common.io import input_file_path
 from shrike.pipeline.aml_connect import add_cli_args, azureml_connect_cli
-from azureml.core import Experiment
-from azureml.pipeline.core import PipelineRun
 
 
 def get_arg_parser(parser=None):
@@ -45,14 +46,12 @@ def get_arg_parser(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(__doc__)
 
-    group_aml = parser.add_argument_group("AzureML Connect")
-    add_cli_args(group_aml)
-
-    group_exp = parser.add_argument_group("AzureML Experiment")
+    group_exp = parser.add_argument_group("MLFlow Experiment")
     group_exp.add_argument("--experiment-id", dest="experiment_id",
         required=True, type=str)
     group_exp.add_argument("--benchmark-id", dest="benchmark_id",
         required=True, type=str)
+    group_aml = parser.add_argument("--mlflow-target", dest="mlflow_target", required=False, type=str, choices=['azureml', 'local'], default='local')
 
     group_data = parser.add_argument_group("Data operations")
     group_data.add_argument("--data-load", dest="data_load",
@@ -85,6 +84,9 @@ def get_arg_parser(parser=None):
         help="set True to show DEBUG logs",
     )
 
+    group_aml = parser.add_argument_group("AzureML Connect (if using --mlflow-target azureml)")
+    add_cli_args(group_aml)
+
     return parser
 
 
@@ -96,7 +98,10 @@ class AnalysisEngine():
     def __init__(self):
         """ Constructor """
         # list to store lines of data obtained from AzureML runs
-        self.benchmark_data = []
+        self.benchmark_data = None
+        self.variants = None
+        self.models = None
+        self.datasets = None
 
         # location of the jinja templates to generate reports
         self.templates_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "templates"))
@@ -109,9 +114,7 @@ class AnalysisEngine():
         self.benchmark_data = []
 
         # read line by line json
-        with open(file_path, "r") as i_file:
-            for line in i_file:
-                self.benchmark_data.append(json.loads(line))
+        self.benchmark_data = pd.read_json(file_path)
 
     def save_benchmark_data(self, file_path):
         """ Saves the fetched benchmark data into a file """
@@ -119,107 +122,84 @@ class AnalysisEngine():
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
         # write data line by line in json
-        with open(file_path, "w") as o_file:
-            for entry in self.benchmark_data:
-                o_file.write(json.dumps(entry))
-                o_file.write("\n")
+        self.benchmark_data.to_json(file_path)
 
-    def fetch_benchmark_data(self, azureml_ws, experiment_id, **filters):
+    def fetch_benchmark_data(self, experiment_id, filter_string):
         """ Gets the data from fetching AzureML runs with a given set of filters """
         self.logger.info("Fetching Experiment")
-        experiment = Experiment(workspace=azureml_ws, name=experiment_id)
+        mlflow.set_experiment(experiment_id)
 
         self.logger.info("Fetching Benchmark Runs")
-        benchmark_runs = experiment.get_runs(tags=filters, include_children=True)
+        # NOTE: returns a pandas dataframe
+        self.benchmark_data = mlflow.search_runs(
+            filter_string=filter_string
+        )
 
-        # iterate through runs to get all the data we need for the analysis
-        self.logger.info("Iterating through runs")
-        self.benchmark_data = [] # reset internal list
+        # extract all model information if present
+        if 'tags.benchmark_model' in self.benchmark_data.columns:
+            models = self.benchmark_data[['tags.benchmark_model']].drop_duplicates()
+            model_info = models['tags.benchmark_model'].str.extract(r"model-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)trees-([0-9]+)leaves")
+            model_info.columns = ['model_origin', 'model_task', 'model_columns', 'model_trees', 'model_leaves']
+            models = models.join(model_info)
+            self.benchmark_data = pd.merge(self.benchmark_data, models, how='left', on='tags.benchmark_model')
+            #print("*** MODELS ***")
+            #print(models.to_markdown())
 
-        for run in benchmark_runs:
-            benchmark_data_entry = {}
-            run_tags = dict(run.tags)
-
-            # get the model name from a tag
-            if 'benchmark_model' in run_tags:
-                benchmark_data_entry['benchmark_model'] = run_tags.get('benchmark_model', None)
-            
-            # parse the model name to get number of trees and leaves
-            if 'benchmark_model' in benchmark_data_entry and benchmark_data_entry['benchmark_model']:
-                model_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-model-([0-9]+)trees-([0-9]+)leaves"
-                model_matched = re.match(model_pattern, benchmark_data_entry['benchmark_model'])
-                if model_matched:
-                    benchmark_data_entry['dataset_origin'] = model_matched.group(1)
-                    benchmark_data_entry['dataset_task'] = model_matched.group(2)
-                    benchmark_data_entry['model_trees'] = int(model_matched.group(4))
-                    benchmark_data_entry['model_leaves'] = int(model_matched.group(5))
-
-            # get the dataset name from a tag
-            if 'benchmark_dataset' in run_tags:
-                benchmark_data_entry['benchmark_dataset'] = run_tags.get('benchmark_dataset', None)
-
-            # parse the dataset name for numbers of columns
-            if 'benchmark_dataset' in benchmark_data_entry and benchmark_data_entry['benchmark_dataset']:
-                dataset_pattern = r"([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)samples-inference"
-                dataset_matched = re.match(dataset_pattern, benchmark_data_entry['benchmark_dataset'])
-                if dataset_matched:
-                    benchmark_data_entry['dataset_origin'] = dataset_matched.group(1)
-                    benchmark_data_entry['dataset_task'] = dataset_matched.group(2)
-                    benchmark_data_entry['dataset_columns'] = int(dataset_matched.group(3))
-                    benchmark_data_entry['dataset_samples'] = int(dataset_matched.group(4))
-
-            # get framework (variant) info
-            benchmark_data_entry['framework'] = run_tags.get('framework', None)
-            benchmark_data_entry['framework_version'] = run_tags.get('framework_version', None)
-            benchmark_data_entry['framework_build'] = run_tags.get('framework_build', None)
-
-            # get all existing metrics in module
-            benchmark_data_entry['metrics'] = dict(run.get_metrics())
-
-            benchmark_data_entry['system_cpu_count'] = run_tags['cpu_count']
-            benchmark_data_entry['system_os'] = run_tags['system']
-            benchmark_data_entry['system_machine'] = run_tags['machine']
-
-            # add to internal list of data
-            self.logger.info(f"Fetched run {run.id}, obtained {len(benchmark_data_entry.keys())} fields including {len(benchmark_data_entry['metrics'].keys())} metrics")
-            print(benchmark_data_entry)
-
-            # add data to internal list for analysis
-            self.benchmark_data.append(benchmark_data_entry)
+        # extract all dataset information if present
+        if 'tags.benchmark_dataset' in self.benchmark_data.columns:
+            datasets = self.benchmark_data[['tags.benchmark_dataset']].drop_duplicates()
+            dataset_info = datasets['tags.benchmark_dataset'].str.extract(r"data-([a-zA-Z0-9]+)-([a-zA-Z0-9]+)-([0-9]+)cols-([0-9]+)samples-([a-zA-Z0-9]+)")
+            dataset_info.columns = ['dataset_origin', 'dataset_task', 'dataset_columns', 'dataset_samples', 'dataset_benchmark_task']
+            datasets = datasets.join(dataset_info)
+            self.benchmark_data = pd.merge(self.benchmark_data, datasets, how='left', on='tags.benchmark_dataset')
+            #print("*** DATASETS ***")
+            #print(datasets.to_markdown())
 
         return self.benchmark_data
 
 
     def report_inferencing(self, output_path):
         """ Uses fetched or load data to produce a reporting for inferencing tasks. """
-        # TODO: replace by pandas data operations
+        # create variant readable id
+        self.benchmark_data['variant_id'] = self.benchmark_data['tags.framework'] + "#" + self.benchmark_data['tags.variant_index']
 
-        # set of all different scoring frameworks
-        variants = set()
+        # extract variants
+        variants = self.benchmark_data[
+            [
+                # select variant specific columns/tags
+                'variant_id',
+                'tags.framework',
+                'tags.framework_version',
+                'tags.framework_build',
+                'tags.cpu_count',
+                'params.num_threads',
+                'tags.machine',
+                'tags.system'
+            ]
+        ].drop_duplicates().set_index('variant_id').sort_values(by='variant_id')
 
-        # set of all tasks on which frameworks are evaluated
-        tasks = set()
+        variants.columns = ['framework', 'version', 'build', 'cpu count', 'num threads', 'machine', 'system']
+        #variants = variants.transpose()
 
-        # dictionary of metrics for each variant*tasks
-        metrics = {}
+        # reduce time_inferencing to predict time per request, in micro seconds
+        self.benchmark_data['predict_time_usecs'] = self.benchmark_data['metrics.time_inferencing'].astype(float) / self.benchmark_data['dataset_samples'].astype(int) * 1000000
 
-        # gets data we want to report on from the fetched data
-        for entry in self.benchmark_data:
-            # key to store metrics for this variant
-            variant_key = (entry['framework'],entry['framework_version'],entry['framework_build'])
-            variants.add(variant_key)
-            
-            # if not already, create a dict for metrics
-            if variant_key not in metrics:
-                metrics[variant_key] = {}
+        # create a readable name for each task configuration
+        self.benchmark_data['inferencing task config'] = (
+            self.benchmark_data['model_trees'] + " trees<br/>"
+            + self.benchmark_data['model_leaves'] + " leaves<br/>"
+            + self.benchmark_data['model_columns'] + " cols"
+        )
 
-            # key to store metrics for this task
-            task_key = (entry['model_trees'], entry['model_leaves'], entry['dataset_columns'])
-            tasks.add(task_key)
+        # pivot metrics table
+        metrics = self.benchmark_data.pivot(
+            index=['inferencing task config'],
+            columns=['variant_id'],
+            values=['predict_time_usecs']
+        )
+        # rename columns to have only variant_id
+        metrics.columns = [ col[1] for col in metrics.columns ]
 
-            # store the metric at the right location in metrics dict
-            metrics[variant_key][task_key] = entry['metrics'].get('time_inferencing', None) / entry['dataset_samples'] * 1000000 # mu secs per query
-        
         # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:
             template_str = i_file.read()
@@ -227,22 +207,10 @@ class AnalysisEngine():
         # use jinja Template
         template_obj = Template(template_str)
 
-        # prepare data for the template rendering
-        variants_list = sorted(list(variants)) # sorting variants in increasing order (tuple)
-        tasks_list = sorted(list(tasks)) # sorting tasks in increasing order (tuple)
-
-        # create a table of metrics
-        metrics_list = [
-            [
-                metrics[v][c] for v in variants_list
-            ] for c in tasks_list
-        ]
-
         # render the template
         rendered_report = template_obj.render(
-            variants=variants_list,
-            tasks=sorted(list(tasks)),
-            metrics=metrics_list
+            variants_table=variants.to_markdown(),
+            metrics_table=metrics.to_markdown()
         )
 
         # save or print
@@ -269,16 +237,20 @@ def run(args, unknown_args=[]):
         if args.data_load:
             analysis_engine.load_benchmark_data(args.data_load)
         else:
-            # use helper to connect to AzureML
-            print("Connecting to AzureML...")
-            ws = azureml_connect_cli(args)
+            if args.mlflow_target == 'azureml':
+                # use helper to connect to AzureML
+                print("Connecting to AzureML...")
+                ws = azureml_connect_cli(args)
+                mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
+            elif args.mlflow_target == 'local':
+                pass # nothing to do here
+            else:
+                raise NotImplementedError(f"--mlflow-target {args.mlflow_target} is not implemented (yet)")
 
             # querying runs for specific filters
             analysis_engine.fetch_benchmark_data(
-                azureml_ws=ws,
                 experiment_id=args.experiment_id,
-                benchmark_name=args.benchmark_id,
-                task='score'
+                filter_string=f"tags.task = 'score' and tags.benchmark_name = '{args.benchmark_id}'"
             )
         
         if args.data_save:
