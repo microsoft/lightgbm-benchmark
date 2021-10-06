@@ -111,6 +111,11 @@ class LightGBMInferencing(AMLPipelineHelper):
                 # passing as json string that each module parses to digest as tags/properties
                 custom_properties = json.dumps(custom_properties)
 
+                # list of comments to surface on the component itself
+                variant_comment = [
+                    f"variant #{variant_index}"
+                ]
+
                 if variant.framework == "treelite_python":
                     treelite_compile_step = treelite_compile_module(
                         model = model,
@@ -147,7 +152,10 @@ class LightGBMInferencing(AMLPipelineHelper):
                         docker=custom_docker,
                         os=variant.os or "Linux" # linux by default
                     )
-                    inferencing_step.comment = f"build {variant.build}"
+                    variant_comment.append(f"build {variant.build}")
+
+                # add some comment to the component
+                inferencing_step.comment = " -- ".join(variant_comment)
 
             # return {key: output}'
             return pipeline_outputs
@@ -191,6 +199,12 @@ class LightGBMInferencing(AMLPipelineHelper):
                     predict_disable_shape_check=inferencing_task.predict_disable_shape_check or False,
                     benchmark_custom_properties=benchmark_custom_properties
                 )
+
+                # add some relevant comments on the subgraph
+                inferencing_task_subgraph_step.comment = " -- ".join([
+                    f"benchmark name: {config.lightgbm_inferencing.benchmark_name}",
+                    # NOTE: add more here?
+                ])
 
         # return the instance of this general function
         return inferencing_all_tasks()
