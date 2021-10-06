@@ -8,15 +8,12 @@
 
 ## Variants
 
-|             | lightgbm_python#0                       | lightgbm_python#1                         | lightgbm_python#2                          | treelite_python#3   |
-|:------------|:----------------------------------------|:------------------------------------------|:-------------------------------------------|:--------------------|
-| framework   | lightgbm_python                         | lightgbm_python                           | lightgbm_python                            | treelite_python     |
-| version     | 3.2.1                                   | 3.2.1.99                                  | 3.2.1.99                                   | 1.3.0               |
-| build       | dockers/lightgbm_cpu_mpi_pip.dockerfile | dockers/lightgbm_cpu_mpi_build.dockerfile | dockers/lightgbm_cpu_mpi_custom.dockerfile | n/a                 |
-| cpu count   | 32                                      | 32                                        | 32                                         | 32                  |
-| num threads | 1                                       | 1                                         | 1                                          | 1                   |
-| machine     | x86_64                                  | x86_64                                    | x86_64                                     | x86_64              |
-| system      | Linux                                   | Linux                                     | Linux                                      | Linux               |
+| variant_id        | framework       | version   | build                                      |   cpu count |   num threads | machine   | system   |
+|:------------------|:----------------|:----------|:-------------------------------------------|------------:|--------------:|:----------|:---------|
+| lightgbm_python#0 | lightgbm_python | 3.2.1     | dockers/lightgbm_cpu_mpi_pip.dockerfile    |          32 |             1 | x86_64    | Linux    |
+| lightgbm_python#1 | lightgbm_python | 3.2.1.99  | dockers/lightgbm_cpu_mpi_build.dockerfile  |          32 |             1 | x86_64    | Linux    |
+| lightgbm_python#2 | lightgbm_python | 3.2.1.99  | dockers/lightgbm_cpu_mpi_custom.dockerfile |          32 |             1 | x86_64    | Linux    |
+| treelite_python#3 | treelite_python | 1.3.0     | n/a                                        |          32 |             1 | x86_64    | Linux    |
 
 ## Metric time_inferencing per prediction (usecs)
 

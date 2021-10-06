@@ -179,7 +179,7 @@ class AnalysisEngine():
         ].drop_duplicates().set_index('variant_id').sort_values(by='variant_id')
 
         variants.columns = ['framework', 'version', 'build', 'cpu count', 'num threads', 'machine', 'system']
-        variants = variants.transpose()
+        #variants = variants.transpose()
 
         # reduce time_inferencing to predict time per request, in micro seconds
         self.benchmark_data['predict_time_usecs'] = self.benchmark_data['metrics.time_inferencing'].astype(float) / self.benchmark_data['dataset_samples'].astype(int) * 1000000
