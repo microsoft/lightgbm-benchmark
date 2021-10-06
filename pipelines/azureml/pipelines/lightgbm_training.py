@@ -204,11 +204,17 @@ class LightGBMTraining(AMLPipelineHelper):
             runsettings_variants_params = [
                 reference_runsettings.copy()
             ]
+            variant_comments = [
+                " -- ".join([
+                    f"variant #0 (reference)",
+                    f"device type: {config.lightgbm_training.reference_training.device_type}"
+                ])
+            ]
 
             # if there's any variant specified
             if config.lightgbm_training.variants:
                 # create distinct training params for each variant
-                for training_variant in config.lightgbm_training.variants:
+                for variant_index, training_variant in enumerate(config.lightgbm_training.variants):
                     # create a specific dict of params for the variant
                     variant_params = reference_training_params.copy()
                     variant_sweep_params = reference_sweep_params.copy()
@@ -230,12 +236,23 @@ class LightGBMTraining(AMLPipelineHelper):
                     for key in variant_runsettings:
                         if key in variant_config:
                             variant_runsettings[key] = variant_config[key]
-
+                      
                     # add to training params list
                     training_variants_params.append(variant_params)
                     sweep_variants_params.append(variant_sweep_params)
                     runsettings_variants_params.append(variant_runsettings)
-            
+
+                    # create smart comment for this variant
+                    variant_comments.append(" -- ".join([
+                        f"variant #{variant_index+1}", # needs +1 since variant 0 is reference
+                        "variant diff: {}".format(
+                            ", ".join([
+                                f"{k}={v}" for k,v in variant_config.items()
+                            ])
+                        )
+                    ]))
+
+
             # for each variant, check if sweep needs to be applied
             for index, variant_training_params in enumerate(training_variants_params):
                 # extract and construct "sweepable" params
@@ -262,7 +279,7 @@ class LightGBMTraining(AMLPipelineHelper):
 
 
             # for each training variant, create a module sequence
-            for variant_index,(training_params,sweep_params,runsettings) in enumerate(zip(training_variants_params,sweep_variants_params,runsettings_variants_params)):
+            for variant_index,(training_params,sweep_params,runsettings,variant_comment) in enumerate(zip(training_variants_params,sweep_variants_params,runsettings_variants_params,variant_comments)):
                 # if we're using multinode, add partitioning
                 if training_params['tree_learner'] == "data" or training_params['tree_learner'] == "voting":
                     # if using data parallel, train data has to be partitioned first
@@ -327,6 +344,9 @@ class LightGBMTraining(AMLPipelineHelper):
                         gpu = (training_params['device_type'] == 'gpu' or training_params['device_type'] == 'cuda'),
                         target = runsettings['target']
                     )
+                
+                # add some relevant comments on the component
+                lightgbm_train_step.comment = variant_comment
 
                 # optional: override environment (ex: to test custom builds)
                 if 'override_docker' in runsettings and runsettings['override_docker']:
@@ -414,6 +434,13 @@ class LightGBMTraining(AMLPipelineHelper):
                     train_dataset=train_data,
                     test_dataset=test_data
                 )
+
+                # add some relevant comments on the subgraph
+                training_task_subgraph_step.comment = " -- ".join([
+                    "LightGBM training pipeline",
+                    f"benchmark name: {config.lightgbm_training.benchmark_name}",
+                    f"benchmark task key: {training_task.task_key}"
+                ])
 
         # return the instance of this general function
         return training_all_tasks()
