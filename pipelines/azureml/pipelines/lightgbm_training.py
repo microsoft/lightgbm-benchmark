@@ -24,6 +24,8 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
 
 from common.sweep import SweepParameterParser
 from common.tasks import training_task, training_variant
+from common.aml import dataset_from_dstore_path
+
 
 class LightGBMTraining(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -408,15 +410,26 @@ class LightGBMTraining(AMLPipelineHelper):
             # loop on all training tasks
             for training_task in config.lightgbm_training.tasks:
                 # load the given train dataset
-                train_data = self.dataset_load(
-                    name = training_task.train_dataset,
-                    version = training_task.train_dataset_version # use latest if None
-                )
+                if training_task.train_dataset:
+                    train_data = self.dataset_load(
+                        name = training_task.train_dataset,
+                        version = training_task.train_dataset_version # use latest if None
+                    )
+                elif training_task.train_datastore and training_task.train_datastore_path:
+                    train_data = dataset_from_dstore_path(self.workspace(), training_task.train_datastore, training_task.train_datastore_path)
+                else:
+                    raise ValueError(f"In training_task {training_task}, you need to provide either train_dataset or train_datastore+train_datastore_path")
+
                 # load the given test dataset
-                test_data = self.dataset_load(
-                    name = training_task.test_dataset,
-                    version = training_task.test_dataset_version # use latest if None
-                )
+                if training_task.test_dataset:
+                    test_data = self.dataset_load(
+                        name = training_task.test_dataset,
+                        version = training_task.test_dataset_version # use latest if None
+                    )
+                elif training_task.test_datastore and training_task.test_datastore_path:
+                    test_data = dataset_from_dstore_path(self.workspace(), training_task.test_datastore, training_task.test_datastore_path)
+                else:
+                    raise ValueError(f"In training_task {training_task}, you need to provide either test_dataset or test_datastore+test_datastore_path")
 
                 # create custom properties for this task
                 # they will be passed on to each job as tags

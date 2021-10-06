@@ -27,11 +27,21 @@ class data_generation_task:
 
 @dataclass
 class training_task:
-    train_dataset: str = MISSING
+    # specify either by dataset name
+    train_dataset: Optional[str] = None
     train_dataset_version: Optional[str] = None
-    test_dataset: str = MISSING
+    # or by datastore+path
+    train_datastore: Optional[str] = None
+    train_datastore_path: Optional[str] = None
+    # specify either by dataset name
+    test_dataset: Optional[str] = None
     test_dataset_version: Optional[str] = None
+    # or by datastore+path
+    test_datastore: Optional[str] = None
+    test_datastore_path: Optional[str] = None
+    # provide a key for internal tagging + reporting
     task_key: Optional[str] = None
+
 
 @dataclass
 class training_variant:
