@@ -9,6 +9,7 @@ import sys
 import argparse
 import logging
 import traceback
+import json
 from distutils.util import strtobool
 import lightgbm
 from mpi4py import MPI
@@ -62,6 +63,8 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--metric", required=True, type=str)
     group_lgbm.add_argument("--boosting_type", required=True, type=str)
     group_lgbm.add_argument("--tree_learner", required=True, type=str)
+    group_lgbm.add_argument("--label_gain", required=False, type=str, default=None)
+    group_lgbm.add_argument("--eval_at", required=False, type=str, default="1,2,3,4,5")
     group_lgbm.add_argument("--num_trees", required=True, type=int)
     group_lgbm.add_argument("--num_leaves", required=True, type=int)
     group_lgbm.add_argument("--min_data_in_leaf", required=True, type=int)
@@ -69,6 +72,7 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--max_bin", required=True, type=int)
     group_lgbm.add_argument("--feature_fraction", required=True, type=float)
     group_lgbm.add_argument("--device_type", required=True, type=str)
+    group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
@@ -134,7 +138,7 @@ def load_lgbm_params_from_cli(args, mpi_config):
     cli_params = dict(vars(args))
 
     # removing arguments that are purely CLI
-    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train']:
+    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params']:
         del cli_params[key]
 
     # doing some fixes and hardcoded values
@@ -148,6 +152,11 @@ def load_lgbm_params_from_cli(args, mpi_config):
     if mpi_config.mpi_available:
         lgbm_params['num_machines'] = mpi_config.world_size
         lgbm_params['machines'] = ":"
+
+    # process custom params
+    if args.custom_params:
+        custom_params = json.loads(args.custom_params)
+        lgbm_params.update(custom_params)
 
     return lgbm_params
 
@@ -258,6 +267,7 @@ def run(args, unknown_args=[]):
         metrics_logger.set_platform_properties()
 
         # log lgbm parameters
+        logger.info(f"LGBM Params: {lgbm_params}")
         metrics_logger.log_parameters(**lgbm_params)
 
     # register logger for lightgbm logs

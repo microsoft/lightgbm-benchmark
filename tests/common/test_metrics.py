@@ -1,7 +1,7 @@
 """Tests src/common/metrics.py"""
 import os
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import call, Mock, patch
 import time
 import platform
 
@@ -86,6 +86,30 @@ def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
     )
 
 
+def test_metrics_logger_log_metric_non_allowed_chars():
+    """ Tests MetricsLogger().log_metric() """
+    metrics_logger = MetricsLogger()
+    metrics_logger.close()
+
+    test_cases = [
+        {
+            'input':   "a!@$b%^&c_-/d",
+            'expected':"abc_-/d"
+        },
+        {
+            'input':   "abcd",
+            'expected':"abcd"
+        },
+        {
+            'input':   "node_0/valid_0.ndcg@1",
+            'expected':"node_0/valid_0.ndcg1"
+        },
+    ]
+
+    for test_case in test_cases:
+        assert metrics_logger._remove_non_allowed_chars(test_case['input']) == test_case['expected']
+
+
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_properties(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties() """
@@ -149,18 +173,23 @@ def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
     # making sure it's the right exception
     assert str(exc_info.value).startswith("Provided JSON properties should be a dict")
 
-@patch('mlflow.log_params')
-def test_metrics_logger_log_parameters(mlflow_log_params_mock):
+@patch('mlflow.log_param')
+def test_metrics_logger_log_parameters(mlflow_log_param_mock):
     """ Tests MetricsLogger().log_parameters() """
     metrics_logger = MetricsLogger()
     metrics_logger.close()
 
     metrics_logger.log_parameters(
         key1 = "foo",
-        key2 = 0.45
+        key2 = 0.45,
+        str_way_too_long = ("*" * 1024)
     )
-    mlflow_log_params_mock.assert_called_with(
-        { 'key1' : "foo", 'key2' : 0.45 }
+    mlflow_log_param_mock.assert_has_calls(
+        [
+            call("key1", "foo"),
+            call("key2", 0.45),
+        ],
+        any_order=True
     )
 
 
