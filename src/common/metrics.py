@@ -109,9 +109,10 @@ class MetricsLogger():
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """
         self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
+        # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
         for key,value in kwargs.items():
-            if len(value) > 255:
-                self._logger.warning(f"parameter {key} could not be logged, value length {len(value)} > 255")
+            if isinstance(value, str) and len(value) > 255:
+                self._logger.warning(f"parameter {key} (str) could not be logged, value length {len(value)} > 255")
             else:
                 mlflow.log_param(key,value)
 
