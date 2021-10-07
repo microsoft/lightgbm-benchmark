@@ -33,13 +33,42 @@ class PartitioningEngine():
     """ Class handles partitioning files into chunks with various strategies. """
     PARTITION_MODES = [
         'chunk',
-        'roundrobin'
+        'roundrobin',
+        'append'
     ]
 
     def __init__(self, mode, number, logger=None):
         self.mode = mode
         self.number = number
         self.logger = logger or logging.getLogger(__name__)
+
+    def split_by_append(self, input_files, output_path, file_count_target):
+        """Just appends N++ files in N groups"""
+        if len(input_files) < file_count_target:
+            raise Exception(f"To use mode=append, the number of input files ({len(input_files)}) needs to be higher than requested number of output files ({file_count_target})")
+
+        # each partition starts as an empty list
+        partitions = [
+            [] for i in range(file_count_target)
+        ]
+
+        # loop on all files, and put them in one partition
+        for index, input_file in enumerate(input_files):
+            partitions[index % file_count_target].append(input_file)
+        
+        self.logger.info(f"Shuffled {len(input_files)} files into {file_count_target} partitions.")
+
+        # then write each partition by appending content
+        for current_partition_index, partition in enumerate(partitions):
+            self.logger.info(f"Writing partition {current_partition_index}...")
+            with open(os.path.join(output_path, "part_{:06d}".format(current_partition_index)), 'a', encoding="utf-8") as output_handler:
+                for input_file in partition:
+                    self.logger.info(f"Reading input file {input_file}...")
+                    with open(input_file, 'r') as input_handler:
+                        output_handler.write(input_handler.read())
+
+        self.logger.info(f"Created {current_partition_index+1} partitions")
+
 
     def split_by_size(self, input_files, output_path, partition_size):
         """The function that partition data by size"""
@@ -93,5 +122,7 @@ class PartitioningEngine():
             self.split_by_size(input_files, output_path, self.number)
         elif self.mode == "roundrobin":
             self.split_by_count(input_files, output_path, self.number)
+        elif self.mode == "append":
+            self.split_by_append(input_files, output_path, self.number)
         else:
             raise NotImplementedError(f"Mode {self.mode} not implemented.")
