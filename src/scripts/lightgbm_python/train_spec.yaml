@@ -75,6 +75,18 @@ inputs:
       - data
       - voting
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#tree_learner"
+  label_gain:
+    type: String
+    optional: True
+    description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#label_gain
+  deterministic:
+    type: Boolean
+    optional: True
+    description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#deterministic
+  enable_bundle:
+    type: Boolean
+    optional: True
+    description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#enable_bundle
   eval_at:
     type: String
     optional: True
@@ -142,6 +154,9 @@ launcher:
     --objective {inputs.objective}
     --metric {inputs.metric}
     [--eval_at {inputs.eval_at}]
+    [--label_gain {inputs.label_gain}]
+    [--deterministic {inputs.deterministic}]
+    [--enable_bundle {inputs.enable_bundle}]
     --boosting {inputs.boosting}
     --tree_learner {inputs.tree_learner}
     --num_trees {inputs.num_iterations}
