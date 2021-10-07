@@ -6,6 +6,7 @@ These classes provide some tools to automate wall time compute and logging
 """
 import os
 import time
+import re
 from functools import wraps
 import mlflow
 import platform
@@ -63,9 +64,16 @@ class MetricsLogger():
         else:
             cls._logger.warning(f"Call to finalize MLFLOW [session='{cls._session_name}'] that was never initialized.")
 
+    def _remove_non_allowed_chars(self, name_string):
+        """ Removes chars not allowed for metric keys in mlflow """
+        return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
+
     def log_metric(self, key, value, step=None):
+        """ Logs a metric key/value pair """
         if self._metrics_prefix:
             key = self._metrics_prefix + key
+
+        key = self._remove_non_allowed_chars(key)
 
         self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
@@ -109,7 +117,12 @@ class MetricsLogger():
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """
         self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
-        mlflow.log_params(kwargs)
+        # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
+        for key,value in kwargs.items():
+            if isinstance(value, str) and len(value) > 255:
+                self._logger.warning(f"parameter {key} (str) could not be logged, value length {len(value)} > 255")
+            else:
+                mlflow.log_param(key,value)
 
     def log_time_block(self, metric_name):
         """ [Proxy] Records time of execution for block of code """

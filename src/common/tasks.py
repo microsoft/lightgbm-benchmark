@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Optional
+from typing import Any, Optional
 
 @dataclass
 class inferencing_task:
@@ -27,20 +27,37 @@ class data_generation_task:
 
 @dataclass
 class training_task:
-    train_dataset: str = MISSING
+    # specify either by dataset name
+    train_dataset: Optional[str] = None
     train_dataset_version: Optional[str] = None
-    test_dataset: str = MISSING
+    # or by datastore+path
+    train_datastore: Optional[str] = None
+    train_datastore_path: Optional[str] = None
+    train_datastore_path_validate: bool = True
+    # specify either by dataset name
+    test_dataset: Optional[str] = None
     test_dataset_version: Optional[str] = None
+    # or by datastore+path
+    test_datastore: Optional[str] = None
+    test_datastore_path: Optional[str] = None
+    test_datastore_path_validate: bool = True
+    # provide a key for internal tagging + reporting
     task_key: Optional[str] = None
+
 
 @dataclass
 class training_variant:
-    # TRAINING
+    # input parametes
+    header: bool = False
+    label_column: Optional[str] = "0"
+    group_column: Optional[str] = None
+
     # fixed training parameters
     objective: str = MISSING
     metric: str = MISSING
     boosting: str = MISSING
     tree_learner: str = MISSING
+    eval_at: Optional[str] = None
 
     # sweepable training parameters
     # NOTE: need to be str so they can be parsed (ex: 'choice(100,200)')
@@ -50,6 +67,8 @@ class training_variant:
     learning_rate: str = MISSING
     max_bin: str = MISSING
     feature_fraction: str = MISSING
+    label_gain: Optional[str] = None
+    custom_params: Optional[Any] = None
 
     # COMPUTE
     device_type: str = "cpu"
@@ -58,6 +77,7 @@ class training_variant:
     target: Optional[str] = None
     override_docker: Optional[str] = None
     override_os: Optional[str] = None
+    auto_partitioning: bool = True
 
     # SWEEP
     # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809
