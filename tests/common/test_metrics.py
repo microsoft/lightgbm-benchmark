@@ -1,7 +1,7 @@
 """Tests src/common/metrics.py"""
 import os
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import call, Mock, patch
 import time
 import platform
 
@@ -149,18 +149,23 @@ def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
     # making sure it's the right exception
     assert str(exc_info.value).startswith("Provided JSON properties should be a dict")
 
-@patch('mlflow.log_params')
-def test_metrics_logger_log_parameters(mlflow_log_params_mock):
+@patch('mlflow.log_param')
+def test_metrics_logger_log_parameters(mlflow_log_param_mock):
     """ Tests MetricsLogger().log_parameters() """
     metrics_logger = MetricsLogger()
     metrics_logger.close()
 
     metrics_logger.log_parameters(
         key1 = "foo",
-        key2 = 0.45
+        key2 = 0.45,
+        str_way_too_long = ("*" * 1024)
     )
-    mlflow_log_params_mock.assert_called_with(
-        { 'key1' : "foo", 'key2' : 0.45 }
+    mlflow_log_param_mock.assert_has_calls(
+        [
+            call("key1", "foo"),
+            call("key2", 0.45),
+        ],
+        any_order=True
     )
 
 
