@@ -16,6 +16,7 @@ inputs:
     enum:
     - roundrobin
     - chunk
+    - append
     default: roundrobin
   number:
     type: Integer
