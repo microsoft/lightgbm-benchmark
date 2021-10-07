@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Optional
+from typing import Any, Optional
 
 @dataclass
 class inferencing_task:
@@ -67,6 +67,8 @@ class training_variant:
     learning_rate: str = MISSING
     max_bin: str = MISSING
     feature_fraction: str = MISSING
+    label_gain: Optional[str] = None
+    custom_params: Optional[Any] = None
 
     # COMPUTE
     device_type: str = "cpu"
@@ -75,6 +77,7 @@ class training_variant:
     target: Optional[str] = None
     override_docker: Optional[str] = None
     override_os: Optional[str] = None
+    auto_partitioning: bool = True
 
     # SWEEP
     # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809

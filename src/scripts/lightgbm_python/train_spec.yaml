@@ -79,14 +79,6 @@ inputs:
     type: String
     optional: True
     description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#label_gain
-  deterministic:
-    type: Boolean
-    optional: True
-    description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#deterministic
-  enable_bundle:
-    type: Boolean
-    optional: True
-    description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#enable_bundle
   eval_at:
     type: String
     optional: True
@@ -127,6 +119,10 @@ inputs:
       - gpu
       - cuda
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#device_type"
+  custom_params:
+    type: String
+    optional: true
+    description: "any lgbm param provided as json dictionary"
 
   # generic benchmark parameters
   verbose:
@@ -155,8 +151,7 @@ launcher:
     --metric {inputs.metric}
     [--eval_at {inputs.eval_at}]
     [--label_gain {inputs.label_gain}]
-    [--deterministic {inputs.deterministic}]
-    [--enable_bundle {inputs.enable_bundle}]
+    [--custom_params {inputs.custom_params}]
     --boosting {inputs.boosting}
     --tree_learner {inputs.tree_learner}
     --num_trees {inputs.num_iterations}
