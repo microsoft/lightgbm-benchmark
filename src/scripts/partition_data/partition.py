@@ -41,7 +41,7 @@ def get_arg_parser(parser=None):
 
     # add arguments that are specific to the module
     group = parser.add_argument_group('Partitioning arguments')
-    group.add_argument("--input", dest="input", type=input_file_path, required=True, help="file/directory to split")
+    group.add_argument("--input", dest="input", type=str, required=True, help="file/directory to split")
     group.add_argument("--output", dest="output", type=str, help="location to store partitioned files", required=True)
     group.add_argument("--mode", type=str, choices=PartitioningEngine.PARTITION_MODES, required=True, help="Partitioning mode")
     group.add_argument("--number", type=int, required=True, help="If roundrobin number of partition, if chunk number of records per partition")
