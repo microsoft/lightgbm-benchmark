@@ -86,6 +86,30 @@ def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
     )
 
 
+def test_metrics_logger_log_metric_non_allowed_chars():
+    """ Tests MetricsLogger().log_metric() """
+    metrics_logger = MetricsLogger()
+    metrics_logger.close()
+
+    test_cases = [
+        {
+            'input':   "a!@$b%^&c_-/d",
+            'expected':"abc_-/d"
+        },
+        {
+            'input':   "abcd",
+            'expected':"abcd"
+        },
+        {
+            'input':   "node_0/valid_0.ndcg@1",
+            'expected':"node_0/valid_0.ndcg1"
+        },
+    ]
+
+    for test_case in test_cases:
+        assert metrics_logger._remove_non_allowed_chars(test_case['input']) == test_case['expected']
+
+
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_properties(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties() """
