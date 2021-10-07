@@ -48,7 +48,7 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--train",
         required=True, type=str, help="Training data location (file or dir path)")
     group_i.add_argument("--test",
-        required=True, type=input_file_path, help="Testing data location (file path)")
+        required=True, type=str, help="Testing data location (file path)")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--group_column", required=False, default=None, type=str)
@@ -161,7 +161,7 @@ def load_lgbm_params_from_cli(args, mpi_config):
     return lgbm_params
 
 
-def get_train_files(path):
+def get_data_files(path):
     """ Scans input path and returns a list of files. """
     # if input path is already a file, return as list
     if os.path.isfile(path):
@@ -182,7 +182,6 @@ def get_train_files(path):
 def assign_train_data(args, mpi_config):
     """ Identifies which training file to load on this node.
     Checks for consistency between number of files and mpi config.
-
     Args:
         args (argparse.Namespace)
         mpi_config (namedtuple): as returned from detect_mpi_config()
@@ -190,7 +189,7 @@ def assign_train_data(args, mpi_config):
     Returns:
         str: path to the data file for this node
     """
-    train_file_paths = get_train_files(args.train)
+    train_file_paths = get_data_files(args.train)
 
     if mpi_config.mpi_available:    
         # depending on mode, we'll require different number of training files
@@ -278,21 +277,28 @@ def run(args, unknown_args=[]):
     with metrics_logger.log_time_block("time_data_loading"):
         # obtain the path to the train data for this node
         train_data_path = assign_train_data(args, mpi_config)
+        test_data_paths = get_data_files(args.test)
+
+        logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
+
+        # construct datasets
         train_data = lightgbm.Dataset(train_data_path, params=lgbm_params).construct()
-        val_data = train_data.create_valid(args.test).construct()
+        val_datasets = [
+            train_data.create_valid(test_data_path) for test_data_path in test_data_paths
+        ]
 
     # capture data shape in metrics
     metrics_logger.log_metric(key="train_data.length", value=train_data.num_data())
     metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature())
-    metrics_logger.log_metric(key="test_data.length", value=val_data.num_data())
-    metrics_logger.log_metric(key="test_data.width", value=val_data.num_feature())
+    #metrics_logger.log_metric(key="test_data.length", value=val_data.num_data())
+    #metrics_logger.log_metric(key="test_data.width", value=val_data.num_feature())
 
     logger.info(f"Training LightGBM with parameters: {lgbm_params}")
     with metrics_logger.log_time_block("time_training"):
         booster = lightgbm.train(
             lgbm_params,
             train_data,
-            valid_sets = val_data,
+            valid_sets = val_datasets,
             callbacks=[callbacks_handler.callback]
         )
 
