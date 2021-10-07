@@ -24,6 +24,8 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
 
 from common.sweep import SweepParameterParser
 from common.tasks import training_task, training_variant
+from common.aml import dataset_from_dstore_path
+
 
 class LightGBMTraining(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -148,8 +150,9 @@ class LightGBMTraining(AMLPipelineHelper):
             """
             # create dict of all params for training module
             reference_training_params = {
-                'header' : False,
-                'label_column' : "0",
+                'header' : config.lightgbm_training.reference_training.header,
+                'label_column' : config.lightgbm_training.reference_training.label_column,
+                'group_column' : config.lightgbm_training.reference_training.group_column,
 
                 # training params
                 'objective' : config.lightgbm_training.reference_training.objective,
@@ -164,13 +167,15 @@ class LightGBMTraining(AMLPipelineHelper):
                 'learning_rate' : config.lightgbm_training.reference_training.learning_rate,
                 'max_bin' : config.lightgbm_training.reference_training.max_bin,
                 'feature_fraction' : config.lightgbm_training.reference_training.feature_fraction,
+                'label_gain' : config.lightgbm_training.reference_training.label_gain,
+                'custom_params' : config.lightgbm_training.reference_training.custom_params,
 
                 # generic params
                 'verbose' : False,
                 'custom_properties' : benchmark_custom_properties,
 
                 # compute params
-                'device_type' : config.lightgbm_training.reference_training.device_type,
+                'device_type' : config.lightgbm_training.reference_training.device_type
             }
 
             # create specific dict for sweep parameters
@@ -187,6 +192,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 'nodes' : config.lightgbm_training.reference_training.nodes,
                 'processes' : config.lightgbm_training.reference_training.processes,
                 'target' : config.lightgbm_training.reference_training.target,
+                'auto_partitioning' : config.lightgbm_training.reference_training.auto_partitioning,
                 'register_model' : config.lightgbm_training.reference_training.register_model,
                 'register_model_prefix' : config.lightgbm_training.reference_training.register_model_prefix,
                 'register_model_suffix' : config.lightgbm_training.reference_training.register_model_suffix,
@@ -281,7 +287,7 @@ class LightGBMTraining(AMLPipelineHelper):
             # for each training variant, create a module sequence
             for variant_index,(training_params,sweep_params,runsettings,variant_comment) in enumerate(zip(training_variants_params,sweep_variants_params,runsettings_variants_params,variant_comments)):
                 # if we're using multinode, add partitioning
-                if training_params['tree_learner'] == "data" or training_params['tree_learner'] == "voting":
+                if runsettings['auto_partitioning'] and (training_params['tree_learner'] == "data" or training_params['tree_learner'] == "voting"):
                     # if using data parallel, train data has to be partitioned first
                     if (runsettings['nodes'] * runsettings['processes']) > 1:
                         partition_data_step = partition_data_module(
@@ -306,6 +312,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 training_params['custom_properties']['framework_build_os'] = runsettings.get('override_os') or "n/a"
                 # passing as json string that each module parses to digest as tags/properties
                 training_params['custom_properties'] = json.dumps(training_params['custom_properties'])
+                if training_params['custom_params']:
+                    training_params['custom_params'] = json.dumps(dict(training_params['custom_params']))
 
                 # create instance of training module and apply training params
                 if runsettings.get('sweep', None):
@@ -408,15 +416,26 @@ class LightGBMTraining(AMLPipelineHelper):
             # loop on all training tasks
             for training_task in config.lightgbm_training.tasks:
                 # load the given train dataset
-                train_data = self.dataset_load(
-                    name = training_task.train_dataset,
-                    version = training_task.train_dataset_version # use latest if None
-                )
+                if training_task.train_dataset:
+                    train_data = self.dataset_load(
+                        name = training_task.train_dataset,
+                        version = training_task.train_dataset_version # use latest if None
+                    )
+                elif training_task.train_datastore and training_task.train_datastore_path:
+                    train_data = dataset_from_dstore_path(self.workspace(), training_task.train_datastore, training_task.train_datastore_path, validate=training_task.train_datastore_path_validate)
+                else:
+                    raise ValueError(f"In training_task {training_task}, you need to provide either train_dataset or train_datastore+train_datastore_path")
+
                 # load the given test dataset
-                test_data = self.dataset_load(
-                    name = training_task.test_dataset,
-                    version = training_task.test_dataset_version # use latest if None
-                )
+                if training_task.test_dataset:
+                    test_data = self.dataset_load(
+                        name = training_task.test_dataset,
+                        version = training_task.test_dataset_version # use latest if None
+                    )
+                elif training_task.test_datastore and training_task.test_datastore_path:
+                    test_data = dataset_from_dstore_path(self.workspace(), training_task.test_datastore, training_task.test_datastore_path, validate=training_task.test_datastore_path_validate)
+                else:
+                    raise ValueError(f"In training_task {training_task}, you need to provide either test_dataset or test_datastore+test_datastore_path")
 
                 # create custom properties for this task
                 # they will be passed on to each job as tags

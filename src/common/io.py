@@ -76,6 +76,7 @@ class PartitioningEngine():
         current_partition_index = 0
         self.logger.info(f"Creating partition {current_partition_index}")
         for input_file in input_files:
+            self.logger.info(f"Opening input file {input_file}")
             with open(input_file, "r", encoding="utf-8") as input_handler:
                 for line in input_handler:
                     if partition_size > 0 and current_partition_size >= partition_size:
@@ -95,6 +96,7 @@ class PartitioningEngine():
 
         current_index = 0
         for input_file in input_files:
+            self.logger.info(f"Opening input file {input_file}")
             with open(input_file, "r", encoding="utf-8") as input_handler:
                 for line in input_handler:
                     partition_files[current_index % partition_count].write(line)
