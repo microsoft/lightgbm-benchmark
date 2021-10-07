@@ -109,7 +109,11 @@ class MetricsLogger():
     def log_parameters(self, **kwargs):
         """ Set parameters for the session """
         self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
-        mlflow.log_params(kwargs)
+        for key,value in kwargs.items():
+            if len(value) > 255:
+                self._logger.warning(f"parameter {key} could not be logged, value length {len(value)} > 255")
+            else:
+                mlflow.log_param(key,value)
 
     def log_time_block(self, metric_name):
         """ [Proxy] Records time of execution for block of code """

@@ -48,6 +48,8 @@ lightgbm_training:
     eval_at: "1,3,5"
     boosting: "gbdt"
     tree_learner: "data"
+    #custom_params:
+    #    deterministic: True
 
     # "sweepable" training parameters
     num_iterations: "choice(100, 200)"

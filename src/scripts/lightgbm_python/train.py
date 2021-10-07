@@ -268,6 +268,7 @@ def run(args, unknown_args=[]):
         metrics_logger.set_platform_properties()
 
         # log lgbm parameters
+        logger.info(f"LGBM Params: {lgbm_params}")
         metrics_logger.log_parameters(**lgbm_params)
 
     # register logger for lightgbm logs
