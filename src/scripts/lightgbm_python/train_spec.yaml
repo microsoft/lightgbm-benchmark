@@ -79,10 +79,6 @@ inputs:
     type: String
     optional: True
     description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#label_gain
-  eval_at:
-    type: String
-    optional: True
-    description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#eval_at"
   num_iterations:
     type: Integer
     min: 1
@@ -149,7 +145,6 @@ launcher:
     --device_type {inputs.device_type}
     --objective {inputs.objective}
     --metric {inputs.metric}
-    [--eval_at {inputs.eval_at}]
     [--label_gain {inputs.label_gain}]
     [--custom_params {inputs.custom_params}]
     --boosting {inputs.boosting}

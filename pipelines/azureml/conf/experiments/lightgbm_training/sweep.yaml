@@ -45,7 +45,6 @@ lightgbm_training:
     # fixedlightgbm training parameters
     objective: "regression"
     metric: "rmse"
-    eval_at: "1,3,5"
     boosting: "gbdt"
     tree_learner: "data"
     #custom_params:

@@ -57,7 +57,6 @@ class training_variant:
     metric: str = MISSING
     boosting: str = MISSING
     tree_learner: str = MISSING
-    eval_at: Optional[str] = None
 
     # sweepable training parameters
     # NOTE: need to be str so they can be parsed (ex: 'choice(100,200)')

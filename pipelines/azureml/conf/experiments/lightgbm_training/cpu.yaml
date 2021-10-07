@@ -46,7 +46,6 @@ lightgbm_training:
     # lightgbm training parameters
     objective: "regression"
     metric: "rmse"
-    eval_at: "1,3,5"
     boosting: "gbdt"
     tree_learner: "data"
     num_iterations: 100
