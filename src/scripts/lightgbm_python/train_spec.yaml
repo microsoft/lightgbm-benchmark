@@ -18,7 +18,7 @@ inputs:
     optional: false
   construct:
     type: Boolean
-    description: pre-construct datasets or not
+    description: "use lazy intialization during data loading phase, see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.Dataset.html#lightgbm.Dataset.construct"
     optional: true
 
   # Input Parameters

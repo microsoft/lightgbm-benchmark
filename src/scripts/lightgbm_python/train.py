@@ -50,7 +50,7 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--test",
         required=True, type=str, help="Testing data location (file path)")
     group_i.add_argument("--construct",
-        required=False, default=True, type=strtobool, help="pre-construct datasets")
+        required=False, default=True, type=strtobool, help="use lazy initialization during data loading phase")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--group_column", required=False, default=None, type=str)
