@@ -139,7 +139,7 @@ def load_lgbm_params_from_cli(args, mpi_config):
     cli_params = dict(vars(args))
 
     # removing arguments that are purely CLI
-    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params']:
+    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params', 'construct']:
         del cli_params[key]
 
     # doing some fixes and hardcoded values
