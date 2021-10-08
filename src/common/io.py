@@ -29,6 +29,36 @@ def input_file_path(path):
     return path
 
 
+def get_all_files(path, fail_on_unknown_type=False):
+    """ Scans input path and returns a list of files.
+    
+    Args:
+        path (str): either a file, or directory path
+        fail_on_unknown_type (bool): fails if path is neither a file or a dir?
+
+    Returns:
+        List[str]: list of paths contained in path
+    """
+    # if input path is already a file, return as list
+    if os.path.isfile(path):
+        logging.getLogger(__name__).info(f"Found INPUT file {path}")
+        return [path]
+
+    # if input path is a directory, list all files and return
+    if os.path.isdir(path):
+        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
+        if not all_files:
+            raise Exception(f"Could not find any file in specified input directory {path}")
+        return all_files
+
+    if fail_on_unknown_type:
+        raise FileNotFoundError(f"Provided INPUT path {path} is neither a directory or a file???")
+    else:
+        logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
+
+    return path
+
+
 class PartitioningEngine():
     """ Class handles partitioning files into chunks with various strategies. """
     PARTITION_MODES = [

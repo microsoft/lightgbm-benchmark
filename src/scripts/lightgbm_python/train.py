@@ -25,7 +25,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.metrics import MetricsLogger
-from common.io import input_file_path
+from common.io import get_all_files
 from common.lightgbm import LightGBMCallbackHandler
 
 def get_arg_parser(parser=None):
@@ -162,24 +162,6 @@ def load_lgbm_params_from_cli(args, mpi_config):
     return lgbm_params
 
 
-def get_data_files(path):
-    """ Scans input path and returns a list of files. """
-    # if input path is already a file, return as list
-    if os.path.isfile(path):
-        logging.getLogger().info(f"Found INPUT file {path}")
-        return [path]
-    
-    # if input path is a directory, list all files and return
-    if os.path.isdir(path):
-        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
-        if not all_files:
-            raise Exception(f"Could not find any file in specified input directory {path}")
-        return all_files
-
-    logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
-    return path
-
-
 def assign_train_data(args, mpi_config):
     """ Identifies which training file to load on this node.
     Checks for consistency between number of files and mpi config.
@@ -190,7 +172,7 @@ def assign_train_data(args, mpi_config):
     Returns:
         str: path to the data file for this node
     """
-    train_file_paths = get_data_files(args.train)
+    train_file_paths = get_all_files(args.train)
 
     if mpi_config.mpi_available:    
         # depending on mode, we'll require different number of training files
@@ -278,7 +260,7 @@ def run(args, unknown_args=[]):
     with metrics_logger.log_time_block("time_data_loading"):
         # obtain the path to the train data for this node
         train_data_path = assign_train_data(args, mpi_config)
-        test_data_paths = get_data_files(args.test)
+        test_data_paths = get_all_files(args.test)
 
         logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
 
