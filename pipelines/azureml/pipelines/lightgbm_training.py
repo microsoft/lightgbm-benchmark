@@ -312,7 +312,8 @@ class LightGBMTraining(AMLPipelineHelper):
                     convert_data2bin_step = lightgbm_data2bin_module(
                         train=partitioned_train_data,
                         test=test_dataset,
-                        max_bin=training_params['max_bin']
+                        max_bin=training_params['max_bin'],
+                        custom_params=json.dumps(dict(training_params['custom_params']))
                     )
                     self.apply_smart_runsettings(convert_data2bin_step)
 
