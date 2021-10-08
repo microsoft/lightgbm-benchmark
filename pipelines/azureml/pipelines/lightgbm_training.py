@@ -153,6 +153,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 'header' : config.lightgbm_training.reference_training.header,
                 'label_column' : config.lightgbm_training.reference_training.label_column,
                 'group_column' : config.lightgbm_training.reference_training.group_column,
+                'construct' : config.lightgbm_training.reference_training.construct,
 
                 # training params
                 'objective' : config.lightgbm_training.reference_training.objective,
@@ -171,7 +172,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 'custom_params' : config.lightgbm_training.reference_training.custom_params,
 
                 # generic params
-                'verbose' : False,
+                'verbose' : config.lightgbm_training.reference_training.verbose,
                 'custom_properties' : benchmark_custom_properties,
 
                 # compute params
