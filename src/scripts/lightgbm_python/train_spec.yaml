@@ -16,11 +16,15 @@ inputs:
     type: AnyDirectory
     description: directory to the testing data
     optional: false
+  construct:
+    type: Boolean
+    description: pre-construct datasets or not
+    optional: true
 
   # Input Parameters
   header:
     type: Boolean
-    default: False
+    optional: true
     description: "does data have a header, see https://lightgbm.readthedocs.io/en/latest/Parameters.html#header"
   label_column:
     type: String
@@ -109,7 +113,7 @@ inputs:
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#feature_fraction"
   device_type:
     type: Enum
-    default: "cpu"
+    optional: true
     enum:
       - cpu
       - gpu
@@ -139,10 +143,11 @@ launcher:
     python train.py
     --train {inputs.train}
     --test {inputs.test}
-    --header {inputs.header}
+    [--construct {inputs.construct}]
+    [--header {inputs.header}]
     [--label_column {inputs.label_column}]
     [--group_column {inputs.group_column}]
-    --device_type {inputs.device_type}
+    [--device_type {inputs.device_type}]
     --objective {inputs.objective}
     --metric {inputs.metric}
     [--label_gain {inputs.label_gain}]
