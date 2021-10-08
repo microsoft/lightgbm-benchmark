@@ -51,6 +51,7 @@ class training_variant:
     header: bool = False
     label_column: Optional[str] = "0"
     group_column: Optional[str] = None
+    construct: bool = True
 
     # fixed training parameters
     objective: str = MISSING
@@ -77,6 +78,7 @@ class training_variant:
     override_docker: Optional[str] = None
     override_os: Optional[str] = None
     auto_partitioning: bool = True
+    verbose: bool = False
 
     # SWEEP
     # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809

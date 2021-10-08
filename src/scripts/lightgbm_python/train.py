@@ -49,6 +49,8 @@ def get_arg_parser(parser=None):
         required=True, type=str, help="Training data location (file or dir path)")
     group_i.add_argument("--test",
         required=True, type=str, help="Testing data location (file path)")
+    group_i.add_argument("--construct",
+        required=False, default=True, type=strtobool, help="use lazy initialization during data loading phase")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--group_column", required=False, default=None, type=str)
@@ -137,7 +139,7 @@ def load_lgbm_params_from_cli(args, mpi_config):
     cli_params = dict(vars(args))
 
     # removing arguments that are purely CLI
-    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params']:
+    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params', 'construct']:
         del cli_params[key]
 
     # doing some fixes and hardcoded values
@@ -281,16 +283,22 @@ def run(args, unknown_args=[]):
         logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
 
         # construct datasets
-        train_data = lightgbm.Dataset(train_data_path, params=lgbm_params).construct()
-        val_datasets = [
-            train_data.create_valid(test_data_path) for test_data_path in test_data_paths
-        ]
-
-    # capture data shape in metrics
-    metrics_logger.log_metric(key="train_data.length", value=train_data.num_data())
-    metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature())
-    #metrics_logger.log_metric(key="test_data.length", value=val_data.num_data())
-    #metrics_logger.log_metric(key="test_data.width", value=val_data.num_feature())
+        if args.construct:
+            train_data = lightgbm.Dataset(train_data_path, params=lgbm_params).construct()
+            val_datasets = [
+                train_data.create_valid(test_data_path).construct() for test_data_path in test_data_paths
+            ]
+            # capture data shape in metrics
+            metrics_logger.log_metric(key="train_data.length", value=train_data.num_data())
+            metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature())
+        else:
+            train_data = lightgbm.Dataset(train_data_path, params=lgbm_params)
+            val_datasets = [
+                train_data.create_valid(test_data_path) for test_data_path in test_data_paths
+            ]
+            # can't count rows if dataset is not constructed
+            metrics_logger.log_metric(key="train_data.length", value="n/a")
+            metrics_logger.log_metric(key="train_data.width", value="n/a")
 
     logger.info(f"Training LightGBM with parameters: {lgbm_params}")
     with metrics_logger.log_time_block("time_training"):
