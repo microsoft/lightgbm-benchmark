@@ -72,9 +72,7 @@ command: >-
 
 environment:
   docker:
-    build:
-      # file path is resolved after additional includes
-      dockerfile: file:./dockers/lightgbm_cpu_mpi_pip.dockerfile
+    image: mcr.microsoft.com/azureml/base:latest
   conda:
-    userManagedDependencies: true
+    conda_dependencies_file: conda_env.yml
   os: Linux

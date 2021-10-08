@@ -77,8 +77,11 @@ class training_variant:
     target: Optional[str] = None
     override_docker: Optional[str] = None
     override_os: Optional[str] = None
-    auto_partitioning: bool = True
     verbose: bool = False
+
+    # FILE OPTIONS
+    auto_partitioning: bool = True
+    pre_convert_to_binary: bool = False # doesn't work with partitioned data (yet)
 
     # SWEEP
     # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809

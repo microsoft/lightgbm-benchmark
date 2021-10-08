@@ -129,6 +129,7 @@ class LightGBMTraining(AMLPipelineHelper):
         lightgbm_train_module = self.module_load("lightgbm_python_train")
         lightgbm_train_sweep_module = self.module_load("lightgbm_python_train_sweep")
         partition_data_module = self.module_load("partition_data")
+        lightgbm_data2bin_module = self.module_load("lightgbm_python_data2bin")
 
         pipeline_name = f"lightgbm_training_{config.lightgbm_training.reference_training.objective}"
         pipeline_description = f"LightGBM {config.lightgbm_training.reference_training.objective} distributed training (mpi)"
@@ -194,6 +195,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 'processes' : config.lightgbm_training.reference_training.processes,
                 'target' : config.lightgbm_training.reference_training.target,
                 'auto_partitioning' : config.lightgbm_training.reference_training.auto_partitioning,
+                'pre_convert_to_binary' : config.lightgbm_training.reference_training.pre_convert_to_binary,
                 'register_model' : config.lightgbm_training.reference_training.register_model,
                 'register_model_prefix' : config.lightgbm_training.reference_training.register_model_prefix,
                 'register_model_suffix' : config.lightgbm_training.reference_training.register_model_suffix,
@@ -304,6 +306,21 @@ class LightGBMTraining(AMLPipelineHelper):
                 else:
                     # for other modes, train data has to be one file
                     partitioned_train_data = train_dataset
+                
+                # convert into binary files
+                if runsettings['pre_convert_to_binary']:
+                    convert_data2bin_step = lightgbm_data2bin_module(
+                        train=partitioned_train_data,
+                        test=test_dataset,
+                        max_bin=training_params['max_bin']
+                    )
+                    self.apply_smart_runsettings(convert_data2bin_step)
+
+                    train_data = convert_data2bin_step.outputs.output_train
+                    test_data = convert_data2bin_step.outputs.output_test
+                else:
+                    train_data = partitioned_train_data
+                    test_data = test_dataset
 
                 # NOTE: last minute addition to custom_properties before transforming into json for tagging
                 # adding variant_index to spot which variant is the reference
@@ -320,8 +337,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 if runsettings.get('sweep', None):
                     # apply training parameters (including sweepable params)
                     lightgbm_train_step = lightgbm_train_sweep_module(
-                        train = partitioned_train_data,
-                        test = test_dataset,
+                        train = train_data,
+                        test = test_data,
                         **training_params
                     )
                     # apply runsettings
@@ -341,8 +358,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 else:
                     # apply training params
                     lightgbm_train_step = lightgbm_train_module(
-                        train = partitioned_train_data,
-                        test = test_dataset,
+                        train = train_data,
+                        test = test_data,
                         **training_params
                     )
                     # apply runsettings
