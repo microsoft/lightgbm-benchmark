@@ -153,6 +153,7 @@ def test_sweep_parameter_from_dict():
     parameter_dict = {
         "num_trees" : "uniform(0.0005, 0.005)",
         "num_leaves" : "choice(0, 100, 120, 140, 180)",
+        "min_data_in_leaf" : "quniform(0, 500, 100)",
         "learning_rate" : "0.32"
     }
 
@@ -163,7 +164,8 @@ def test_sweep_parameter_from_dict():
 
     assert tunable_params == {
         "num_trees" : uniform(0.0005, 0.005),
-        "num_leaves" : choice(0, 100, 120, 140, 180)
+        "num_leaves" : choice(0, 100, 120, 140, 180),
+        "min_data_in_leaf" : quniform(0, 500, 100)
     }
     assert fixed_params == {
         "learning_rate" : 0.32
