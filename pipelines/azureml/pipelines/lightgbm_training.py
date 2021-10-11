@@ -317,11 +317,11 @@ class LightGBMTraining(AMLPipelineHelper):
                     )
                     self.apply_smart_runsettings(convert_data2bin_step)
 
-                    train_data = convert_data2bin_step.outputs.output_train
-                    test_data = convert_data2bin_step.outputs.output_test
+                    prepared_train_data = convert_data2bin_step.outputs.output_train
+                    prepared_test_data = convert_data2bin_step.outputs.output_test
                 else:
-                    train_data = partitioned_train_data
-                    test_data = test_dataset
+                    prepared_train_data = partitioned_train_data
+                    prepared_test_data = test_dataset
 
                 # NOTE: last minute addition to custom_properties before transforming into json for tagging
                 # adding variant_index to spot which variant is the reference
@@ -338,8 +338,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 if runsettings.get('sweep', None):
                     # apply training parameters (including sweepable params)
                     lightgbm_train_step = lightgbm_train_sweep_module(
-                        train = train_data,
-                        test = test_data,
+                        train = prepared_train_data,
+                        test = prepared_test_data,
                         **training_params
                     )
                     # apply runsettings
@@ -349,6 +349,7 @@ class LightGBMTraining(AMLPipelineHelper):
                         process_count_per_node = runsettings['processes'],
                         gpu = (training_params['device_type'] == 'gpu' or training_params['device_type'] == 'cuda'),
                         target = runsettings['target'],
+                        primary_metric=f"node_0/valid_0.{training_params['metric']}",
                         sweep = True,
                         algorithm = sweep_params['sweep_algorithm'],
                         goal = sweep_params['sweep_goal'],
@@ -359,8 +360,8 @@ class LightGBMTraining(AMLPipelineHelper):
                 else:
                     # apply training params
                     lightgbm_train_step = lightgbm_train_module(
-                        train = train_data,
-                        test = test_data,
+                        train = prepared_train_data,
+                        test = prepared_test_data,
                         **training_params
                     )
                     # apply runsettings
