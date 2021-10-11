@@ -25,7 +25,7 @@ For each of those, you need to create a File dataset with your training and test
 
 1\. Go into the subdirectory `pipelines/azureml/`
 
-2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below)
+2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below):
 
 ``` yaml
 {!./pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml!}

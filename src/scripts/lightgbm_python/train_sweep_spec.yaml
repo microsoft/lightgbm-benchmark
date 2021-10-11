@@ -43,32 +43,32 @@ search_space:
 
 objective:
   primary_metric:
-    default: valid_0.rmse
+    default: node_0/valid_0.rmse
     enum:
       # NOTE: we have to declare all the possible metrics names here
-      - valid_0.l1
-      - valid_0.l2
-      - valid_0.rmse
-      - valid_0.quantile
-      - valid_0.mape
-      - valid_0.huber
-      - valid_0.fair
-      - valid_0.poisson
-      - valid_0.gamma
-      - valid_0.gamma_deviance
-      - valid_0.tweedie
-      - valid_0.ndcg
-      - valid_0.map
-      - valid_0.auc
-      - valid_0.average_precision
-      - valid_0.binary_logloss
-      - valid_0.binary_error
-      - valid_0.auc_mu
-      - valid_0.multi_logloss
-      - valid_0.multi_error
-      - valid_0.cross_entropy
-      - valid_0.cross_entropy_lambda
-      - valid_0.kullback_leibler
+      - node_0/valid_0.l1
+      - node_0/valid_0.l2
+      - node_0/valid_0.rmse
+      - node_0/valid_0.quantile
+      - node_0/valid_0.mape
+      - node_0/valid_0.huber
+      - node_0/valid_0.fair
+      - node_0/valid_0.poisson
+      - node_0/valid_0.gamma
+      - node_0/valid_0.gamma_deviance
+      - node_0/valid_0.tweedie
+      - node_0/valid_0.ndcg
+      - node_0/valid_0.map
+      - node_0/valid_0.auc
+      - node_0/valid_0.average_precision
+      - node_0/valid_0.binary_logloss
+      - node_0/valid_0.binary_error
+      - node_0/valid_0.auc_mu
+      - node_0/valid_0.multi_logloss
+      - node_0/valid_0.multi_error
+      - node_0/valid_0.cross_entropy
+      - node_0/valid_0.cross_entropy_lambda
+      - node_0/valid_0.kullback_leibler
   goal: minimize
 
 limits:
