@@ -313,7 +313,7 @@ class LightGBMTraining(AMLPipelineHelper):
                         train=partitioned_train_data,
                         test=test_dataset,
                         max_bin=training_params['max_bin'],
-                        custom_params=json.dumps(dict(training_params['custom_params']))
+                        custom_params=json.dumps(dict(training_params['custom_params'] or {}))
                     )
                     self.apply_smart_runsettings(convert_data2bin_step)
 
@@ -330,9 +330,9 @@ class LightGBMTraining(AMLPipelineHelper):
                 training_params['custom_properties']['framework_build'] = runsettings.get('override_docker') or "n/a"
                 training_params['custom_properties']['framework_build_os'] = runsettings.get('override_os') or "n/a"
                 # passing as json string that each module parses to digest as tags/properties
-                training_params['custom_properties'] = json.dumps(training_params['custom_properties'])
+                training_params['custom_properties'] = json.dumps(training_params['custom_properties'] or {})
                 if training_params['custom_params']:
-                    training_params['custom_params'] = json.dumps(dict(training_params['custom_params']))
+                    training_params['custom_params'] = json.dumps(dict(training_params['custom_params'] or {}))
 
                 # create instance of training module and apply training params
                 if runsettings.get('sweep', None):
