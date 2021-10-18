@@ -4,9 +4,26 @@ from typing import Any, Optional
 
 @dataclass
 class inferencing_task:
-    dataset: str = MISSING
-    model: str = MISSING
+    # specify either by dataset name
+    inferencing_dataset: Optional[str] = None
+    inferencing_dataset_version: Optional[str] = None
+    # or by datastore+path
+    inferencing_datastore: Optional[str] = None
+    inferencing_datastore_path: Optional[str] = None
+    inferencing_datastore_path_validate: bool = True
+
+    # specify either by model dataset name
+    model_dataset: Optional[str] = None
+    model_dataset_version: Optional[str] = None
+    # or by datastore+path
+    model_datastore: Optional[str] = None
+    model_datastore_path: Optional[str] = None
+    model_datastore_path_validate: bool = True
+
+    # task tag
     task_key: Optional[str] = None
+
+    # turn to True is model and dataset have different shapes
     predict_disable_shape_check: bool = False
 
 @dataclass

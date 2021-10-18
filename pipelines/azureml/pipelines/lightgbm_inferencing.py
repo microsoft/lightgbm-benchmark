@@ -27,6 +27,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
 
 from common.tasks import inferencing_task, inferencing_variants
+from common.aml import dataset_from_dstore_path
 
 class LightGBMInferencing(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -183,19 +184,39 @@ class LightGBMInferencing(AMLPipelineHelper):
                       default_datastore=config.compute.noncompliant_datastore)
         def inferencing_all_tasks():
             for inferencing_task in config.lightgbm_inferencing.tasks:
-                data = self.dataset_load(inferencing_task.dataset)
-                model = self.dataset_load(inferencing_task.model)
+
+                # load the given inferencing dataset
+                if inferencing_task.inferencing_dataset:
+                    inferencing_data = self.dataset_load(
+                        name = inferencing_task.inferencing_dataset,
+                        version = inferencing_task.inferencing_dataset_version # use latest if None
+                    )
+                elif inferencing_task.inferencing_datastore and inferencing_task.inferencing_datastore_path:
+                    inferencing_data = dataset_from_dstore_path(self.workspace(), inferencing_task.inferencing_datastore, inferencing_task.inferencing_datastore_path, validate=inferencing_task.inferencing_datastore_path_validate)
+                else:
+                    raise ValueError(f"In inferencing_task {inferencing_task}, you need to provide either inferencing_dataset or inferencing_datastore+inferencing_datastore_path")
+
+                # load the given inferencing model (from a dataset)
+                if inferencing_task.model_dataset:
+                    model_data = self.dataset_load(
+                        name = inferencing_task.model_dataset,
+                        version = inferencing_task.model_dataset_version # use latest if None
+                    )
+                elif inferencing_task.model_datastore and inferencing_task.model_datastore_path:
+                    model_data = dataset_from_dstore_path(self.workspace(), inferencing_task.model_datastore, inferencing_task.model_datastore_path, validate=inferencing_task.model_datastore_path_validate)
+                else:
+                    raise ValueError(f"In inferencing_task {inferencing_task}, you need to provide either model_dataset or model_datastore+model_datastore_path")
 
                 # create custom properties for this task
                 benchmark_custom_properties = {
                     'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
-                    'benchmark_dataset' : inferencing_task.dataset,
-                    'benchmark_model' : inferencing_task.model,
+                    'benchmark_dataset' : inferencing_task.inferencing_dataset,
+                    'benchmark_model' : inferencing_task.model_dataset,
                 }
 
                 inferencing_task_subgraph_step = pipeline_function(
-                    data=data,
-                    model=model,
+                    data=inferencing_data,
+                    model=model_data,
                     predict_disable_shape_check=inferencing_task.predict_disable_shape_check or False,
                     benchmark_custom_properties=benchmark_custom_properties
                 )
