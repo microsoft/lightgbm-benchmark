@@ -35,8 +35,8 @@ lightgbm_inferencing:
 
   # list all the data/model pairs to run inferencing with
   tasks:
-    - dataset: "data-synthetic-regression-100cols-10000samples-inference"
-      model:  "model-synthetic-regression-100cols-10trees-31leaves"
+    - inferencing_dataset: "data-synthetic-regression-100cols-10000samples-inference"
+      inferencing_model:  "model-synthetic-regression-100cols-10trees-31leaves"
 
   # list all inferencing frameworks and their builds
   variants:
