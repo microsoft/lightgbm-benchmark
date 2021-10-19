@@ -8,6 +8,7 @@ import os
 import sys
 import argparse
 import logging
+import time
 import numpy
 from distutils.util import strtobool
 import pandas as pd
@@ -23,7 +24,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.metrics import MetricsLogger
-from common.io import input_file_path
+from common.io import input_file_path, DataBatch, libsvm_data_load, numpy_data_load
 
 
 def get_arg_parser(parser=None):
@@ -45,12 +46,16 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
+    group_i.add_argument(f"--data_loader",
+        required=False, type=str, default="libsvm", choices=["libsvm", "numpy"], help="use numpy for csv, libsvm for libsvm, or lightgbm for both")        
     group_i.add_argument("--so_path",
         required=False, default = "./mymodel.so" , help="full path to model so")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
     group_params = parser.add_argument_group("Scoring parameters")
+    group_params.add_argument(f"--batch_size",
+        required=False, type=int, default=0, help="size of batches (default: all data in 1 batch")
     group_params.add_argument("--nthreads",
         required=False, default=1, type=int, help="number of threads")
     
@@ -116,18 +121,46 @@ def run(args, unknown_args=[]):
 
     logger.info(f"Loading data for inferencing")
     with metrics_logger.log_time_block("time_data_loading"):
-        my_data = pd.read_csv(args.data).to_numpy()
-        
-        predictor = treelite_runtime.Predictor(
-            args.so_path,
-            verbose=True,
-            nthread=args.nthreads
-        )
-        dmat = treelite_runtime.DMatrix(my_data)
+        if args.data_loader == "libsvm":
+            inference_data, row_count, feature_count = libsvm_data_load(args.data)
+            inference_raw_data = inference_data[0] # (x,y) -> x
+        elif args.data_loader == "numpy":
+            inference_data, row_count, feature_count = numpy_data_load(args.data)
+        else:
+            raise NotImplementedError(f"--data_loader {args.data_loader} is not implemented.")
+
+        inference_data_raw = treelite_runtime.DMatrix(inference_data)
+
+    logger.info(f"Loading model from {args.model}")
+    predictor = treelite_runtime.Predictor(
+        args.so_path,
+        verbose=True,
+        nthread=args.nthreads
+    )
+
+    # capture data shape as property
+    metrics_logger.set_properties(
+        inference_data_length = row_count,
+        inference_data_width = feature_count
+    )
 
     logger.info(f"Running .predict()")
+    batch_run_times = [] # collect time for each batch
     with metrics_logger.log_time_block("time_inferencing"):
-        predictor.predict(dmat)
+        if args.batch_size > 0:
+            inference_batches = DataBatch(x=inference_raw_data, y=None, batch_size=args.batch_size)
+            for data_batch, _ in inference_batches:
+                batch_start_time = time.time()
+                predictor.predict(data_batch)
+                batch_run_times.append(time.time() - batch_start_time)
+        else:
+            predictor.predict(inference_data_raw)
+
+    if len(batch_run_times) > 1:
+        batch_run_times = numpy.array(batch_run_times)
+        metrics_logger.log_metric("batch_time_inferencing_p50_usecs", numpy.percentile(batch_run_times, 50) * 1000000)
+        metrics_logger.log_metric("batch_time_inferencing_p90_usecs", numpy.percentile(batch_run_times, 90) * 1000000)
+        metrics_logger.log_metric("batch_time_inferencing_p99_usecs", numpy.percentile(batch_run_times, 99) * 1000000)
 
     # Important: close logging session before exiting
     metrics_logger.close()

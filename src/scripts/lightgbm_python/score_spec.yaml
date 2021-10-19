@@ -43,7 +43,7 @@ command: >-
   --data {inputs.data}
   --model {inputs.model}
   --data_loader {inputs.data_loader}
-  --data_batch_size {inputs.batch_size}
+  --batch_size {inputs.batch_size}
   [--num_threads {inputs.n_threads}]
   [--predict_disable_shape_check {inputs.predict_disable_shape_check}]
   [--verbose {inputs.verbose}]

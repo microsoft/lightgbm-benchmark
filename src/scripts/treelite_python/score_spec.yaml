@@ -15,6 +15,17 @@ inputs:
     type: AnyDirectory
     description: directory to the model
     optional: false
+  data_loader:
+    type: Enum
+    enum:
+      - libsvm
+      - numpy
+  batch_size:
+    type: Integer
+    default: 0
+  n_threads:
+    type: Integer
+    optional: true
   verbose:
     type: Boolean
     optional: true
@@ -28,6 +39,9 @@ command: >-
   python score.py
   --data {inputs.data}
   --so_path {inputs.compiled_model}
+  --data_loader {inputs.data_loader}
+  --batch_size {inputs.batch_size}
+  [--nthreads {inputs.n_threads}]
   [--verbose {inputs.verbose}]
   [--custom_properties {inputs.custom_properties}]
 
