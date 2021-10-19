@@ -144,14 +144,14 @@ class PartitioningEngine():
         for input_file in input_files:
             self.logger.info(f"Opening input file {input_file}")
             with open(input_file, "r", encoding="utf-8") as input_handler:
-                for line in input_handler:
+                for line_index, line in enumerate(input_handler):
                     if self.header and header_line is None:
                         # if first line of first input file
                         # write that line in every partition
                         header_line = line
                         for partition_file in partition_files:
                             partition_file.write(header_line)
-                    else:
+                    elif self.header and line_index == 0:
                         # if first line of 2nd... input file, just pass
                         continue
 
