@@ -13,7 +13,7 @@ import os
 import sys
 import json
 from dataclasses import dataclass
-from omegaconf import MISSING
+from omegaconf import MISSING, OmegaConf
 from typing import Optional, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
@@ -177,9 +177,16 @@ class LightGBMInferencing(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
+        full_pipeline_description="\n".join([
+            "Inferencing on all specified tasks (see yaml below).",
+            "```yaml""",
+            OmegaConf.to_yaml(config),
+            "```"
+        ])
+
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="inferencing_all_tasks", # pythonic name
-                      description="Inferencing on all specified tasks",
+                      description=full_pipeline_description,
                       default_datastore=config.compute.noncompliant_datastore)
         def inferencing_all_tasks():
             for inferencing_task in config.lightgbm_inferencing.tasks:
