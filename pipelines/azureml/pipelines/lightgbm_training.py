@@ -296,7 +296,8 @@ class LightGBMTraining(AMLPipelineHelper):
                         partition_data_step = partition_data_module(
                             input_data=train_dataset,
                             mode="roundrobin",
-                            number=(runsettings['nodes'] * runsettings['processes'])
+                            number=(runsettings['nodes'] * runsettings['processes']),
+                            header=training_params['header']
                         )
                         self.apply_smart_runsettings(partition_data_step)
                         partitioned_train_data = partition_data_step.outputs.output_data

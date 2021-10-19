@@ -23,6 +23,10 @@ inputs:
     description: If roundrobin number of partition, if chunk number of records per
       partition
     min: 1
+  header:
+    type: Boolean
+    description : "Should we preserve firstline into each partition?"
+    optional: True
 
   # generic benchmark parameters
   verbose:
@@ -44,6 +48,7 @@ command: >-
   --output {outputs.output_data}
   --mode {inputs.mode}
   --number {inputs.number}
+  [--header {inputs.header}]
   [--verbose {inputs.verbose}]
   [--custom_properties {inputs.custom_properties}]
 
