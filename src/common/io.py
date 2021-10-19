@@ -1,8 +1,6 @@
 import os
 import argparse
 import logging
-import numpy as np
-from lightgbm import Dataset as lightgbm_Dataset
 
 def input_file_path(path):
     """ Resolve input path from AzureML.
@@ -190,11 +188,10 @@ def numpy_data_load(path, delimiter=","):
     Returns:
         numpy_array, number_of_rows (int), number of cols (int)
     """
-    self.logger.info(f"Loading {path} with numpy")
     # importing at last minute intentionally
-    raw_data = np.loadtxt(path, delimiter=delimiter)
+    import numpy as np
 
-    self.logger.info(f"Loaded {path} data has {raw_data.shape[0]} rows and {raw_data.shape[1]} cols")
+    raw_data = np.loadtxt(path, delimiter=delimiter)
 
     return raw_data, raw_data.shape[0], raw_data.shape[1]
 

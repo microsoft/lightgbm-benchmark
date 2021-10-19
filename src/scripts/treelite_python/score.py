@@ -125,11 +125,11 @@ def run(args, unknown_args=[]):
             inference_data, row_count, feature_count = libsvm_data_load(args.data)
             inference_raw_data = inference_data[0] # (x,y) -> x
         elif args.data_loader == "numpy":
-            inference_data, row_count, feature_count = numpy_data_load(args.data)
+            inference_raw_data, row_count, feature_count = numpy_data_load(args.data)
         else:
             raise NotImplementedError(f"--data_loader {args.data_loader} is not implemented.")
 
-        inference_data_raw = treelite_runtime.DMatrix(inference_data)
+        inference_data_raw = treelite_runtime.DMatrix(inference_raw_data)
 
     logger.info(f"Loading model from {args.model}")
     predictor = treelite_runtime.Predictor(
