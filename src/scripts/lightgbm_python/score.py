@@ -23,13 +23,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.metrics import MetricsLogger
-from common.io import input_file_path, InputDataLoader
-
-INPUT_DATA_LOADER = InputDataLoader(
-    allowed_loaders = ['numpy', 'libsvm', 'lightgbm'],
-    arg_prefix="data",
-    default_loader="lightgbm"
-)
+from common.io import input_file_path, DataBatch, libsvm_data_load, numpy_data_load
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -50,13 +44,16 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
-    INPUT_DATA_LOADER.get_arg_parser(group_i) # add data loading parameters
+    group_i.add_argument(f"--data_loader",
+        required=False, type=str, default="lightgbm", choices=["lightgbm", "libsvm", "numpy"], help="use numpy for csv, libsvm for libsvm, or lightgbm for both")        
     group_i.add_argument("--model",
         required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
     
     group_params = parser.add_argument_group("Scoring parameters")
+    group_params.add_argument(f"--batch_size",
+        required=False, type=int, default=0, help="size of batches (default: all data in 1 batch")
     group_params.add_argument("--num_threads",
         required=False, default=1, type=int, help="number of threads")
     group_params.add_argument("--predict_disable_shape_check",
@@ -109,7 +106,7 @@ def run(args, unknown_args=[]):
 
     # record relevant parameters
     metrics_logger.log_parameters(
-        batch_size=args.data_batch_size,
+        batch_size=args.batch_size,
         data_loader=args.data_loader,
         num_threads=args.num_threads,
     )
@@ -122,9 +119,24 @@ def run(args, unknown_args=[]):
         os.makedirs(args.output, exist_ok=True)
         args.output = os.path.join(args.output, "predictions.txt")
 
+    if args.batch_size > 0 and args.data_loader == "lightgbm":
+        logger.warning("--data_loader lightgbm does not support --batch_size > 0 (currently)")
+        args.batch_size = 0
+
     logger.info(f"Loading data for inferencing")
     with metrics_logger.log_time_block("time_data_loading"):
-        inference_raw_data_batches, row_count, feature_count = INPUT_DATA_LOADER.load(args, args.data)
+        if args.data_loader == "lightgbm":
+            inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
+            inference_raw_data = inference_data.get_data()
+            row_count = inference_data.num_data()
+            feature_count = inference_data.num_feature()
+        elif args.data_loader == "libsvm":
+            inference_data, row_count, feature_count = libsvm_data_load(args.data)
+            inference_raw_data = inference_data[0] # (x,y) -> x
+        elif args.data_loader == "numpy":
+            inference_data, row_count, feature_count = numpy_data_load(args.data)
+        else:
+            raise NotImplementedError(f"--data_loader {args.data_loader} is not implemented.")
 
     logger.info(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)
@@ -138,14 +150,22 @@ def run(args, unknown_args=[]):
     logger.info(f"Running .predict()")
     batch_run_times = [] # collect time for each batch
     with metrics_logger.log_time_block("time_inferencing"):
-        for batch_x, _ in inference_raw_data_batches:
-            batch_start_time = time.time()
+        if args.batch_size > 0:
+            inference_batches = DataBatch(x=inference_raw_data, y=None, batch_size=args.batch_size)
+            for data_batch, _ in inference_batches:
+                batch_start_time = time.time()
+                booster.predict(
+                    data=data_batch,
+                    num_threads=args.num_threads,
+                    predict_disable_shape_check=bool(args.predict_disable_shape_check)
+                )
+                batch_run_times.append(time.time() - batch_start_time)
+        else:
             booster.predict(
-                data=batch_x,
+                data=inference_raw_data,
                 num_threads=args.num_threads,
                 predict_disable_shape_check=bool(args.predict_disable_shape_check)
             )
-            batch_run_times.append(time.time() - batch_start_time)
 
     if len(batch_run_times) > 1:
         batch_run_times = numpy.array(batch_run_times)
