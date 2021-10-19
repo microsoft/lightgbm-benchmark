@@ -32,6 +32,10 @@ class inferencing_variants:
     build: Optional[str] = None
     os: str = "Linux" # linux or windows, linux by default
 
+    data_loader: str = "lightgbm"
+    batch_size: int = 0 # all data in 1 batch by default
+    n_threads: int = 1
+
 @dataclass
 class data_generation_task:
     task: str = MISSING

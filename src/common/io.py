@@ -1,6 +1,8 @@
 import os
 import argparse
 import logging
+import numpy as np
+from lightgbm import Dataset as lightgbm_Dataset
 
 def input_file_path(path):
     """ Resolve input path from AzureML.
@@ -156,3 +158,130 @@ class PartitioningEngine():
             self.split_by_append(input_files, output_path, self.number)
         else:
             raise NotImplementedError(f"Mode {self.mode} not implemented.")
+
+
+class DataBatch():
+    # taken from https://datascience.stackexchange.com/questions/47623/how-feed-a-numpy-array-in-batches-in-keras
+    def __init__(self, x, y=None, batch_size=0):
+        self.x = x
+        self.y = y
+        if batch_size == 0:
+            self.batch_size = x.shape[0]
+            self.num_batches = 1
+        else:
+            self.batch_size = batch_size
+            self.num_batches = np.ceil(x.shape[0] / batch_size)
+        
+        self.batch_idx = np.array_split(range(x.shape[0]), self.num_batches)
+        logging.getLogger(__name__).info(f"Creating data batch with {self.num_batches} batches")
+    
+    def __len__(self):
+        return len(self.batch_idx)
+    
+    def __getitem__(self, idx):
+        return self.x[self.batch_idx[idx]], (self.y[self.batch_idx[idx]] if self.y is not None else None)
+
+
+class InputDataLoader():
+    """Utility class to load input data with flexible options from argparse"""
+    # current list of supported loaders
+    SUPPORTED_LOADERS = ['lightgbm', 'numpy', 'libsvm']
+
+    # prefix used for all argparse
+    DEFAULT_ARG_PREFIX = "input_data"
+
+    def __init__(self,
+                 allowed_loaders=SUPPORTED_LOADERS,
+                 arg_prefix=DEFAULT_ARG_PREFIX,
+                 default_loader=None):
+        """Initialize data loader.
+        Args:
+            allowed_loaders (List[str]): list of supported loaders (can restrict to avoid incompatibilities)
+            arg_prefix (str): which prefix to use for all argparse
+            default_loader (str): name of default loader (if None, will use first in allowed_loaders)
+        """
+        self.allowed_loaders = allowed_loaders
+        self.arg_prefix = arg_prefix
+        self.default_loader = default_loader or allowed_loaders[0]
+        self.logger = logging.getLogger(__name__)
+
+    def get_arg_parser(self, parser=None):
+        """Adds arguments for this class
+        Args:
+            parser (argparse.ArgumentParser): an argument parser instance
+        Returns:
+            ArgumentParser: the argument parser instance
+        Notes:
+            if parser is None, creates a new parser instance
+        """
+        # add arguments that are specific to the script
+        if parser is None:
+            parser = argparse.ArgumentParser(__doc__)
+
+        parser.add_argument(f"--{self.arg_prefix}_loader",
+            required=False, type=str, default=self.default_loader, choices=self.allowed_loaders, help="use numpy for csv, libsvm for libsvm, or lightgbm for both")
+        parser.add_argument(f"--{self.arg_prefix}_batch_size",
+            required=False, type=int, default=0, help="size of batches (default: all data in 1 batch")
+
+        return parser
+
+    def _lightgbm_loader_load(self, path):
+        """Loads data using lightgbm construct().
+        
+        Args:
+            path (str): path to data file
+        Returns:
+            lightgbm_data_reference, number_of_rows (int), number of cols (int)
+        """
+        self.logger.info(f"Loading {path} with lightgbm")
+        # importing at last minute intentionally
+        data = lightgbm_Dataset(path, free_raw_data=False).construct()
+        raw_data = data.get_data()
+
+        self.logger.info(f"Loaded {path} data has {data.num_data()} rows and {data.num_feature()} cols")
+        return raw_data, data.num_data(), data.num_feature()
+
+    def _numpy_loader_load(self, path, batch_size=0):
+        """Loads data using numpy (csv).
+        
+        Args:
+            path (str): path to data file
+        Returns:
+            numpy_array, number_of_rows (int), number of cols (int)
+        """
+        self.logger.info(f"Loading {path} with numpy")
+        # importing at last minute intentionally
+        raw_data = np.loadtxt(path, delimiter=",")
+
+        self.logger.info(f"Loaded {path} data has {raw_data.shape[0]} rows and {raw_data.shape[1]} cols")
+
+        return DataBatch(x=raw_data, y=None, batch_size=batch_size), raw_data.shape[0], raw_data.shape[1]
+
+    def _libsvm_loader_load(self, path, batch_size=0):
+        """Loads data using libsvm.
+        
+        Args:
+            path (str): path to data file
+        Returns:
+            (y, x), number_of_rows (int), number of cols (int)
+        """
+        self.logger.info(f"Loading {path} with libsvm")
+        # importing at last minute intentionally
+        from libsvm.svmutil import svm_read_problem
+
+        y, x = svm_read_problem(path, return_scipy=True)
+
+        self.logger.info(f"Loaded {path}, data (X) has {x.shape[0]} rows and {x.shape[1]} cols")
+        return DataBatch(x=x.toarray(), y=y, batch_size=batch_size), x.shape[0], x.shape[1]
+
+    def load(self, args, path):
+        """Loads data using the right loader"""
+        loader = getattr(args, f"{self.arg_prefix}_loader")
+        batch_size = getattr(args, f"{self.arg_prefix}_batch_size")
+        if loader == "lightgbm":
+            return self._lightgbm_loader_load(path)
+        if loader == "numpy":
+            return self._numpy_loader_load(path, batch_size=batch_size)
+        if loader == "libsvm":
+            return self._libsvm_loader_load(path, batch_size=batch_size)
+        raise NotImplementedError(f"Data loader '{loader}' is not implemented")

@@ -11,6 +11,7 @@ import logging
 from distutils.util import strtobool
 import lightgbm
 import numpy
+import time
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -22,8 +23,13 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.metrics import MetricsLogger
-from common.io import input_file_path
+from common.io import input_file_path, InputDataLoader
 
+INPUT_DATA_LOADER = InputDataLoader(
+    allowed_loaders = ['numpy', 'libsvm', 'lightgbm'],
+    arg_prefix="data",
+    default_loader="lightgbm"
+)
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.
@@ -44,6 +50,7 @@ def get_arg_parser(parser=None):
     group_i = parser.add_argument_group("Input Data")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
+    INPUT_DATA_LOADER.get_arg_parser(group_i) # add data loading parameters
     group_i.add_argument("--model",
         required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
@@ -102,7 +109,9 @@ def run(args, unknown_args=[]):
 
     # record relevant parameters
     metrics_logger.log_parameters(
-        num_threads=args.num_threads
+        batch_size=args.data_batch_size,
+        data_loader=args.data_loader,
+        num_threads=args.num_threads,
     )
 
     # register logger for lightgbm logs
@@ -113,28 +122,36 @@ def run(args, unknown_args=[]):
         os.makedirs(args.output, exist_ok=True)
         args.output = os.path.join(args.output, "predictions.txt")
 
+    logger.info(f"Loading data for inferencing")
+    with metrics_logger.log_time_block("time_data_loading"):
+        inference_raw_data_batches, row_count, feature_count = INPUT_DATA_LOADER.load(args, args.data)
+
     logger.info(f"Loading model from {args.model}")
     booster = lightgbm.Booster(model_file=args.model)
 
-    logger.info(f"Loading data for inferencing")
-    with metrics_logger.log_time_block("time_data_loading"):
-        # NOTE: this is bad, but allows for libsvm format (not just numpy)
-        inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
-        inference_raw_data = inference_data.get_data()
-
     # capture data shape as property
     metrics_logger.set_properties(
-        inference_data_length = inference_data.num_data(),
-        inference_data_width = inference_data.num_feature()
+        inference_data_length = row_count,
+        inference_data_width = feature_count
     )
 
     logger.info(f"Running .predict()")
+    batch_run_times = [] # collect time for each batch
     with metrics_logger.log_time_block("time_inferencing"):
-        booster.predict(
-            data=inference_raw_data,
-            num_threads=args.num_threads,
-            predict_disable_shape_check=bool(args.predict_disable_shape_check)
-        )
+        for batch_x, _ in inference_raw_data_batches:
+            batch_start_time = time.time()
+            booster.predict(
+                data=batch_x,
+                num_threads=args.num_threads,
+                predict_disable_shape_check=bool(args.predict_disable_shape_check)
+            )
+            batch_run_times.append(time.time() - batch_start_time)
+
+    if len(batch_run_times) > 1:
+        batch_run_times = numpy.array(batch_run_times)
+        metrics_logger.log_metric("batch_time_inferencing_p50_usecs", numpy.percentile(batch_run_times, 50) * 1000000)
+        metrics_logger.log_metric("batch_time_inferencing_p90_usecs", numpy.percentile(batch_run_times, 90) * 1000000)
+        metrics_logger.log_metric("batch_time_inferencing_p99_usecs", numpy.percentile(batch_run_times, 99) * 1000000)
 
     # Important: close logging session before exiting
     metrics_logger.close()

@@ -19,6 +19,7 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-defaults==1.30.0' \
                 'azureml-mlflow==1.30.0' \
                 'azureml-telemetry==1.30.0' \
+                'libsvm==3.23.0' \
                 'mpi4py==3.1.1'
 
 # install lightgbm with mpi
