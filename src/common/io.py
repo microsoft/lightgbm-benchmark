@@ -151,6 +151,7 @@ class PartitioningEngine():
                         header_line = line
                         for partition_file in partition_files:
                             partition_file.write(header_line)
+                        continue
                     elif self.header and line_index == 0:
                         # if first line of 2nd... input file, just pass
                         continue
