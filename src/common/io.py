@@ -1,6 +1,7 @@
 import os
 import argparse
 import logging
+import numpy as np
 
 def input_file_path(path):
     """ Resolve input path from AzureML.
@@ -188,9 +189,6 @@ def numpy_data_load(path, delimiter=","):
     Returns:
         numpy_array, number_of_rows (int), number of cols (int)
     """
-    # importing at last minute intentionally
-    import numpy as np
-
     raw_data = np.loadtxt(path, delimiter=delimiter)
 
     return raw_data, raw_data.shape[0], raw_data.shape[1]
