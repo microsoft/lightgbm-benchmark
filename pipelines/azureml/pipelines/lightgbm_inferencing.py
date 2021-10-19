@@ -145,7 +145,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                         verbose = False,
                         custom_properties = custom_properties
                     )
-                    self.apply_smart_runsettings(inferencing_step)
+                    self.apply_smart_runsettings(inferencing_step, windows=(variant.os == "Windows"))
 
                 else:
                     raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
