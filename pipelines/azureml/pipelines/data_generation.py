@@ -10,7 +10,7 @@ import os
 import sys
 import json
 from dataclasses import dataclass
-from omegaconf import MISSING
+from omegaconf import MISSING, OmegaConf
 from typing import Optional, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
@@ -141,10 +141,16 @@ class DataGenerationPipeline(AMLPipelineHelper):
         benchmark_custom_properties = json.dumps({
             'benchmark_name' : config.data_generation.benchmark_name
         })
+        full_pipeline_description="\n".join([
+            "Generate all datasets for lightgbm benchmark",
+            "```yaml""",
+            OmegaConf.to_yaml(config),
+            "```"
+        ])
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="generate_all_datasets", # pythonic name
-                      description="Generate all datasets for lightgbm benchmark",
+                      description=full_pipeline_description,
                       default_datastore=config.compute.noncompliant_datastore)
         def generate_all_tasks():
             for generation_task in config.data_generation.tasks:
