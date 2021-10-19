@@ -128,6 +128,9 @@ class LightGBMInferencing(AMLPipelineHelper):
                     inferencing_step = treelite_score_module(
                         data = data,
                         compiled_model = treelite_compile_step.outputs.compiled_model,
+                        data_loader = variant.data_loader,
+                        batch_size = variant.batch_size,
+                        n_threads = variant.n_threads,
                         verbose = False,
                         custom_properties = custom_properties
                     )

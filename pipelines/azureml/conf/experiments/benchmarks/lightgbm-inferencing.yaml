@@ -59,8 +59,20 @@ lightgbm_inferencing:
   variants:
     - framework: lightgbm_python
       build: dockers/lightgbm_cpu_mpi_pip.dockerfile
+      batch_size: 1
+      data_loader: "libsvm"
+      n_threads: 1
     - framework: lightgbm_python
       build: dockers/lightgbm_cpu_mpi_build.dockerfile
+      batch_size: 1
+      data_loader: "libsvm"
+      n_threads: 1
     - framework: lightgbm_python
       build: dockers/lightgbm_cpu_mpi_custom.dockerfile
+      batch_size: 1
+      data_loader: "libsvm"
+      n_threads: 1
     - framework: treelite_python
+      batch_size: 1
+      data_loader: "libsvm"
+      n_threads: 1
