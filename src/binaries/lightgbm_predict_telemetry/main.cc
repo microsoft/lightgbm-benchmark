@@ -1,11 +1,21 @@
+/*
+This program uses the LightGBM C API to run predictions on a file dataset
+in order to measure inferencing time for production scenarios.
+
+Usage:
+    lightgbm_predict_telemetry.exe MODELFILEPATH DATAFILEPATH CUSTOMPARAMS
+
+Copyright (c) Microsoft Corporation.
+Licensed under the MIT license.
+*/
 #include <iostream>
 #include <chrono>
 #include "LightGBM/c_api.h"
 
 
+// struct to organize arguments for call to LGBM_BoosterPredictForCSRSingleRow()
+// see https://lightgbm.readthedocs.io/en/latest/C-API.html#c.LGBM_BoosterPredictForCSRSingleRow
 struct CSRDataRow_t {
-    // arguments for call to LGBM_BoosterPredictForCSRSingleRow()
-    // see https://lightgbm.readthedocs.io/en/latest/C-API.html#c.LGBM_BoosterPredictForCSRSingleRow
     int32_t * row_headers;
     int32_t * indices;
     float * row;
@@ -14,19 +24,24 @@ struct CSRDataRow_t {
     int64_t null_elem;
 };
 
+// class to read libsvm file and iterate on each line
 class LibSVMReader {
     private:
+        // counts how many rows have been processed so far
         int row_counter = 0;
-        int max_rows = 10;
+        int max_rows = 10; // TODO: remove this
 
     public:
+        // Constructor
         LibSVMReader(const std::string file_path) {
             this->row_counter = 0;
             this->max_rows = 10;
         };
+        // Destructor
         ~LibSVMReader() {};
 
-        /* iterates on the svm file and returns a row ready to predict */
+        // Iterates on the svm file and returns a row ready to predict
+        // returns nullptr when finished
         CSRDataRow_t * iter(CSRDataRow_t * replace_row = nullptr) {
             CSRDataRow_t * csr_row;
 
@@ -64,16 +79,18 @@ class LibSVMReader {
         };
 };
 
+// main function obviously
 int main(int argc, char* argv[]) {
     int model_num_trees;
     int num_features;
     BoosterHandle model_handle;
     DatasetHandle data_handle;
     //std::vector<float*> sample_data{sample_data_row};
+
+    // TODO: argument parsing
     const std::string model_filename = "C:\\Users\\jeomhove\\source\\lightgbm-benchmark\\data\\tests\\fusionmodel.txt";
     const std::string data_filename = "C:\\Users\\jeomhove\\source\\lightgbm-benchmark\\data\\tests\\data.txt";
-
-    std::cout << "Hello, world!\n";
+    const std::string custom_params = "";
 
     if (LGBM_BoosterCreateFromModelfile(model_filename.c_str(), &model_num_trees, &model_handle) != 0) {
         throw std::runtime_error("Could not load LightGBM model from file " + model_filename);
@@ -104,7 +121,7 @@ int main(int argc, char* argv[]) {
     double * out_result = new double[1];
 
     try {
-        if (LGBM_BoosterPredictForMatSingleRow(model_handle, (void*)sample_data_mat_row, C_API_DTYPE_FLOAT32, sample_data_mat_num_features, 1, C_API_PREDICT_NORMAL, 0, 0, "", &out_len, out_result) != 0) {
+        if (LGBM_BoosterPredictForMatSingleRow(model_handle, (void*)sample_data_mat_row, C_API_DTYPE_FLOAT32, sample_data_mat_num_features, 1, C_API_PREDICT_NORMAL, 0, 0, custom_params.c_str(), &out_len, out_result) != 0) {
             std::cout << "failed prediction for some reason";
         } else {
             std::cout << "prediction=" << out_result[0] << "\n";
@@ -123,7 +140,7 @@ int main(int argc, char* argv[]) {
 
         try {
             auto t1 = high_resolution_clock::now();
-            if (LGBM_BoosterPredictForCSRSingleRow(model_handle, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, C_API_DTYPE_FLOAT32, csr_row->nindptr, csr_row->null_elem, csr_row->num_features, C_API_PREDICT_NORMAL, 0, 0, "", &out_len, out_result) != 0) {
+            if (LGBM_BoosterPredictForCSRSingleRow(model_handle, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, C_API_DTYPE_FLOAT32, csr_row->nindptr, csr_row->null_elem, csr_row->num_features, C_API_PREDICT_NORMAL, 0, 0, custom_params.c_str(), &out_len, out_result) != 0) {
                 std::cout << "failed prediction for some reason";
             } else {
                 std::cout << "prediction=" << out_result[0] << "\n";
