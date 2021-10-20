@@ -1,5 +1,68 @@
 #include <iostream>
+#include <chrono>
 #include "LightGBM/c_api.h"
+
+
+struct CSRDataRow_t {
+    // arguments for call to LGBM_BoosterPredictForCSRSingleRow()
+    // see https://lightgbm.readthedocs.io/en/latest/C-API.html#c.LGBM_BoosterPredictForCSRSingleRow
+    int32_t * row_headers;
+    int32_t * indices;
+    float * row;
+    size_t num_features;
+    int64_t nindptr;
+    int64_t null_elem;
+};
+
+class LibSVMReader {
+    private:
+        int row_counter = 0;
+        int max_rows = 10;
+
+    public:
+        LibSVMReader(const std::string file_path) {
+            this->row_counter = 0;
+            this->max_rows = 10;
+        };
+        ~LibSVMReader() {};
+
+        /* iterates on the svm file and returns a row ready to predict */
+        CSRDataRow_t * iter(CSRDataRow_t * replace_row = nullptr) {
+            CSRDataRow_t * csr_row;
+
+            // let's fake it for now
+            if (this->row_counter >= this->max_rows) {
+                return nullptr;
+            } else {
+                this->row_counter++;
+            }
+
+            if (replace_row == nullptr) {
+                csr_row = new CSRDataRow_t;
+            } else {
+                csr_row = replace_row;
+            }
+
+            // let's fake it for now
+            csr_row->row_headers = new int32_t[301];
+
+            for (int32_t i=0; i<301; i++) {
+                csr_row->row_headers[i] = i;
+            }
+
+            csr_row->indices = new int32_t[301];
+            for (int32_t i=0; i<301; i++) {
+                csr_row->indices[i] = i;
+            }
+
+            csr_row->row = new float[301];
+            csr_row->num_features = 301;
+            csr_row->nindptr = 1; // number of rows in sample data
+            csr_row->null_elem = 0;
+
+            return csr_row;
+        };
+};
 
 int main(int argc, char* argv[]) {
     int model_num_trees;
@@ -50,22 +113,30 @@ int main(int argc, char* argv[]) {
         std::cout << "exception";
     }
 
-    int32_t * sample_data_csr_row_headers = new int32_t[301];
-    int32_t * sample_data_csr_indices = new int32_t[301];
-    float * sample_data_csr_row = new float[301];
-    size_t sample_data_csr_num_features = 301;
-    int64_t sample_data_nindptr = 1; // number of rows in sample data
-    int64_t sample_data_null_elem = 0;
+    LibSVMReader * data_reader = new LibSVMReader(data_filename);
 
-    try {
-        if (LGBM_BoosterPredictForCSRSingleRow(model_handle, (void*)sample_data_csr_row_headers, C_API_DTYPE_INT32, sample_data_csr_indices, sample_data_csr_row, C_API_DTYPE_FLOAT32, sample_data_nindptr, sample_data_null_elem, sample_data_csr_num_features, C_API_PREDICT_NORMAL, 0, 0, "", &out_len, out_result) != 0) {
-            std::cout << "failed prediction for some reason";
-        } else {
-            std::cout << "prediction=" << out_result[0] << "\n";
+    while (CSRDataRow_t * csr_row = data_reader->iter()) {
+        using std::chrono::high_resolution_clock;
+        using std::chrono::duration_cast;
+        using std::chrono::duration;
+        using std::chrono::milliseconds;
+
+        try {
+            auto t1 = high_resolution_clock::now();
+            if (LGBM_BoosterPredictForCSRSingleRow(model_handle, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, C_API_DTYPE_FLOAT32, csr_row->nindptr, csr_row->null_elem, csr_row->num_features, C_API_PREDICT_NORMAL, 0, 0, "", &out_len, out_result) != 0) {
+                std::cout << "failed prediction for some reason";
+            } else {
+                std::cout << "prediction=" << out_result[0] << "\n";
+            }
+            auto t2 = high_resolution_clock::now();
+            duration<double, std::milli> ms_double = t2 - t1;
+            std::cout << ms_double.count() << "ms\n";
+
+        } catch (std::exception e) {
+            std::cout << "exception";
         }
-    } catch (std::exception e) {
-        std::cout << "exception";
     }
+
 
     //LGBM_BoosterPredictForCSRSingleRow(model_handle, )
     // LGBM_DatasetGetNumData(DatasetHandle handle, int *out)
