@@ -84,7 +84,7 @@ def run(args, unknown_args=[]):
 
     # get Metrics logger for benchmark metrics
     # below: initialize reporting of metrics with a custom session name
-    metrics_logger = MetricsLogger("sample_framework.sample_task")
+    metrics_logger = MetricsLogger("lightgbm_c_api.score")
 
     # add common properties to the session
     metrics_logger.set_properties(
