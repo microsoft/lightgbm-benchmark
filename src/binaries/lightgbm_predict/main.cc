@@ -229,6 +229,7 @@ int main(int argc, char* argv[]) {
     BoosterHandle model_handle;
     int model_num_trees;
     int num_features;
+    int num_classes;
 
     if (LGBM_BoosterCreateFromModelfile(model_filename.c_str(), &model_num_trees, &model_handle) != 0) {
         throw std::runtime_error("ERROR Could not load LightGBM model from file " + model_filename);
@@ -243,13 +244,20 @@ int main(int argc, char* argv[]) {
         std::cout << "INPUT num_features=" << num_features << endl;
     }
 
+    // we need number of outputs to allocate memory later
+    if (LGBM_BoosterGetNumClasses(model_handle, &num_classes) != 0) {
+        throw std::runtime_error("Could not get number of classes from model");
+    } else {
+        std::cout << "INPUT num_classes=" << num_classes << endl;
+    }
+
     // **********************
     // LOOP ON DATA + PREDICT
     // **********************
 
     // variables for predictions output
     int64_t out_len = 0;
-    double * out_result = new double[1];
+    double * out_result = new double[num_classes];
 
     // custom class for reading libsvm
     LibSVMReader * data_reader = new LibSVMReader();
@@ -271,14 +279,17 @@ int main(int argc, char* argv[]) {
             auto t1 = high_resolution_clock::now();
 
             // call for LightGBM C API
-            if (LGBM_BoosterPredictForCSRSingleRowFast(fastConfig, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, csr_row->nindptr, csr_row->null_elem, &out_len, out_result) != 0) {
+            int ret_val = LGBM_BoosterPredictForCSRSingleRowFast(fastConfig, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, csr_row->nindptr, csr_row->null_elem, &out_len, out_result);
+
+            // stop the clock
+            auto t2 = high_resolution_clock::now();
+
+            if (ret_val != 0) {
                 std::cout << endl << "ERROR failed prediction for some reason" << endl;
             } else {
                 std::cout << " prediction=" << out_result[0];
             }
 
-            // stop the clock
-            auto t2 = high_resolution_clock::now();
 
             // compute metric
             duration<double, std::milli> ms_double = t2 - t1;
