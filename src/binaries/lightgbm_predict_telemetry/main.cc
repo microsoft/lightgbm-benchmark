@@ -27,11 +27,26 @@ using std::chrono::milliseconds;
 // struct to organize arguments for call to LGBM_BoosterPredictForCSRSingleRow()
 // see https://lightgbm.readthedocs.io/en/latest/C-API.html#c.LGBM_BoosterPredictForCSRSingleRow
 struct CSRDataRow_t {
+    // array of size nindptr (number of rows)
+    // row_headers[n] = mem index start of row n
+    // row_headers[n+1] = mem index end of row n
     int32_t * row_headers = nullptr;
+
+    // array of size maximum num_features
+    // sparse indices in the row
     int32_t * indices = nullptr;
+
+    // array of size maximum num_features
+    // sparse values in the row
     float * row = nullptr;
+
+    // maximum number of features (total)
     size_t num_features;
+
+    // number of rows
     int64_t nindptr;
+
+    // number of null elements in the row (?)
     int64_t null_elem;
 };
 
@@ -40,7 +55,6 @@ class LibSVMReader {
     private:
         // counts how many rows have been processed so far
         int row_counter;
-        int max_rows; // TODO: remove this
         int num_features;
         ifstream * file_handler;
 
@@ -48,7 +62,6 @@ class LibSVMReader {
         // Constructor
         LibSVMReader() {
             this->row_counter = 0;
-            this->max_rows = 100;
             this->num_features = 0;
             this->file_handler = nullptr;
         };
@@ -73,7 +86,7 @@ class LibSVMReader {
             this->file_handler->close();
         };
 
-        // allocate a new row of data in the given struct
+        // allocate ONE new row of data in the given struct
         CSRDataRow_t * init_row(CSRDataRow_t * row, int32_t num_features) {
             // if null provide, allocate completely new struct
             if (row == nullptr) {
@@ -84,7 +97,9 @@ class LibSVMReader {
             if (row->row_headers != nullptr) {
                 free(row->row_headers);
             }
-            row->row_headers = new int32_t[num_features];
+            row->row_headers = new int32_t[2]; // one for start of row (0), one for end of row (tbd)
+            row->row_headers[0] = 0;
+            row->row_headers[1] = 0;
 
             if (row->indices != nullptr) {
                 free(row->indices);
@@ -98,7 +113,6 @@ class LibSVMReader {
 
             // just making sure we're not keeping old data
             for (int i=0; i<num_features; i++) {
-                row->row_headers[i] = -1;
                 row->indices[i] = -1;
                 row->row[i] = 0.0;
             }
@@ -114,7 +128,7 @@ class LibSVMReader {
             return row;
         };
 
-        // Iterates on the svm file and returns a row ready to predict
+        // Iterates on the svm file and returns ONE row ready to predict
         // returns nullptr when finished
         CSRDataRow_t * iter(CSRDataRow_t * replace_row = nullptr) {
             CSRDataRow_t * csr_row;
@@ -124,15 +138,9 @@ class LibSVMReader {
                 throw std::runtime_error("You need to open() the file before iterating on it.");
             }
 
-            // let's fake it for now
-            if (this->row_counter >= this->max_rows) {
-                return nullptr;
-            } else {
-                this->row_counter++;
-            }
-
             // get a line from the file handler
             if(getline(*this->file_handler, input_line)) {
+                this->row_counter++;
                 cout << "ROW line=" << this->row_counter;
             } else {
                 // if we're done
@@ -148,10 +156,10 @@ class LibSVMReader {
 
             float row_label = atof(token);
             cout << " label=" << row_label;
-            //csr_row->label = row_label;
 
             while ((token = strtok(nullptr, " ")) != nullptr)
             {
+                // we use csr_row->num_features to count values in sparse row
                 if (csr_row->num_features > num_features) {
                     throw std::runtime_error("Number of features found is above expected number.");
                 }
@@ -161,14 +169,31 @@ class LibSVMReader {
                 int32_t key = atoi(token_str.substr(0, colon_index).c_str());
                 float value = atof(token_str.substr(colon_index+1,token_str.length()).c_str());
 
-                csr_row->row_headers[csr_row->num_features] = key;
+                csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
+                csr_row->row_headers[1] = csr_row->num_features; // memory index end of row (length)
+
                 csr_row->indices[csr_row->num_features] = key;
                 csr_row->row[csr_row->num_features] = value;
                 csr_row->num_features++;
             }
 
+            // number of null elements
             csr_row->null_elem = num_features - csr_row->num_features;
-            csr_row->num_features = num_features;
+
+            // finalize number of features
+            // check consistency
+            int max_feature_index = 0;
+            for (int i=0; i<csr_row->num_features; i++) {
+                if (csr_row->indices[i] > max_feature_index) {
+                    max_feature_index = csr_row->indices[i];
+                }
+            }
+            if (max_feature_index > num_features) {
+                cerr << "Number of features found in row line=" << this->row_counter << " is " << max_feature_index << " >= num_features" << endl;
+                csr_row->num_features = max_feature_index;
+            } else {
+                csr_row->num_features = num_features;
+            }
 
             cout << " null_elem=" << csr_row->null_elem;
             return csr_row;
