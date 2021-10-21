@@ -259,6 +259,10 @@ int main(int argc, char* argv[]) {
     double prediction_per_request = 0.0;
     int count_request = 0;
 
+    // initialize fast handle for fast predictions (-20%)
+    FastConfigHandle fastConfig;
+    LGBM_BoosterPredictForCSRSingleRowFastInit(model_handle, C_API_PREDICT_NORMAL, 0, 0, C_API_DTYPE_FLOAT32, num_features, custom_params.c_str(), &fastConfig);
+
     // loop on each data row
     while (CSRDataRow_t * csr_row = data_reader->iter()) {
         // NOTE: we add an exception here just in case
@@ -267,7 +271,7 @@ int main(int argc, char* argv[]) {
             auto t1 = high_resolution_clock::now();
 
             // call for LightGBM C API
-            if (LGBM_BoosterPredictForCSRSingleRow(model_handle, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, C_API_DTYPE_FLOAT32, csr_row->nindptr, csr_row->null_elem, csr_row->num_features, C_API_PREDICT_NORMAL, 0, 0, custom_params.c_str(), &out_len, out_result) != 0) {
+            if (LGBM_BoosterPredictForCSRSingleRowFast(fastConfig, (void*)csr_row->row_headers, C_API_DTYPE_INT32, csr_row->indices, csr_row->row, csr_row->nindptr, csr_row->null_elem, &out_len, out_result) != 0) {
                 std::cout << endl << "ERROR failed prediction for some reason" << endl;
             } else {
                 std::cout << " prediction=" << out_result[0];
