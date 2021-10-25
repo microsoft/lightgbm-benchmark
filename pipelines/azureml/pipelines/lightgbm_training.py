@@ -10,7 +10,7 @@ import os
 import sys
 import json
 from dataclasses import dataclass
-from omegaconf import MISSING
+from omegaconf import MISSING, OmegaConf
 from typing import Optional, Any, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
@@ -429,9 +429,16 @@ class LightGBMTraining(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
+        full_pipeline_description="\n".join([
+            "Training on all specified tasks (see yaml below).",
+            "```yaml""",
+            OmegaConf.to_yaml(config),
+            "```"
+        ])
+
         # creating an overall pipeline using pipeline_function for each task given
         @dsl.pipeline(name="training_all_tasks", # pythonic name
-                      description="Training on all specified tasks",
+                      description=full_pipeline_description,
                       default_datastore=config.compute.noncompliant_datastore)
         def training_all_tasks():
             # loop on all training tasks
