@@ -45,6 +45,7 @@ def get_arg_parser(parser=None):
     group.add_argument("--output", dest="output", type=str, help="location to store partitioned files", required=True)
     group.add_argument("--mode", type=str, choices=PartitioningEngine.PARTITION_MODES, required=True, help="Partitioning mode")
     group.add_argument("--number", type=int, required=True, help="If roundrobin number of partition, if chunk number of records per partition")
+    group.add_argument("--header", type=strtobool, required=False, default=False, help="Should we preserve firstline into each partition?")
 
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
@@ -98,6 +99,7 @@ def run(args, unknown_args=[]):
     partition_engine = PartitioningEngine(
         mode = args.mode,
         number = args.number,
+        header = args.header,
         logger=logger
     )
 
