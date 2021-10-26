@@ -48,4 +48,3 @@ lightgbm_inferencing:
       build: dockers/lightgbm_cpu_mpi_custom.dockerfile # relative to lightgbm_python/
     - framework: lightgbm_c_api
     - framework: treelite_python
-  
