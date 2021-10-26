@@ -290,10 +290,9 @@ int main(int argc, char* argv[]) {
                 std::cout << " prediction=" << out_result[0];
             }
 
-
             // compute metric
-            duration<double, std::milli> ms_double = t2 - t1;
-            std::cout << " time_ms=" << ms_double.count() << endl;
+            duration<double> ms_double = t2 - t1;
+            std::cout << " time_usecs=" << ms_double.count()*1000000 << endl;
 
             // record the rest and iterate
             prediction_per_request += ms_double.count();
@@ -305,7 +304,7 @@ int main(int argc, char* argv[]) {
 
     // print out summary metrics
     cout << "SUMMARY";
-    cout << " prediction_per_request_ms=" << prediction_per_request/count_request << endl;
+    cout << " prediction_per_request_secs=" << prediction_per_request/count_request << endl;
 
     // free resources
     data_reader->close();

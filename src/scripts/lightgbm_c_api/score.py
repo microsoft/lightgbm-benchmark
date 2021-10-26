@@ -160,18 +160,18 @@ def run(args, unknown_args=[]):
     time_inferencing_per_query = []
     for line in lightgbm_predict_call.stdout.split("\n"):
         if line.startswith("ROW"):
-            row_pattern = r"ROW line=([0-9\.]+) label=([0-9\.]+) null_elem=([0-9\.]+) prediction=([0-9\.]+) time_ms=([0-9\.]+)"
+            row_pattern = r"ROW line=([0-9\.]+) label=([0-9\.e\-]+) null_elem=([0-9\.]+) prediction=([0-9\.e\-]+) time_usecs=([0-9\.e\-]+)"
             row_matched = re.match(row_pattern, line.strip())
             if row_matched:
                 time_inferencing_per_query.append(float(row_matched.group(5)))
             else:
-                logger.warning("log row {line} does not match expected pattern {row_pattern}")
+                logger.warning(f"log row {line} does not match expected pattern {row_pattern}")
 
     if len(time_inferencing_per_query) > 1:
         batch_run_times = np.array(time_inferencing_per_query)
-        metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50) * 1000)
-        metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90) * 1000)
-        metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99) * 1000)
+        metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
+        metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
+        metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
 
     # Important: close logging session before exiting
     metrics_logger.close()
