@@ -18,9 +18,6 @@ inputs:
     type: Boolean
     description: "control whether or not LightGBM raises an error when you try to predict on data with a different number of features than the training data"
     optional: true
-  n_threads:
-    type: Integer
-    optional: true
   verbose:
     type: Boolean
     optional: true

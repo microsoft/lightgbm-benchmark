@@ -45,14 +45,23 @@ def get_arg_parser(parser=None):
         parser = argparse.ArgumentParser(__doc__)
 
     group_i = parser.add_argument_group("Input Data")
+    group_i.add_argument("--lightgbm_lib_path",
+        required=False, type=str, default=None, help="Path to lightgbm library (file path)")
     group_i.add_argument("--binaries_path",
         required=False, type=str, default=os.environ.get("LIGHTGBM_BENCHMARK_BINARIES_PATH", None), help="Path to lightgbm_predict (file path)")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
     group_i.add_argument("--model",
-        required=False, type=input_file_path, help="Exported model location")
+        required=False, type=input_file_path, help="Exported model location (file path)")
     group_i.add_argument("--output",
         required=False, default=None, type=str, help="Inferencing output location (file path)")
+
+    group_params = parser.add_argument_group("Scoring parameters")
+    group_params.add_argument("--num_threads",
+        required=False, default=1, type=int, help="number of threads")
+    group_params.add_argument("--predict_disable_shape_check",
+        required=False, default=False, type=strtobool, help="See LightGBM documentation")
+
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
         "--verbose",
@@ -98,6 +107,11 @@ def run(args, unknown_args=[]):
     # add properties about environment of this script
     metrics_logger.set_platform_properties()
 
+    # record relevant parameters
+    metrics_logger.log_parameters(
+        num_threads=args.num_threads
+    )
+
     if args.output:
         # make sure the output argument exists
         os.makedirs(args.output, exist_ok=True)
@@ -113,13 +127,17 @@ def run(args, unknown_args=[]):
         f"{args.model}",
         f"{args.data}",
         "verbosity=2",
-        "num_threads=1"
+        "num_threads=1",
+        ""
     ]
     if args.output:
         lightgbm_predict_command.append(f"output_result={args.output}")
 
-    #custom_env = os.environ.copy()
-    #custom_env["PATH"] = os.path.abspath(args.lightgbm_lib) + ":" + custom_env["PATH"]
+    # create custom environment variables for the exec
+    custom_env = os.environ.copy()
+    if args.lightgbm_lib_path:
+        logger.info(f"Adding to PATH: {args.lightgbm_lib_path}")
+        custom_env["PATH"] = os.path.abspath(args.lightgbm_lib_path) + ":" + custom_env["PATH"]
 
     logger.info(f"Running .predict()")
     lightgbm_predict_call = subprocess_run(
@@ -129,7 +147,7 @@ def run(args, unknown_args=[]):
         universal_newlines=True,
         check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
         timeout=None,
-        #env=custom_env
+        env=custom_env
     )
     logger.info(f"stdout: {lightgbm_predict_call.stdout}")
     logger.info(f"stderr: {lightgbm_predict_call.stderr}")

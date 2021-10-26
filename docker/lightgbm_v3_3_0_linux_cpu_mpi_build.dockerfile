@@ -17,6 +17,9 @@ RUN cd /LightGBM && \
     cmake -DUSE_MPI=ON .. && \
     make -j$(nproc)
 
+# Prepend path to LightGBM LIB
+ENV PATH /LightGBM:$PATH
+
 # building lightgbm-benchmark binaries
 RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git && \
     cd /lightgbm-benchmark && \
@@ -29,7 +32,9 @@ RUN cd /lightgbm-benchmark/src/binaries/ && \
     cmake -DLIGHTGBM_INC=/LightGBM/include -DLIGHTGBM_LIB=/LightGBM .. && \
     cmake --build . --target lightgbm_predict --config Release
 
-ENV RUN /lightgbm-benchmark/src/binaries/build/lightgbm_predict
+# provide env variable with path to built binaries
+ENV LIGHTGBM_BENCHMARK_BINARIES_PATH /lightgbm-benchmark/ssrc/binaries/build/Release/
+RUN ls -l $LIGHTGBM_BENCHMARK_BINARIES_PATH
 
 ## ANACONDA ENVIRONMENT
 

@@ -8,10 +8,10 @@ add_executable(lightgbm_predict ./lightgbm_predict/main.cc)
 
 if(LIGHTGBM_LIB)
     message(STATUS "Looking for lib_lightgbm at ${LIGHTGBM_LIB}")
-    find_library(LIGHTGBM_LIBRARIES NAMES _lightgbm PATHS "${LIGHTGBM_LIB}" REQUIRED)
+    find_library(LIGHTGBM_LIBRARIES NAMES _lightgbm lib_lightgbm PATHS "${LIGHTGBM_LIB}" REQUIRED)
 else()
     message(STATUS "Looking for lib_lightgbm in PATH(win) or LD_LIBRARY_PATH(linux)")
-    find_library(LIGHTGBM_LIBRARIES NAMES _lightgbm REQUIRED)
+    find_library(LIGHTGBM_LIBRARIES NAMES _lightgbm lib_lightgbm REQUIRED)
 endif()
 
 if(NOT LIGHTGBM_LIBRARIES)
