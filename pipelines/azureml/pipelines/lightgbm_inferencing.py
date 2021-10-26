@@ -20,11 +20,11 @@ from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
-LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
+LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
-    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
-    sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
+    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT}/src/ to path")
+    sys.path.append(str(os.path.join(LIGHTGBM_BENCHMARK_ROOT, "src")))
 
 from common.tasks import inferencing_task, inferencing_variants
 
@@ -159,12 +159,14 @@ class LightGBMInferencing(AMLPipelineHelper):
                     raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
 
                 if variant.build:
-                    custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, variant.framework, variant.build))
+                    custom_docker = Docker(file=os.path.join(LIGHTGBM_BENCHMARK_ROOT, variant.build))
                     inferencing_step.runsettings.environment.configure(
                         docker=custom_docker,
                         os=variant.os or "Linux" # linux by default
                     )
                     variant_comment.append(f"build {variant.build}")
+                else:
+                    variant_comment.append(f"default build")
 
                 # add some comment to the component
                 inferencing_step.comment = " -- ".join(variant_comment)
