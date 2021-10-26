@@ -21,9 +21,7 @@ RUN cd /LightGBM && \
 ENV PATH /LightGBM:$PATH
 
 # building lightgbm-benchmark binaries
-RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git && \
-    cd /lightgbm-benchmark && \
-    git checkout jfomhover/lgbmcapipredict
+RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git
 
 # assuming lightgbm lib+includes are installed on the system
 RUN cd /lightgbm-benchmark/src/binaries/ && \
@@ -33,7 +31,7 @@ RUN cd /lightgbm-benchmark/src/binaries/ && \
     cmake --build . --target lightgbm_predict --config Release
 
 # provide env variable with path to built binaries
-ENV LIGHTGBM_BENCHMARK_BINARIES_PATH /lightgbm-benchmark/src/binaries/build/Release/
+ENV LIGHTGBM_BENCHMARK_BINARIES_PATH /lightgbm-benchmark/src/binaries/build
 RUN ls -l $LIGHTGBM_BENCHMARK_BINARIES_PATH
 
 ## ANACONDA ENVIRONMENT
