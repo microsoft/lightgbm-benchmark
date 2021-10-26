@@ -15,29 +15,16 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'numpy>=1.10,<1.20' \
                 'scipy~=1.5.0' \
                 'scikit-learn~=0.24.1' \
-                'lightgbm~=3.2.0' \
-                'dask~=2021.6.0' \
-                'distributed~=2021.6.0' \
-                'dask-ml~=1.9.0' \
                 'azureml-core==1.30.0' \
                 'azureml-defaults==1.30.0' \
                 'azureml-mlflow==1.30.0' \
-                'azureml-telemetry==1.30.0'
+                'azureml-telemetry==1.30.0' \
+                'mpi4py==3.1.1'
 
+# install lightgbm with mpi
 RUN pip install --upgrade pip setuptools wheel && \
-    pip install 'cmake==3.21.0' 
-
-# Clone lightgbm official repository (master branch)
-RUN git clone --recursive https://github.com/microsoft/LightGBM.git
-
-# Download and apply a particular patch
-RUN cd /LightGBM && \
-    wget https://raw.githubusercontent.com/microsoft/lightgbm-benchmark/32cbb007b61f5bed89af1423c7da250607726a35/pipelines/azureml_sdk15/components/lightgbm_python_custom/lightgbm_custom.python.patch && \
-    git apply --whitespace=fix ./lightgbm_custom.python.patch
-
-# Build lightgbm with custom patch applied
-RUN cd /LightGBM/python-package && \
-    python setup.py install --mpi
+    pip install 'cmake==3.21.0' && \
+    pip install 'lightgbm==3.3.0' --install-option=--mpi
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
