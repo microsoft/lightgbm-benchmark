@@ -33,7 +33,7 @@ RUN cd /lightgbm-benchmark/src/binaries/ && \
     cmake --build . --target lightgbm_predict --config Release
 
 # provide env variable with path to built binaries
-ENV LIGHTGBM_BENCHMARK_BINARIES_PATH /lightgbm-benchmark/ssrc/binaries/build/Release/
+ENV LIGHTGBM_BENCHMARK_BINARIES_PATH /lightgbm-benchmark/src/binaries/build/Release/
 RUN ls -l $LIGHTGBM_BENCHMARK_BINARIES_PATH
 
 ## ANACONDA ENVIRONMENT
