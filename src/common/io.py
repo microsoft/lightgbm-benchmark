@@ -67,9 +67,10 @@ class PartitioningEngine():
         'append'
     ]
 
-    def __init__(self, mode, number, logger=None):
+    def __init__(self, mode, number, header=False, logger=None):
         self.mode = mode
         self.number = number
+        self.header = header
         self.logger = logger or logging.getLogger(__name__)
 
     def split_by_append(self, input_files, output_path, file_count_target):
@@ -105,15 +106,28 @@ class PartitioningEngine():
         current_partition_size = 0
         current_partition_index = 0
         self.logger.info(f"Creating partition {current_partition_index}")
+
+        header_line = None # there can be only on header line
+
         for input_file in input_files:
             self.logger.info(f"Opening input file {input_file}")
             with open(input_file, "r", encoding="utf-8") as input_handler:
                 for line in input_handler:
+                    if self.header and header_line is None:
+                        # if first line of first input file
+                        # write that line in every partition
+                        header_line = line
+
                     if partition_size > 0 and current_partition_size >= partition_size:
                         current_partition_index += 1
                         current_partition_size = 0
                         self.logger.info(f"Creating partition {current_partition_index}")
+                        
                     with open(os.path.join(output_path, "part_{:06d}".format(current_partition_index)), 'a', encoding="utf-8") as output_handler:
+                        if self.header and current_partition_size == 0:
+                            # put header before anything else
+                            output_handler.write(header_line)
+
                         output_handler.write(line)
                         current_partition_size += 1
         self.logger.info(f"Created {current_partition_index+1} partitions")
@@ -125,10 +139,23 @@ class PartitioningEngine():
         partition_files = [open(os.path.join(output_path, "part_{:06d}".format(i)), "w", encoding="utf-8") for i in range(partition_count)]
 
         current_index = 0
+        header_line = None # there can be only on header line
+
         for input_file in input_files:
             self.logger.info(f"Opening input file {input_file}")
             with open(input_file, "r", encoding="utf-8") as input_handler:
-                for line in input_handler:
+                for line_index, line in enumerate(input_handler):
+                    if self.header and header_line is None:
+                        # if first line of first input file
+                        # write that line in every partition
+                        header_line = line
+                        for partition_file in partition_files:
+                            partition_file.write(header_line)
+                        continue
+                    elif self.header and line_index == 0:
+                        # if first line of 2nd... input file, just pass
+                        continue
+
                     partition_files[current_index % partition_count].write(line)
                     current_index += 1
 
