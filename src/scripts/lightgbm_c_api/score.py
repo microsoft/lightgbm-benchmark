@@ -8,6 +8,8 @@ import os
 import sys
 import argparse
 import logging
+import re
+import numpy as np
 from distutils.util import strtobool
 from subprocess import PIPE
 from subprocess import run as subprocess_run
@@ -18,7 +20,7 @@ from subprocess import TimeoutExpired
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    logging.info(f"Adding {COMMON_ROOT} to PYTHONPATH")
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
@@ -43,10 +45,8 @@ def get_arg_parser(parser=None):
         parser = argparse.ArgumentParser(__doc__)
 
     group_i = parser.add_argument_group("Input Data")
-    group_i.add_argument("--lightgbm_exec",
-        required=True, type=str, help="Path to lightgbm_predict (file path)")
-    group_i.add_argument("--lightgbm_lib",
-        required=True, type=str, help="Path to LightGBM library (file path)")
+    group_i.add_argument("--binaries_path",
+        required=False, type=str, default=os.environ.get("LIGHTGBM_BENCHMARK_BINARIES_PATH", None), help="Path to lightgbm_predict (file path)")
     group_i.add_argument("--data",
         required=True, type=input_file_path, help="Inferencing data location (file path)")
     group_i.add_argument("--model",
@@ -105,37 +105,55 @@ def run(args, unknown_args=[]):
         # and create your own file inside the output
         args.output = os.path.join(args.output, "predictions.txt")
 
-    if not os.path.isfile(args.lightgbm_exec):
-        raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")
+    lightgbm_predict_path = os.path.join(os.path.abspath(args.binaries_path), "lightgbm_predict")
 
     # assemble a command for lightgbm cli
-    lightgbm_cli_command = [
-        os.path.abspath(args.lightgbm_exec),
+    lightgbm_predict_command = [
+        lightgbm_predict_path,
         f"{args.model}",
         f"{args.data}",
         "verbosity=2",
         "num_threads=1"
     ]
     if args.output:
-        lightgbm_cli_command.append(f"output_result={args.output}")
+        lightgbm_predict_command.append(f"output_result={args.output}")
 
-    custom_env = os.environ.copy()
-    custom_env["PATH"] = os.path.abspath(args.lightgbm_lib) + ":" + custom_env["PATH"]
+    #custom_env = os.environ.copy()
+    #custom_env["PATH"] = os.path.abspath(args.lightgbm_lib) + ":" + custom_env["PATH"]
 
     logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block(metric_name="time_inferencing"):
-        lightgbm_cli_call = subprocess_run(
-            lightgbm_cli_command,
-            stdout=PIPE,
-            stderr=PIPE,
-            universal_newlines=True,
-            check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
-            timeout=None,
-            env=custom_env
-        )
-        logger.info(f"LightGBM stdout: {lightgbm_cli_call.stdout}")
-        logger.info(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
-        logger.info(f"LightGBM return code: {lightgbm_cli_call.returncode}")
+    lightgbm_predict_call = subprocess_run(
+        lightgbm_predict_command,
+        stdout=PIPE,
+        stderr=PIPE,
+        universal_newlines=True,
+        check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
+        timeout=None,
+        #env=custom_env
+    )
+    logger.info(f"stdout: {lightgbm_predict_call.stdout}")
+    logger.info(f"stderr: {lightgbm_predict_call.stderr}")
+    logger.info(f"return code: {lightgbm_predict_call.returncode}")
+
+    if lightgbm_predict_call.returncode != 0:
+        raise Exception("Return code != 0, see stderr above.")
+
+    # now parsing executable logs for prediction per query time in ms
+    time_inferencing_per_query = []
+    for line in lightgbm_predict_call.stdout.split("\n"):
+        if line.startswith("ROW"):
+            row_pattern = r"ROW line=([0-9\.]+) label=([0-9\.]+) null_elem=([0-9\.]+) prediction=([0-9\.]+) time_ms=([0-9\.]+)"
+            row_matched = re.match(row_pattern, line.strip())
+            if row_matched:
+                time_inferencing_per_query.append(float(row_matched.group(5)))
+            else:
+                logger.warning("log row {line} does not match expected pattern {row_pattern}")
+
+    if len(time_inferencing_per_query) > 1:
+        batch_run_times = np.array(time_inferencing_per_query)
+        metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50) * 1000)
+        metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90) * 1000)
+        metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99) * 1000)
 
     # Important: close logging session before exiting
     metrics_logger.close()
