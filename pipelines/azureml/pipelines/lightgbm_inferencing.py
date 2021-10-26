@@ -73,7 +73,8 @@ class LightGBMInferencing(AMLPipelineHelper):
             dsl.pipeline: the function to create your pipeline
         """
         # Inferencing modules
-        lightgbm_score_module = self.module_load("lightgbm_python_score")
+        lightgbm_python_score_module = self.module_load("lightgbm_python_score")
+        lightgbm_c_api_score_module = self.module_load("lightgbm_c_api_score")
         treelite_compile_module = self.module_load("treelite_compile")
         treelite_score_module = self.module_load("treelite_score")
 
@@ -132,9 +133,20 @@ class LightGBMInferencing(AMLPipelineHelper):
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
+                elif variant.framework == "lightgbm_c_api":
+                    # call module with all the right arguments
+                    inferencing_step = lightgbm_c_api_score_module(
+                        data = data,
+                        model = model,
+                        predict_disable_shape_check = predict_disable_shape_check,
+                        verbose = False,
+                        custom_properties = custom_properties
+                    )
+                    self.apply_smart_runsettings(inferencing_step)
+
                 elif variant.framework == "lightgbm_python":
                     # call module with all the right arguments
-                    inferencing_step = lightgbm_score_module(
+                    inferencing_step = lightgbm_python_score_module(
                         data = data,
                         model = model,
                         predict_disable_shape_check = predict_disable_shape_check,
