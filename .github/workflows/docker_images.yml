@@ -36,3 +36,4 @@ jobs:
 
     - name: Build the Docker image
       run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s)
+      working-directory: docker/
