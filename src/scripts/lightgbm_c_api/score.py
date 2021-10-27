@@ -128,8 +128,9 @@ def run(args, unknown_args=[]):
         f"{args.data}",
         "verbosity=2",
         "num_threads=1",
-        ""
+        f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
     ]
+
     if args.output:
         lightgbm_predict_command.append(f"output_result={args.output}")
 
