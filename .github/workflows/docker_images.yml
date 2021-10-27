@@ -23,8 +23,7 @@ jobs:
         dockerfile:
           - lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
           - lightgbm-v3.2.1/linux_cpu_mpi_pip.dockerfile
-          #- lightgbm-v3.2.1/linux_cuda_build.dockerfile
-          #- lightgbm-v3.2.1/linux_cuda_pip.dockerfile
+          - lightgbm-v3.2.1/linux_cuda_build.dockerfile
           - lightgbm-v3.2.1/linux_gpu_build.dockerfile
           - lightgbm-v3.2.1/linux_gpu_pip.dockerfile
           - lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
