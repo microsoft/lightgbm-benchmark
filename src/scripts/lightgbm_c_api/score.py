@@ -167,12 +167,21 @@ def run(args, unknown_args=[]):
                 time_inferencing_per_query.append(float(row_matched.group(5)))
             else:
                 logger.warning(f"log row {line} does not match expected pattern {row_pattern}")
+        elif line.startswith("METRIC"):
+            row_pattern = r"METRIC ([a-zA-Z0-9]+)=([a-zA-Z0-9\.e\-]+)"
+            row_matched = re.match(row_pattern, line.strip())
+            if row_matched:
+                time_inferencing_per_query.append(float(row_matched.group(5)))
+            else:
+                logger.warning(f"log metric {line} does not match expected pattern {row_pattern}")
+
 
     if len(time_inferencing_per_query) > 1:
         batch_run_times = np.array(time_inferencing_per_query)
         metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
         metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
         metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
+        metrics_logger.log_metric("time_inferencing", np.sum(batch_run_times))
 
     # Important: close logging session before exiting
     metrics_logger.close()
