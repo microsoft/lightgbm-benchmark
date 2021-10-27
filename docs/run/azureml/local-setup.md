@@ -4,7 +4,7 @@
 
 **Requirements** - To enjoy this tutorial, you first need to:
 - install the [local python requirements](../install.md).
-- provision [Azure resources first](provision.md), and have a working AzureML workspace.
+- provision [Azure resources first](azure-setup.md), and have a working AzureML workspace.
 
 ## A. Edit config files to point to your AzureML workspace
 

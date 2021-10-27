@@ -61,7 +61,7 @@ This will use the sample config file below to create a dataset uploading the fil
 
 3\. To find it in the AzureML UI, get into your workspace under the **Datasets** tab.
 
-You'll now be able to consume this data as an input of [lightgbm training](train-on-your-own-data.md) or inferencing pipelines.
+You'll now be able to consume this data as an input of [lightgbm training](train-on-your-data.md) or inferencing pipelines.
 
 Feel free to edit this sample file to upload your own data into AzureML from local files and folders.
 
