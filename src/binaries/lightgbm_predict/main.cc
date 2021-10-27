@@ -217,6 +217,9 @@ int main(int argc, char* argv[]) {
     // everything after model+data is considered custom params for LightGBM
     if (argc > 3) {
         for (int i=3; i<argc; i++) {
+            if (i>1) {
+                custom_params += " ";
+            }
             custom_params += argv[i];
         }
     }
@@ -241,14 +244,14 @@ int main(int argc, char* argv[]) {
     if (LGBM_BoosterGetNumFeature(model_handle, &num_features) != 0) {
         throw std::runtime_error("Could not get number of features from model");
     } else {
-        std::cout << "INPUT num_features=" << num_features << endl;
+        std::cout << "PROPERTY inference_data_width=" << num_features << endl;
     }
 
     // we need number of outputs to allocate memory later
     if (LGBM_BoosterGetNumClasses(model_handle, &num_classes) != 0) {
         throw std::runtime_error("Could not get number of classes from model");
     } else {
-        std::cout << "INPUT num_classes=" << num_classes << endl;
+        std::cout << "PROPERTY num_classes=" << num_classes << endl;
     }
 
     // **********************
@@ -303,8 +306,9 @@ int main(int argc, char* argv[]) {
     }
 
     // print out summary metrics
-    cout << "SUMMARY";
-    cout << " prediction_per_request_secs=" << prediction_per_request/count_request << endl;
+    cout << "METRIC time_inferencing=" << prediction_per_request << endl;
+    cout << "METRIC prediction_per_request_usecs=" << prediction_per_request/count_request*1000000 << endl;
+    cout << "PROPERTY inference_data_length=" << count_request << endl;
 
     // free resources
     data_reader->close();
