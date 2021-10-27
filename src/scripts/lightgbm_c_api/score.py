@@ -128,8 +128,9 @@ def run(args, unknown_args=[]):
         f"{args.data}",
         "verbosity=2",
         "num_threads=1",
-        ""
+        f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
     ]
+
     if args.output:
         lightgbm_predict_command.append(f"output_result={args.output}")
 
@@ -139,7 +140,7 @@ def run(args, unknown_args=[]):
         logger.info(f"Adding to PATH: {args.lightgbm_lib_path}")
         custom_env["PATH"] = os.path.abspath(args.lightgbm_lib_path) + ":" + custom_env["PATH"]
 
-    logger.info(f"Running .predict()")
+    logger.info("Running command {}".format(" ".join(lightgbm_predict_command)))
     lightgbm_predict_call = subprocess_run(
         lightgbm_predict_command,
         stdout=PIPE,
@@ -166,12 +167,28 @@ def run(args, unknown_args=[]):
                 time_inferencing_per_query.append(float(row_matched.group(5)))
             else:
                 logger.warning(f"log row {line} does not match expected pattern {row_pattern}")
+        elif line.startswith("METRIC"):
+            row_pattern = r"METRIC ([a-zA-Z0-9_]+)=([a-zA-Z0-9\.e\-]+)"
+            row_matched = re.match(row_pattern, line.strip())
+            if row_matched:
+                metrics_logger.log_metric(row_matched.group(1), float(row_matched.group(2)))
+            else:
+                logger.warning(f"log metric {line} does not match expected pattern {row_pattern}")
+        elif line.startswith("PROPERTY"):
+            row_pattern = r"PROPERTY ([a-zA-Z0-9_]+)=([a-zA-Z0-9\.e\-]+)"
+            row_matched = re.match(row_pattern, line.strip())
+            if row_matched:
+                metrics_logger.set_properties(**{row_matched.group(1): row_matched.group(2)})
+            else:
+                logger.warning(f"log metric {line} does not match expected pattern {row_pattern}")
+
 
     if len(time_inferencing_per_query) > 1:
         batch_run_times = np.array(time_inferencing_per_query)
         metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
         metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
         metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
+        metrics_logger.log_metric("time_inferencing", np.sum(batch_run_times))
 
     # Important: close logging session before exiting
     metrics_logger.close()
