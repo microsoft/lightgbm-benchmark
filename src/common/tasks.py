@@ -1,11 +1,24 @@
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Any, Optional
+from typing import Any, Optional, Union
+
+@dataclass
+class data_input_spec:
+    # NOTE: Union is not supported in Hydra/OmegaConf
+    # specify either by dataset name and version
+    name: Optional[str] = None
+    version: Optional[str] = None
+    # or by uuid (non-registered)
+    uuid: Optional[str] = None
+    # or by datastore+path
+    datastore: Optional[str] = None
+    path: Optional[str] = None
+    validate: bool = True
 
 @dataclass
 class inferencing_task:
-    dataset: str = MISSING
-    model: str = MISSING
+    data: data_input_spec = MISSING
+    model: data_input_spec = MISSING
     task_key: Optional[str] = None
     predict_disable_shape_check: bool = False
 

@@ -27,6 +27,7 @@ if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
     sys.path.append(str(os.path.join(LIGHTGBM_BENCHMARK_ROOT, "src")))
 
 from common.tasks import inferencing_task, inferencing_variants
+from common.aml import load_dataset_from_data_input_spec
 
 class LightGBMInferencing(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -204,14 +205,14 @@ class LightGBMInferencing(AMLPipelineHelper):
                       default_datastore=config.compute.noncompliant_datastore)
         def inferencing_all_tasks():
             for inferencing_task in config.lightgbm_inferencing.tasks:
-                data = self.dataset_load(inferencing_task.dataset)
-                model = self.dataset_load(inferencing_task.model)
+                data = load_dataset_from_data_input_spec(self.workspace(), inferencing_task.data)
+                model = load_dataset_from_data_input_spec(self.workspace(), inferencing_task.model)
 
                 # create custom properties for this task
                 benchmark_custom_properties = {
                     'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
-                    'benchmark_dataset' : inferencing_task.dataset,
-                    'benchmark_model' : inferencing_task.model,
+                    'benchmark_dataset' : inferencing_task.data.name,
+                    'benchmark_model' : inferencing_task.model.name,
                 }
 
                 inferencing_task_subgraph_step = pipeline_function(
