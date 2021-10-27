@@ -166,9 +166,6 @@ class LightGBMCAPIInferecingScript(RunnableScript):
             metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
             metrics_logger.log_metric("time_inferencing", np.sum(batch_run_times))
 
-        # Important: close logging session before exiting
-        metrics_logger.close()
-
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """

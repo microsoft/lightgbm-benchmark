@@ -180,9 +180,6 @@ def run(args, unknown_args=[]):
         for index, valid_data in enumerate(val_datasets):
             valid_data.save_binary(os.path.join(args.output_test, f"test_{index}.bin"))
 
-    # Important: close logging session before exiting
-    metrics_logger.close()
-
 
 def main(cli_args=None):
     """Component main function, parses arguments and executes run() function.

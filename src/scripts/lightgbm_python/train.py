@@ -273,9 +273,6 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
             logger.info("MPI was initialized, calling MPI.finalize()")
             MPI.Finalize()
 
-        # Important: close logging session before exiting
-        metrics_logger.close()
-
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """

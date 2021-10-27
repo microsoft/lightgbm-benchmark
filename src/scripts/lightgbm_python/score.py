@@ -111,9 +111,6 @@ class LightGBMPythonInferecingScript(RunnableScript):
                 predict_disable_shape_check=bool(args.predict_disable_shape_check)
             )
 
-        # Important: close logging session before exiting
-        metrics_logger.close()
-
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """
