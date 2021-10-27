@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from omegaconf import MISSING
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 @dataclass
 class data_input_spec:
