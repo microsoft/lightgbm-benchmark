@@ -217,6 +217,9 @@ int main(int argc, char* argv[]) {
     // everything after model+data is considered custom params for LightGBM
     if (argc > 3) {
         for (int i=3; i<argc; i++) {
+            if (i>1) {
+                custom_params += " ";
+            }
             custom_params += argv[i];
         }
     }
