@@ -283,7 +283,7 @@ def get_arg_parser(parser=None):
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """
-    LightGBMPythonMpiTrainingScript.main()
+    LightGBMPythonMpiTrainingScript.main(cli_args)
 
 if __name__ == "__main__":
     main()
