@@ -42,7 +42,7 @@ def load_dataset_from_data_input_spec(workspace, data_input_spec):
         logger.info(f"Reading dataset from name={data_input_spec.name} version={data_input_spec.version}")
         loaded_dataset = Dataset.get_by_name(workspace, name=data_input_spec.name, version=data_input_spec.version)
     elif data_input_spec.uuid:
-        logger.info(f"Reading dataset from uuid={data_input_spec.uuid}")
+        logger.info(f"Reading dataset from uuid")
         loaded_dataset = Dataset.get_by_id(workspace, id=data_input_spec.uuid)
     elif data_input_spec.datastore and data_input_spec.path:        
         logger.info(f"Connecting to Datastore {data_input_spec.datastore}...")
