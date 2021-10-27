@@ -1,24 +1,12 @@
-# Run a sample benchmark pipeline on AzureML
+# Local Setup: run a sample benchmark pipeline on AzureML
 
 **Objectives** - By following this tutorial, you will be able to setup resources in Azure to be able to run the pipelines in this repo.:
 
-**Requirements** - To enjoy this tutorial, you need to have a working Azure account and subscription (see [how to create one]()).
+**Requirements** - To enjoy this tutorial, you first need to:
+- install the [local python requirements](../install.md).
+- provision [Azure resources first](provision.md), and have a working AzureML workspace.
 
-## A. Create an AzureML workspace
-
-1. If you don't have one already, [create an AzureML workspace](https://docs.microsoft.com/en-us/azure/machine-learning/quickstart-create-resources).
-
-2. In that workspace, you will need to [create compute clusters](https://docs.microsoft.com/en-us/azure/machine-learning/quickstart-create-resources#cluster). Here's what we recommend to get you started with LightGBM training using the pipelines of this repo. The names below are indicative, but we'll keep refering to those in our docs.
-
-    | Cluster Name | SKU | Node count | Description |
-    | :-- | :-- | :-- | :-- |
-    | `cpu-cluster` | Standard_DS3_v2 | 4 | A cluster for simple jobs, running on cheap VMs. |
-    | `linux-cpu-d32sv3` | Standard_D32s_v3 | 10 | A cluster for LightGBM itself, with a more powerful yet affordable VM. Feel free to provision more or less. |
-    | `linux-gpu-nv6` | Standard_NV6 (gpu) | 1 | Optional: for trying out gpu lightgbm training (work in progress) |
-
-    IMPORTANT: Whenever you create those, set the minimum number of nodes to 0 so that unused clusters will automatically size down and reduce costs.
-
-## B. Edit config files to point to your AzureML workspace
+## A. Edit config files to point to your AzureML workspace
 
 To be able to submit the benchmark pipelines in AzureML, you need to edit some configuration files with the right references to connect to your AzureML resources.
 
@@ -56,7 +44,7 @@ To be able to submit the benchmark pipelines in AzureML, you need to edit some c
 
 From now on, when you'll want to run a pipeline, use arguments `aml=myaml compute=myaml` to run it in your AzureML workspace.
 
-## Verify your setup: run a sample pipeline in your workspace
+## B. Verify your setup: run a sample pipeline in your workspace
 
 !!! note
     We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
