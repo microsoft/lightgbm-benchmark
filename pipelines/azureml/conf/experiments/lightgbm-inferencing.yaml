@@ -35,15 +35,19 @@ lightgbm_inferencing:
 
   # list all the data/model pairs to run inferencing with
   tasks:
-    - dataset: "data-synthetic-regression-100cols-10000samples-inference"
-      model:  "model-synthetic-regression-100cols-10trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-100cols-10000samples-inference"
+      model:
+        name: "model-synthetic-regression-100cols-10trees-31leaves"
 
   # list all inferencing frameworks and their builds
   variants:
     - framework: lightgbm_python
-      build: dockers/lightgbm_cpu_mpi_pip.dockerfile # relative to lightgbm_python/
     - framework: lightgbm_python
-      build: dockers/lightgbm_cpu_mpi_build.dockerfile # relative to lightgbm_python/
+      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile # relative to repo root
+      os: "Linux" # 'Linux' or 'Windows', linux is default
     - framework: lightgbm_python
-      build: dockers/lightgbm_cpu_mpi_custom.dockerfile # relative to lightgbm_python/
+      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile # relative to repo root
+      os: "Linux" # 'Linux' or 'Windows', linux is default
+    - framework: lightgbm_c_api
     - framework: treelite_python

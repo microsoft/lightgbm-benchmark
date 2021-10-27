@@ -21,7 +21,6 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
-from common.metrics import MetricsLogger
 from common.io import input_file_path
 from common.components import RunnableScript
 
@@ -75,12 +74,14 @@ class SampleScript(RunnableScript):
         return parser
 
 
-    def run(self, args, unknown_args=[]):
+    def run(self, args, logger, metrics_logger, unknown_args):
         """Run script with arguments (the core of the component)
 
         Args:
             args (argparse.namespace): command line arguments provided to script
-            unknown_args (list[str]): list of arguments not known
+            logger (logging.getLogger() for this script)
+            metrics_logger (common.metrics.MetricLogger)
+            unknown_args (list[str]): list of arguments not recognized during argparse
         """
         # make sure the output argument exists
         os.makedirs(args.output, exist_ok=True)
@@ -90,24 +91,24 @@ class SampleScript(RunnableScript):
 
         # CUSTOM CODE STARTS HERE
         # below this line is user code
-        self.logger.info(f"Loading model from {args.model}")
+        logger.info(f"Loading model from {args.model}")
         booster = lightgbm.Booster(model_file=args.model)
 
         # to log executing time of a code block, use log_time_block()
-        self.logger.info(f"Loading data for inferencing")
-        with self.metrics_logger.log_time_block(metric_name="time_data_loading"):
+        logger.info(f"Loading data for inferencing")
+        with metrics_logger.log_time_block(metric_name="time_data_loading"):
             inference_data = lightgbm.Dataset(args.data, free_raw_data=False).construct()
             inference_raw_data = inference_data.get_data()
 
         # optional: add data shape as property
-        self.metrics_logger.set_properties(
+        metrics_logger.set_properties(
             inference_data_length=inference_data.num_data(),
             inference_data_width=inference_data.num_feature(),
         )
 
         # to log executing time of a code block, use log_time_block()
-        self.logger.info(f"Running .predict()")
-        with self.metrics_logger.log_time_block(metric_name="time_inferencing"):
+        logger.info(f"Running .predict()")
+        with metrics_logger.log_time_block(metric_name="time_inferencing"):
             booster.predict(data=inference_raw_data)
 
         # CUSTOM CODE ENDS HERE

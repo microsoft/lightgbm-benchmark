@@ -37,11 +37,18 @@ lightgbm_training:
 
   # set of parameters to train on all tasks
   reference_training:
+    # input parameters
+    header: false
+    label_column: "0"
+    group_column: null
+
     # fixedlightgbm training parameters
     objective: "regression"
     metric: "rmse"
     boosting: "gbdt"
     tree_learner: "data"
+    #custom_params:
+    #    deterministic: True
 
     # "sweepable" training parameters
     num_iterations: "choice(100, 200)"

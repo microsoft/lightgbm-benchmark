@@ -36,6 +36,7 @@ class SweepParameterParser():
         self.unknown_args = None
         self.tunable_params = {}
         self.fixed_params = {}
+        self.logger = logging.getLogger(__name__)
 
         if self.parameter_sampling not in SweepParameterParser.ALLOWED_DISTRIBUTIONS:
             raise Exception(f"Sampling distribution {self.parameter_sampling} is not in the list of allowed distributiond {SweepParameterParser.ALLOWED_DISTRIBUTIONS}")
@@ -70,15 +71,29 @@ class SweepParameterParser():
         return self.parser
     
     def parse_from_dict(self, parameter_dict):
+        """Parses parameters provided in a dictionary to check if they are sweepable.
+        
+        Args:
+            parameter_dict (dict)
+        
+        Returns:
+            tunable_params (dict): all sweep parameters from parameter_dict, constructed as sweep sdk objects
+            fixed_params (dict): all fixed / constant parameters from parameter_dict
+        """
+        self.logger.debug(f"parsing sweep params from input dict {parameter_dict}")
+
         self.tunable_params = {}
         self.fixed_params = {}
 
         # we're building a loop to test every compatible parsing format
-        tunable_parsing_methods = {
-            # startswith_test_str, method_to_parse
-            "choice": self._parse_choice,
-            "uniform": self._parse_uniform
-        }
+        tunable_parsing_methods = {}
+        for sweep_parameter_key in SweepParameterParser.ALLOWED_DISTRIBUTIONS[self.parameter_sampling]:
+            parsing_method_key = f"_parse_{sweep_parameter_key}"
+            if hasattr(self, parsing_method_key):
+                tunable_parsing_methods[sweep_parameter_key] = getattr(self, parsing_method_key)
+            else:
+                raise ValueError(f"sweep parameter type {sweep_parameter_key} from SweepParameterParser.ALLOWED_DISTRIBUTIONS[{self.parameter_sampling}] unknown, cannot find parsing method {parsing_method_key}")
+        self.logger.debug(f"prepared parsing methods {tunable_parsing_methods}")
 
         # for any key in tunable parameters
         for param_key in self.tunable_parameters:
@@ -102,15 +117,30 @@ class SweepParameterParser():
             else:
                 # if nothing matches, let's consider this a fixed param
                 self.fixed_params[param_key] = self._parse_number(param_value)
+
+        self.logger.debug(f"found tunable/sweep params: {self.tunable_params}")
+        self.logger.debug(f"found fixed/const params: {self.fixed_params}")
         return self.tunable_params, self.fixed_params
 
     def parse_from_argparse(self, args):
+        """Parses parameters provided as an argparse namespace.
+        
+        Args:
+            args (argparse.Namespace)
+        
+        Returns:
+            tunable_params (dict): all sweep parameters from parameter_dict, constructed as sweep sdk objects
+            fixed_params (dict): all fixed / constant parameters from parameter_dict
+        """
+        self.logger.debug(f"parsing sweep params from argparse namespace {args}")
         return self.parse_from_dict(vars(args))
 
     def get_tunable_params(self):
+        """ Returns sweep params parsed from last call to parse function. """
         return self.tunable_params
 
     def get_fixed_params(self):
+        """ Returns fixed params parsed from last call to parse function. """
         return self.fixed_params
 
     """

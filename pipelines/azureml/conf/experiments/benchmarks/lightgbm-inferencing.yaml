@@ -31,36 +31,62 @@ lightgbm_inferencing:
   benchmark_name: "benchmark-inferencing" # need to be provided at runtime!
 
   tasks:
-    - dataset: "data-synthetic-regression-10cols-10000samples-inference"
-      model:  "model-synthetic-regression-10cols-10trees-31leaves"
-    - dataset: "data-synthetic-regression-10cols-10000samples-inference"
-      model:  "model-synthetic-regression-10cols-100trees-31leaves"
-    - dataset: "data-synthetic-regression-10cols-10000samples-inference"
-      model:  "model-synthetic-regression-10cols-1000trees-31leaves"
-    - dataset: "data-synthetic-regression-10cols-10000samples-inference"
-      model:  "model-synthetic-regression-10cols-5000trees-31leaves"
-    - dataset: "data-synthetic-regression-100cols-10000samples-inference"
-      model:  "model-synthetic-regression-100cols-10trees-31leaves"
-    - dataset: "data-synthetic-regression-100cols-10000samples-inference"
-      model:  "model-synthetic-regression-100cols-100trees-31leaves"
-    - dataset: "data-synthetic-regression-100cols-10000samples-inference"
-      model:  "model-synthetic-regression-100cols-1000trees-31leaves"
-    - dataset: "data-synthetic-regression-100cols-10000samples-inference"
-      model:  "model-synthetic-regression-100cols-5000trees-31leaves"
-    - dataset: "data-synthetic-regression-1000cols-10000samples-inference"
-      model:  "model-synthetic-regression-1000cols-10trees-31leaves"
-    - dataset: "data-synthetic-regression-1000cols-10000samples-inference"
-      model:  "model-synthetic-regression-1000cols-100trees-31leaves"
-    - dataset: "data-synthetic-regression-1000cols-10000samples-inference"
-      model:  "model-synthetic-regression-1000cols-1000trees-31leaves"
-    - dataset: "data-synthetic-regression-1000cols-10000samples-inference"
-      model:  "model-synthetic-regression-1000cols-5000trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-10cols-10000samples-inference"
+      model:
+        name: "model-synthetic-regression-10cols-10trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-10cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-10cols-100trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-10cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-10cols-1000trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-10cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-10cols-5000trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-100cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-100cols-10trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-100cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-100cols-100trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-100cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-100cols-1000trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-100cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-100cols-5000trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-1000cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-1000cols-10trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-1000cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-1000cols-100trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-1000cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-1000cols-1000trees-31leaves"
+    - data:
+        name: "data-synthetic-regression-1000cols-10000samples-inference"
+      model:
+        name:  "model-synthetic-regression-1000cols-5000trees-31leaves"
 
   variants:
     - framework: lightgbm_python
-      build: dockers/lightgbm_cpu_mpi_pip.dockerfile
     - framework: lightgbm_python
-      build: dockers/lightgbm_cpu_mpi_build.dockerfile
+      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+      os: "Linux" # 'Linux' or 'Windows', linux is default
     - framework: lightgbm_python
-      build: dockers/lightgbm_cpu_mpi_custom.dockerfile
+      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+      os: "Linux" # 'Linux' or 'Windows', linux is default
+    - framework: lightgbm_c_api
     - framework: treelite_python

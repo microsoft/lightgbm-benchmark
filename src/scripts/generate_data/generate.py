@@ -22,7 +22,6 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
-from common.metrics import MetricsLogger
 from common.components import RunnableScript
 
 
@@ -86,19 +85,21 @@ class GenerateSyntheticDataScript(RunnableScript):
         return parser
 
 
-    def run(self, args, unknown_args=[]):
+    def run(self, args, logger, metrics_logger, unknown_args):
         """Run script with arguments (the core of the component)
 
         Args:
             args (argparse.namespace): command line arguments provided to script
-            unknown_args (list[str]): list of arguments not known
+            logger (logging.getLogger() for this script)
+            metrics_logger (common.metrics.MetricLogger)
+            unknown_args (list[str]): list of arguments not recognized during argparse
         """
         # make sure the output arguments exists
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
 
-        self.metrics_logger.log_parameters(
+        metrics_logger.log_parameters(
             type=args.type,
             train_samples=args.train_samples,
             test_samples=args.test_samples,
@@ -110,8 +111,8 @@ class GenerateSyntheticDataScript(RunnableScript):
         )
 
         # record a metric
-        self.logger.info(f"Generating data in memory.")
-        with self.metrics_logger.log_time_block("time_data_generation"):
+        logger.info(f"Generating data in memory.")
+        with metrics_logger.log_time_block("time_data_generation"):
             total_samples = (
                 args.train_samples + args.test_samples + args.inferencing_samples
             )
@@ -139,19 +140,19 @@ class GenerateSyntheticDataScript(RunnableScript):
             train_X = X[0 : args.train_samples]
             train_y = y[0 : args.train_samples]
             train_data = numpy.hstack((train_y, train_X))  # keep target as column 0
-            self.logger.info(f"Train data shape: {train_data.shape}")
+            logger.info(f"Train data shape: {train_data.shape}")
 
             test_X = X[args.train_samples : args.train_samples + args.test_samples]
             test_y = y[args.train_samples : args.train_samples + args.test_samples]
             test_data = numpy.hstack((test_y, test_X))  # keep target as column 0
-            self.logger.info(f"Test data shape: {test_data.shape}")
+            logger.info(f"Test data shape: {test_data.shape}")
 
             inference_data = X[args.train_samples + args.test_samples :]
-            self.logger.info(f"Inference data shape: {inference_data.shape}")
+            logger.info(f"Inference data shape: {inference_data.shape}")
 
         # save as CSV
-        self.logger.info(f"Saving data...")
-        with self.metrics_logger.log_time_block("time_data_saving"):
+        logger.info(f"Saving data...")
+        with metrics_logger.log_time_block("time_data_saving"):
             numpy.savetxt(
                 os.path.join(args.output_train, "train.txt"),
                 train_data,

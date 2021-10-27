@@ -13,20 +13,21 @@ import os
 import sys
 import json
 from dataclasses import dataclass
-from omegaconf import MISSING
+from omegaconf import MISSING, OmegaConf
 from typing import Optional, List
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
-LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
+LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
-    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
-    sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
+    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT}/src/ to path")
+    sys.path.append(str(os.path.join(LIGHTGBM_BENCHMARK_ROOT, "src")))
 
 from common.tasks import inferencing_task, inferencing_variants
+from common.aml import load_dataset_from_data_input_spec
 
 class LightGBMInferencing(AMLPipelineHelper):
     """Runnable/reusable pipeline helper class
@@ -73,7 +74,8 @@ class LightGBMInferencing(AMLPipelineHelper):
             dsl.pipeline: the function to create your pipeline
         """
         # Inferencing modules
-        lightgbm_score_module = self.module_load("lightgbm_python_score")
+        lightgbm_python_score_module = self.module_load("lightgbm_python_score")
+        lightgbm_c_api_score_module = self.module_load("lightgbm_c_api_score")
         treelite_compile_module = self.module_load("treelite_compile")
         treelite_score_module = self.module_load("treelite_score")
 
@@ -132,9 +134,20 @@ class LightGBMInferencing(AMLPipelineHelper):
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
+                elif variant.framework == "lightgbm_c_api":
+                    # call module with all the right arguments
+                    inferencing_step = lightgbm_c_api_score_module(
+                        data = data,
+                        model = model,
+                        predict_disable_shape_check = predict_disable_shape_check,
+                        verbose = False,
+                        custom_properties = custom_properties
+                    )
+                    self.apply_smart_runsettings(inferencing_step)
+
                 elif variant.framework == "lightgbm_python":
                     # call module with all the right arguments
-                    inferencing_step = lightgbm_score_module(
+                    inferencing_step = lightgbm_python_score_module(
                         data = data,
                         model = model,
                         predict_disable_shape_check = predict_disable_shape_check,
@@ -147,12 +160,14 @@ class LightGBMInferencing(AMLPipelineHelper):
                     raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
 
                 if variant.build:
-                    custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, variant.framework, variant.build))
+                    custom_docker = Docker(file=os.path.join(LIGHTGBM_BENCHMARK_ROOT, variant.build))
                     inferencing_step.runsettings.environment.configure(
                         docker=custom_docker,
                         os=variant.os or "Linux" # linux by default
                     )
                     variant_comment.append(f"build {variant.build}")
+                else:
+                    variant_comment.append(f"default build")
 
                 # add some comment to the component
                 inferencing_step.comment = " -- ".join(variant_comment)
@@ -177,20 +192,27 @@ class LightGBMInferencing(AMLPipelineHelper):
         Returns:
             azureml.core.Pipeline: the instance constructed with its inputs and params.
         """
+        full_pipeline_description="\n".join([
+            "Inferencing on all specified tasks (see yaml below).",
+            "```yaml""",
+            OmegaConf.to_yaml(config),
+            "```"
+        ])
+
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="inferencing_all_tasks", # pythonic name
-                      description="Inferencing on all specified tasks",
+                      description=full_pipeline_description,
                       default_datastore=config.compute.noncompliant_datastore)
         def inferencing_all_tasks():
             for inferencing_task in config.lightgbm_inferencing.tasks:
-                data = self.dataset_load(inferencing_task.dataset)
-                model = self.dataset_load(inferencing_task.model)
+                data = load_dataset_from_data_input_spec(self.workspace(), inferencing_task.data)
+                model = load_dataset_from_data_input_spec(self.workspace(), inferencing_task.model)
 
                 # create custom properties for this task
                 benchmark_custom_properties = {
                     'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
-                    'benchmark_dataset' : inferencing_task.dataset,
-                    'benchmark_model' : inferencing_task.model,
+                    'benchmark_dataset' : inferencing_task.data.name,
+                    'benchmark_model' : inferencing_task.model.name,
                 }
 
                 inferencing_task_subgraph_step = pipeline_function(

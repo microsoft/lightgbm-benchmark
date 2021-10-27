@@ -6,8 +6,8 @@
 
 **Requirements** - To enjoy this tutorial, you need to:
 - have installed the [local python requirements](../install.md).
-- have an existing [AzureML workspace with relevant compute resource](setup.md).
-- have [edited your config files](setup.md) to run the pipelines in your workspace.
+- have an existing [AzureML workspace with relevant compute resource](azure-setup.md).
+- have [edited your config files](local-setup.md) to run the pipelines in your workspace.
 
 ## Get your data into AzureML
 
@@ -25,7 +25,7 @@ For each of those, you need to create a File dataset with your training and test
 
 1\. Go into the subdirectory `pipelines/azureml/`
 
-2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below)
+2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below):
 
 ``` yaml
 {!./pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml!}

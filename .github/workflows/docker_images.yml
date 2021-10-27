@@ -1,0 +1,46 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+    - 'docker/**'
+    - '.github/workflows/docker_images.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+    - 'docker/**'
+    - '.github/workflows/docker_images.yml'
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dockerfile:
+          - lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+          - lightgbm-v3.2.1/linux_cpu_mpi_pip.dockerfile
+          - lightgbm-v3.2.1/linux_cuda_build.dockerfile
+          - lightgbm-v3.2.1/linux_gpu_build.dockerfile
+          - lightgbm-v3.2.1/linux_gpu_pip.dockerfile
+          - lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
+          - lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
+          - lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: marceloprado/has-changed-path@v1
+      id: dockerfile-changed
+      with:
+        paths: docker/${{ matrix.dockerfile}}
+
+    - name: Build the Docker image
+      if: steps.dockerfile-changed.outputs.changed == 'true'
+      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s)
+      working-directory: docker/

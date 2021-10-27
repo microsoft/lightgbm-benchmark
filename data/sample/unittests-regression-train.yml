@@ -1,0 +1,4 @@
+$schema: https://azuremlschemas.azureedge.net/latest/dataset.schema.json
+name: unittests-regression-sample-train
+local_path: ../../tests/data/regression/train/
+description: Data used in lightgbm-benchmark repo as unittest sample for regression (train data)
