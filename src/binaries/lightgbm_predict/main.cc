@@ -306,8 +306,8 @@ int main(int argc, char* argv[]) {
     }
 
     // print out summary metrics
-    cout << "SUMMARY";
-    cout << " prediction_per_request_secs=" << prediction_per_request/count_request << endl;
+    cout << "METRIC time_inferencing=" << prediction_per_request << endl;
+    cout << "METRIC prediction_per_request_usecs=" << prediction_per_request/count_request*1000000 << endl;
     cout << "METRIC inference_data_length=" << count_request << endl;
 
     // free resources
