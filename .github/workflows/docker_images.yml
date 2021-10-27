@@ -33,6 +33,12 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - uses: marceloprado/has-changed-path@v1
+      id: dockerfile-changed
+      with:
+        paths: docker/${{ matrix.dockerfile}}
+
     - name: Build the Docker image
+      if: steps.dockerfile-changed.outputs.changed == 'true'
       run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s)
       working-directory: docker/
