@@ -17,7 +17,7 @@ import numpy
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    logging.info(f"Adding {COMMON_ROOT} to PYTHONPATH")
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
@@ -30,7 +30,7 @@ class LightGBMPythonInferecingScript(RunnableScript):
         super().__init__(
             task = "score",
             framework = "lightgbm",
-            framework_version = lightgbm.__version__
+            framework_version = "PYTHON_API."+str(lightgbm.__version__)
         )
 
     @classmethod
