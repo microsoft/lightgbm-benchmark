@@ -244,14 +244,14 @@ int main(int argc, char* argv[]) {
     if (LGBM_BoosterGetNumFeature(model_handle, &num_features) != 0) {
         throw std::runtime_error("Could not get number of features from model");
     } else {
-        std::cout << "METRIC inference_data_width=" << num_features << endl;
+        std::cout << "PROPERTY inference_data_width=" << num_features << endl;
     }
 
     // we need number of outputs to allocate memory later
     if (LGBM_BoosterGetNumClasses(model_handle, &num_classes) != 0) {
         throw std::runtime_error("Could not get number of classes from model");
     } else {
-        std::cout << "METRIC num_classes=" << num_classes << endl;
+        std::cout << "PROPERTY num_classes=" << num_classes << endl;
     }
 
     // **********************
@@ -308,7 +308,7 @@ int main(int argc, char* argv[]) {
     // print out summary metrics
     cout << "METRIC time_inferencing=" << prediction_per_request << endl;
     cout << "METRIC prediction_per_request_usecs=" << prediction_per_request/count_request*1000000 << endl;
-    cout << "METRIC inference_data_length=" << count_request << endl;
+    cout << "PROPERTY inference_data_length=" << count_request << endl;
 
     // free resources
     data_reader->close();

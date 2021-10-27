@@ -140,7 +140,7 @@ def run(args, unknown_args=[]):
         logger.info(f"Adding to PATH: {args.lightgbm_lib_path}")
         custom_env["PATH"] = os.path.abspath(args.lightgbm_lib_path) + ":" + custom_env["PATH"]
 
-    logger.info(f"Running .predict()")
+    logger.info("Running command {}".format(" ".join(lightgbm_predict_command)))
     lightgbm_predict_call = subprocess_run(
         lightgbm_predict_command,
         stdout=PIPE,
@@ -168,10 +168,17 @@ def run(args, unknown_args=[]):
             else:
                 logger.warning(f"log row {line} does not match expected pattern {row_pattern}")
         elif line.startswith("METRIC"):
-            row_pattern = r"METRIC ([a-zA-Z0-9]+)=([a-zA-Z0-9\.e\-]+)"
+            row_pattern = r"METRIC ([a-zA-Z0-9_]+)=([a-zA-Z0-9\.e\-]+)"
             row_matched = re.match(row_pattern, line.strip())
             if row_matched:
-                time_inferencing_per_query.append(float(row_matched.group(5)))
+                metrics_logger.log_metric(row_matched.group(1), float(row_matched.group(2)))
+            else:
+                logger.warning(f"log metric {line} does not match expected pattern {row_pattern}")
+        elif line.startswith("PROPERTY"):
+            row_pattern = r"PROPERTY ([a-zA-Z0-9_]+)=([a-zA-Z0-9\.e\-]+)"
+            row_matched = re.match(row_pattern, line.strip())
+            if row_matched:
+                metrics_logger.set_properties(**{row_matched.group(1): row_matched.group(2)})
             else:
                 logger.warning(f"log metric {line} does not match expected pattern {row_pattern}")
 
