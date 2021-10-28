@@ -76,6 +76,7 @@ class LightGBMInferencing(AMLPipelineHelper):
         # Inferencing modules
         lightgbm_python_score_module = self.module_load("lightgbm_python_score")
         lightgbm_c_api_score_module = self.module_load("lightgbm_c_api_score")
+        lightgbm_cli_score_module = self.module_load("lightgbm_cli_score")
         treelite_compile_module = self.module_load("treelite_compile")
         treelite_score_module = self.module_load("treelite_score")
 
@@ -145,6 +146,17 @@ class LightGBMInferencing(AMLPipelineHelper):
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
+                elif variant.framework == "lightgbm_cli":
+                    # call module with all the right arguments
+                    inferencing_step = lightgbm_cli_score_module(
+                        data = data,
+                        model = model,
+                        predict_disable_shape_check = predict_disable_shape_check,
+                        verbose = False,
+                        custom_properties = custom_properties
+                    )
+                    self.apply_smart_runsettings(inferencing_step)
+
                 elif variant.framework == "lightgbm_python":
                     # call module with all the right arguments
                     inferencing_step = lightgbm_python_score_module(
@@ -195,9 +207,13 @@ class LightGBMInferencing(AMLPipelineHelper):
         full_pipeline_description="\n".join([
             "Inferencing on all specified tasks (see yaml below).",
             "```yaml""",
-            OmegaConf.to_yaml(config),
+            "lightgbm_inferencing:",
+            OmegaConf.to_yaml(config.lightgbm_inferencing),
             "```"
         ])
+
+        if len(full_pipeline_description) > 5000:
+            full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="inferencing_all_tasks", # pythonic name
