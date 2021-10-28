@@ -1,6 +1,12 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+"""
+This script contains a class to structure and standardize all scripts
+in the lightgbm-benchmark repository. This class factors duplicate code to
+achieve usual routines of every script: logging init, MLFlow init,
+system properties logging, etc.
+"""
 import os
 import sys
 import argparse
@@ -11,15 +17,20 @@ from distutils.util import strtobool
 from .metrics import MetricsLogger
 
 class RunnableScript():
+    """
+    This class factors duplicate code to achieve usual routines
+    of every script in the lightgbm-benchmark repo: logging init, MLFlow init,
+    system properties logging, etc.
+    """
     def __init__(self, task, framework, framework_version, metrics_prefix=None, do_not_log_properties=False):
-        """ Generic initialization of this script class.
+        """ Generic initialization for all script classes.
 
         Args:
-            task (str) : name of task in the pipeline/benchmark (ex: train, score)
-            framework (str) : name of ML framework
-            framework_version (str) : a version of this framework
-            metrics_prefix (str) : any prefix to add to this scripts metrics
-            do_not_log_properties (bool) : block all calls to log_properties()
+            task (str): name of task in the pipeline/benchmark (ex: train, score)
+            framework (str): name of ML framework
+            framework_version (str): a version of this framework
+            metrics_prefix (str): any prefix to add to this scripts metrics
+            do_not_log_properties (bool): block all calls to log_properties()
                 ex: in mpi, we want to report those only on node 0
         """
         self.task = task
@@ -73,19 +84,21 @@ class RunnableScript():
         return parser
 
     def run(self, args, logger, metrics_logger, unknown_args):
-        """Run script with arguments (the core of the component)
+        """The run function of your script. You are required to override this method
+        with your own implementation.
 
         Args:
             args (argparse.namespace): command line arguments provided to script
-            logger (logging.getLogger() for this script)
-            metrics_logger (common.metrics.MetricLogger)
+            logger (logging.logger): a logger initialized for this script
+            metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow
             unknown_args (list[str]): list of arguments not recognized during argparse
         """
         raise NotImplementedError(f"run() method from class {self.__class__.__name__} hasn't actually been implemented.")
 
     @classmethod
     def main(cls, cli_args=None):
-        """ Component main function, parses arguments and executes run() function.
+        """ Component main function, it is not recommended to override this method.
+        It parses arguments and executes run() with the right arguments.
 
         Args:
             cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.

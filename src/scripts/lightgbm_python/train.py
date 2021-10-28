@@ -26,7 +26,7 @@ if COMMON_ROOT not in sys.path:
 # useful imports from common
 from common.metrics import MetricsLogger
 from common.io import get_all_files
-from common.lightgbm import LightGBMCallbackHandler
+from common.lightgbm_utils import LightGBMCallbackHandler
 
 def get_arg_parser(parser=None):
     """Adds component/module arguments to a given argument parser.

@@ -1,16 +1,24 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+"""
+This script contains methods to handle connection to AzureML,
+such as registering Datasets or obtaining a Dataset handler from a given workspace.
+"""
 import logging
 from azureml.core import Datastore, Dataset
 
 
 def dataset_from_dstore_path(workspace, datastore, datastore_path, validate=True):
-    """ Obtains a local reference for a given datastore and path
-    
+    """ Obtains a local reference for a given datastore and path  
+
     Args:
-        datastore (str)
-        datastore_path (str)
+        datastore (str): name of the AzureML datastore
+        datastore_path (str): path in datastore to register as Dataset
+        validate (bool): validate files exist or not
 
     Returns:
-        remote_dataset (azureml.core.Dataset)
+        azureml.core.Dataset: registered Dataset object
     """
     logger = logging.getLogger(__name__)
 
@@ -30,11 +38,11 @@ def load_dataset_from_data_input_spec(workspace, data_input_spec):
     """ Loads a dataset based on config object data_input_spec (see tasks.py data_input_spec)
     
     Args:
-        workspace (azureml.core.Workspace)
-        data_input_spec (OmegaConf.DictConfig)
+        workspace (azureml.core.Workspace): connector to an AzureML workspace
+        data_input_spec (OmegaConf.DictConfig): config Hydra dataclass data_input_spec (see tasks.py)
 
     Returns:
-        loaded_dataset (azureml.core.Dataset)
+        azureml.core.Dataset: registered Dataset object
     """
     logger = logging.getLogger(__name__)
 
