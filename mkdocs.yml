@@ -23,13 +23,15 @@ nav:
     Manual: results/manual.md
 - Reference Docs:
     - src/common/:
+        - aml.py: references/common/aml.md
+        - components.py: references/common/components.md
         - io.py: references/common/io.md
         - lightgbm.py: references/common/lightgbm.md
         - metrics.py: references/common/metrics.md
         - sweep.py: references/common/sweep.md
         - tasks.py: references/common/tasks.md
     - src/scripts/:
-        - partition_data/partition.py: references/scripts/partition_data/partition.md
+        - sample/sample.py: references/scripts/sample/sample.md
 
 theme:
   name: readthedocs

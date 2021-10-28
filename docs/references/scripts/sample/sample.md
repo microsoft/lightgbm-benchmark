@@ -27,4 +27,4 @@ General parameters:
                         provide custom properties as json dict
 ```
 
-::: src.scripts.partition_data.partition
+::: src.scripts.sample.sample

@@ -1,9 +1,16 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+"""
+This contains helper functions to handle inputs and outputs arguments
+in the benchmark scripts. It also provides some automation routine to handle data.
+"""
 import os
 import argparse
 import logging
 
 def input_file_path(path):
-    """ Resolve input path from AzureML.
+    """ Argparse type to resolve input path as single file from directory.
     Given input path can be either a file, or a directory.
     If it's a directory, this returns the path to the unique file it contains.
 
@@ -30,7 +37,7 @@ def input_file_path(path):
 
 
 def get_all_files(path, fail_on_unknown_type=False):
-    """ Scans input path and returns a list of files.
+    """ Scans some input path and returns a list of files.
     
     Args:
         path (str): either a file, or directory path
@@ -60,7 +67,7 @@ def get_all_files(path, fail_on_unknown_type=False):
 
 
 class PartitioningEngine():
-    """ Class handles partitioning files into chunks with various strategies. """
+    """This class handles partitioning data files into chunks with various strategies. """
     PARTITION_MODES = [
         'chunk',
         'roundrobin',
@@ -68,13 +75,27 @@ class PartitioningEngine():
     ]
 
     def __init__(self, mode, number, header=False, logger=None):
+        """Constructs and setup of the engine
+        
+        Args:
+            mode (str): which partition mode (in PartitioningEngine.PARTITION_MODE list)
+            number (int): parameter, behavior depends on mode
+            header (bool): are there header in the input files?
+            logger (logging.logger): a custom logger, if needed, for this engine to log
+        """
         self.mode = mode
         self.number = number
         self.header = header
         self.logger = logger or logging.getLogger(__name__)
 
     def split_by_append(self, input_files, output_path, file_count_target):
-        """Just appends N++ files in N groups"""
+        """Just appends N++ files in N groups.
+        
+        Args:
+            input_files (List[str]): list of file paths
+            output_path (str): directory path, where to write the partitions
+            file_count_target (int): how many partitions we want
+        """
         if len(input_files) < file_count_target:
             raise Exception(f"To use mode=append, the number of input files ({len(input_files)}) needs to be higher than requested number of output files ({file_count_target})")
 
@@ -102,7 +123,15 @@ class PartitioningEngine():
 
 
     def split_by_size(self, input_files, output_path, partition_size):
-        """The function that partition data by size"""
+        """Splits input files into a variable number of partitions
+        by chunking a fixed number of lines from inputs into each
+        output file.
+
+        Args:
+            input_files (List[str]): list of file paths
+            output_path (str): directory path, where to write the partitions
+            partition_size (int): how many lines per partition
+        """
         current_partition_size = 0
         current_partition_index = 0
         self.logger.info(f"Creating partition {current_partition_index}")
@@ -133,7 +162,14 @@ class PartitioningEngine():
         self.logger.info(f"Created {current_partition_index+1} partitions")
 
     def split_by_count(self, input_files, output_path, partition_count):
-        """The function that partition data by count"""
+        """Splits input files into a fixed number of partitions by round-robin
+        shuffling of the lines of input files.
+
+        Args:
+            input_files (List[str]): list of file paths
+            output_path (str): directory path, where to write the partitions
+            partition_size (int): how many lines per partition
+        """
         self.logger.info(f"Creating {partition_count} partitions using round robin.")
 
         partition_files = [open(os.path.join(output_path, "part_{:06d}".format(i)), "w", encoding="utf-8") for i in range(partition_count)]
@@ -164,6 +200,12 @@ class PartitioningEngine():
         self.logger.info(f"Created {partition_count} partitions")
 
     def run(self, input_path, output_path):
+        """Runs the partition based on provided arguments.
+        
+        Args:
+            input_path (str): path to input file(s)
+            output_path (str): path to store output partitions
+        """
         # Retrieve all input files
         if os.path.isfile(input_path):
             self.logger.info("Input is one unique file")
