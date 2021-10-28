@@ -10,6 +10,7 @@ nav:
 - Contribute:
     Developer Guide: contribute/developer-guide.md
     Reporting Guide: contribute/reporting-guide.md
+    Create a script: contribute/tutorial-create-script.md
 - Run:
     Install: run/install.md
     Run manually: run/manual-benchmark.md

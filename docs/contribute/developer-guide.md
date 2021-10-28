@@ -20,6 +20,7 @@ For the benchmark to automate the analysis of the results and the production of 
 | Directory | Content |
 | :-- | :-- |
 | `/.github/workflows/` | [github workflows](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions) for this project |
+| `/docker/` | Docker files for various scripts (for running in AzureML) |
 | `/docs/` | Documentation in markdown |
 | `/pipelines/` | (coming) Scripts or config files for running the benchmark in the cloud (ex: AzureML) |
 | `/src/` | &nbsp; |
