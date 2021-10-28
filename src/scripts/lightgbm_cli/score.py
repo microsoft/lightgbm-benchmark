@@ -94,7 +94,7 @@ class LightGBMCLIInferencingScript(RunnableScript):
 
         # assemble a command for lightgbm cli
         lightgbm_cli_command = [
-            args.lightgbm_exec,
+            args.lightgbm_exec_path,
             "task=prediction",
             f"data={args.data}",
             f"input_model={args.model}",
