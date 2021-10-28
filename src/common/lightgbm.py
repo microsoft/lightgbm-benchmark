@@ -12,15 +12,15 @@ class LightGBMCallbackHandler():
     def __init__(self, metrics_logger):
         """
         Args:
-            metrics_logger (common.metrics.MetricsLogger)
-            node_index (int) : if mpi, provide index of the node
+            metrics_logger (common.metrics.MetricsLogger): class to log metrics using MLFlow
         """
         self.metrics = {}
         self.metrics_logger = metrics_logger
         self.logger = logging.getLogger(__name__)
     
     def callback(self, env: lightgbm.callback.CallbackEnv) -> None:
-        """
+        """Callback method to collect metrics produced by LightGBM.
+
         See https://lightgbm.readthedocs.io/en/latest/_modules/lightgbm/callback.html
         """
         # let's record in the object for future use

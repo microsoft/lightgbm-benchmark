@@ -168,7 +168,7 @@ class PartitioningEngine():
         Args:
             input_files (List[str]): list of file paths
             output_path (str): directory path, where to write the partitions
-            partition_size (int): how many lines per partition
+            partition_count (int): how many lines per partition
         """
         self.logger.info(f"Creating {partition_count} partitions using round robin.")
 

@@ -28,7 +28,6 @@ nav:
         - io.py: references/common/io.md
         - lightgbm.py: references/common/lightgbm.md
         - metrics.py: references/common/metrics.md
-        - sweep.py: references/common/sweep.md
         - tasks.py: references/common/tasks.md
     - src/scripts/:
         - sample/sample.py: references/scripts/sample/sample.md
