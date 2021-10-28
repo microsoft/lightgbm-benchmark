@@ -59,7 +59,7 @@ class TreeLightInferencingScript(RunnableScript):
             required=False, default=None, type=str, help="Inferencing output location (file path)")
         
         group_params = parser.add_argument_group("Scoring parameters")
-        group_params.add_argument("--nthreads",
+        group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
 
         return parser
@@ -76,7 +76,7 @@ class TreeLightInferencingScript(RunnableScript):
         """
         # record relevant parameters
         metrics_logger.log_parameters(
-            num_threads=args.nthreads
+            num_threads=args.num_threads
         )
 
         if args.output:
@@ -94,7 +94,7 @@ class TreeLightInferencingScript(RunnableScript):
             predictor = treelite_runtime.Predictor(
                 args.so_path,
                 verbose=True,
-                nthread=args.nthreads
+                nthread=args.num_threads
             )
             dmat = treelite_runtime.DMatrix(my_data)
 
