@@ -10,15 +10,23 @@ nav:
 - Contribute:
     Developer Guide: contribute/developer-guide.md
     Reporting Guide: contribute/reporting-guide.md
-    Create a script: contribute/tutorial-create-script.md
 - Run:
     Install: run/install.md
-    Run manually: run/manual-benchmark.md
+    Run locally:
+        Manual benchmark: run/local/manual-benchmark.md
     Run in AzureML:
         Azure Setup: run/azureml/azure-setup.md
         Local Setup: run/azureml/local-setup.md
         Upload data: run/azureml/upload-data.md
         Train on your data: run/azureml/train-on-your-data.md
+- Tutorials:
+    Develop:
+        Create a script: tutorials/create-script.md
+        Create an AzureML component: tutorials/create-azureml-component.md
+    Pipelines:
+        Training (single): tutorials/pipeline-training-single.md
+        Training (benchmark): tutorials/pipeline-training-benchmark.md
+        Inferencing (benchmark): tutorials/pipeline-inferencing-benchmark.md
 - Results:
     Inferencing: results/inferencing.md
     Manual: results/manual.md
