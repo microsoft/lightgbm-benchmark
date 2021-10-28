@@ -53,8 +53,8 @@ class LightGBMCLIInferencingScript(RunnableScript):
         parser = RunnableScript.get_arg_parser(parser)
 
         group_i = parser.add_argument_group("Input Data")
-        group_i.add_argument("--lightgbm_exec",
-            required=False, type=str, default=None, help="Path to lightgbm.exe (file path)")
+        group_i.add_argument("--lightgbm_exec_path",
+            required=False, type=str, default="lightgbm", help="Path to lightgbm.exe (file path)")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
         group_i.add_argument("--model",
@@ -91,9 +91,6 @@ class LightGBMCLIInferencingScript(RunnableScript):
             
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
-
-        if args.lightgbm_exec is None:
-            args.lightgbm_exec = "lightgbm" # let's hope it's in PATH
 
         # assemble a command for lightgbm cli
         lightgbm_cli_command = [
@@ -135,4 +132,3 @@ def main(cli_args=None):
 
 if __name__ == "__main__":
     main()
-
