@@ -28,6 +28,7 @@ COMPONENT_ROOT_FOLDER = os.path.abspath(
 COMPONENT_SPEC_FILES = [
     "generate_data/spec.yaml",
     "lightgbm_c_api/spec.yaml",
+    "lightgbm_cli/score_spec.yaml",
     "lightgbm_data2bin/spec.yaml",
     "lightgbm_python/train_spec.yaml",
     "lightgbm_python/score_spec.yaml",
