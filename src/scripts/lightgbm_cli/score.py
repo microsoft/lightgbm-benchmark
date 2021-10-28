@@ -54,14 +54,20 @@ class LightGBMCLIInferencingScript(RunnableScript):
 
         group_i = parser.add_argument_group("Input Data")
         group_i.add_argument("--lightgbm_exec",
-            required=True, type=str, help="Path to lightgbm.exe (file path)")
+            required=False, type=str, default=None, help="Path to lightgbm.exe (file path)")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
         group_i.add_argument("--model",
             required=False, type=input_file_path, help="Exported model location")
         group_i.add_argument("--output",
             required=False, default=None, type=str, help="Inferencing output location (file path)")
-        
+
+        group_params = parser.add_argument_group("Scoring parameters")
+        group_params.add_argument("--num_threads",
+            required=False, default=1, type=int, help="number of threads")
+        group_params.add_argument("--predict_disable_shape_check",
+            required=False, default=False, type=strtobool, help="See LightGBM documentation")
+
         return parser
 
 
@@ -74,6 +80,11 @@ class LightGBMCLIInferencingScript(RunnableScript):
             metrics_logger (common.metrics.MetricLogger)
             unknown_args (list[str]): list of arguments not recognized during argparse
         """
+        # record relevant parameters
+        metrics_logger.log_parameters(
+            num_threads=args.num_threads
+        )
+
         if args.output:
             # make sure the output argument exists
             os.makedirs(args.output, exist_ok=True)
@@ -81,8 +92,8 @@ class LightGBMCLIInferencingScript(RunnableScript):
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
-        if not os.path.isfile(args.lightgbm_exec):
-            raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")
+        if args.lightgbm_exec is None:
+            args.lightgbm_exec = "lightgbm" # let's hope it's in PATH
 
         # assemble a command for lightgbm cli
         lightgbm_cli_command = [
@@ -90,8 +101,11 @@ class LightGBMCLIInferencingScript(RunnableScript):
             "task=prediction",
             f"data={args.data}",
             f"input_model={args.model}",
-            "verbosity=2"
+            "verbosity=2",
+            f"num_threads={args.num_threads}",
+            f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
         ]
+
         if args.output:
             lightgbm_cli_command.append(f"output_result={args.output}")
 

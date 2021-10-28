@@ -103,7 +103,7 @@ class LightGBMCAPIInferecingScript(RunnableScript):
             f"{args.model}",
             f"{args.data}",
             "verbosity=2",
-            "num_threads=1",
+            f"num_threads={args.num_threads}",
             f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
         ]
 
