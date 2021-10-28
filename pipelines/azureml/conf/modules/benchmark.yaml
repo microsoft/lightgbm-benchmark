@@ -6,12 +6,18 @@ manifest:
   - name: "partition_data"
     version: null
     yaml: "partition_data/partition_spec.yaml"
+  - name: "lightgbm_python_data2bin"
+    version: null
+    yaml: "lightgbm_data2bin/data2bin_spec.yaml"
   - name: "lightgbm_python_train"
     version: null
     yaml: "lightgbm_python/train_spec.yaml"
   - name: "lightgbm_python_train_sweep"
     version: null
     yaml: "lightgbm_python/train_sweep_spec.yaml"
+  - name: "lightgbm_c_api_score"
+    version: null
+    yaml: "lightgbm_c_api/spec.yaml"
   - name: "lightgbm_python_score"
     version: null
     yaml: "lightgbm_python/score_spec.yaml"

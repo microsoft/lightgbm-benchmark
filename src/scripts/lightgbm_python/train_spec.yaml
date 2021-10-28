@@ -16,11 +16,15 @@ inputs:
     type: AnyDirectory
     description: directory to the testing data
     optional: false
+  construct:
+    type: Boolean
+    description: "use lazy intialization during data loading phase, see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.Dataset.html#lightgbm.Dataset.construct"
+    optional: true
 
   # Input Parameters
   header:
     type: Boolean
-    default: False
+    optional: true
     description: "does data have a header, see https://lightgbm.readthedocs.io/en/latest/Parameters.html#header"
   label_column:
     type: String
@@ -75,6 +79,10 @@ inputs:
       - data
       - voting
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#tree_learner"
+  label_gain:
+    type: String
+    optional: True
+    description: https://lightgbm.readthedocs.io/en/latest/Parameters.html#label_gain
   num_iterations:
     type: Integer
     min: 1
@@ -105,12 +113,16 @@ inputs:
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#feature_fraction"
   device_type:
     type: Enum
-    default: "cpu"
+    optional: true
     enum:
       - cpu
       - gpu
       - cuda
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#device_type"
+  custom_params:
+    type: String
+    optional: true
+    description: "any lgbm param provided as json dictionary"
 
   # generic benchmark parameters
   verbose:
@@ -131,12 +143,15 @@ launcher:
     python train.py
     --train {inputs.train}
     --test {inputs.test}
-    --header {inputs.header}
+    [--construct {inputs.construct}]
+    [--header {inputs.header}]
     [--label_column {inputs.label_column}]
     [--group_column {inputs.group_column}]
-    --device_type {inputs.device_type}
+    [--device_type {inputs.device_type}]
     --objective {inputs.objective}
     --metric {inputs.metric}
+    [--label_gain {inputs.label_gain}]
+    [--custom_params {inputs.custom_params}]
     --boosting {inputs.boosting}
     --tree_learner {inputs.tree_learner}
     --num_trees {inputs.num_iterations}
@@ -153,7 +168,7 @@ environment:
   docker:
     build:
       # file path is resolved after additional includes
-      dockerfile: file:./dockers/lightgbm_cpu_mpi_pip.dockerfile
+      dockerfile: file:./docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
   conda:
     userManagedDependencies: true
   os: Linux

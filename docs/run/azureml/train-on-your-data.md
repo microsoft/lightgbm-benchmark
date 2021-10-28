@@ -6,8 +6,8 @@
 
 **Requirements** - To enjoy this tutorial, you need to:
 - have installed the [local python requirements](../install.md).
-- have an existing [AzureML workspace with relevant compute resource](setup.md).
-- have [edited your config files](setup.md) to run the pipelines in your workspace.
+- have an existing [AzureML workspace with relevant compute resource](azure-setup.md).
+- have [edited your config files](local-setup.md) to run the pipelines in your workspace.
 
 ## Get your data into AzureML
 
@@ -20,11 +20,12 @@ For each of those, you need to create a File dataset with your training and test
 
 ## Run training on your train/test datasets
 
-> NOTE: We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
+!!! info
+    We are using [Shrike](https://github.com/Azure/shrike/tree/main/shrike) to build and submit our pipelines. You can find more documentation on the arguments to configure a pipeline run from the command line in the [Shrike docs](https://azure.github.io/shrike/pipeline/configure-aml-pipeline/).
 
 1\. Go into the subdirectory `pipelines/azureml/`
 
-2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below)
+2\. Check out the file `conf/experiments/lightgbm_training/cpu.yaml (see below):
 
 ``` yaml
 {!./pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml!}
@@ -33,20 +34,30 @@ For each of those, you need to create a File dataset with your training and test
 3\. Modify the lines below to reflect the name of your input train/test datasets:
 
 ```yaml
+# list all the train/test pairs to train on
 tasks:
   - train_dataset: "NAME OF YOUR TRAINING DATASET HERE"
     test_dataset: "NAME OF YOUR TESTING DATASET HERE"
+    # task_key: "PROVIDE CUSTOM TASK KEY HERE" # optional, user to register outputs
 ```
 
-> Note: `tasks` is actually a list, if you provide multiple pairs, the pipeline will train one model per task pair.
+!!! hint
+    `tasks` is actually a list, if you provide multiple entries, the pipeline will train one model per train/test pair.
 
 4\. If you want the pipeline to save your model as a dataset, uncomment the line below and name the output accordingly:
 
 ```yaml
-training_register_model_as: "my-custom-lightgbm-model"
+lightgbm_training:
+  reference_training:
+    # model registration
+    # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
+    register_model: True
+    register_model_prefix: "model"
+    register_model_suffix: null
 ```
 
-    > NOTE: you can decide to register the output of the pipeline later manually from the AzureML portal.
+!!! hint
+    you can decide to register the output of the pipeline later manually from the AzureML portal.
 
 5\. Run the training pipeline:
 
@@ -62,7 +73,8 @@ The benchmark training pipeline is entirely configurable. There are a few key pa
 
 ### Scalable multi node training using mpi
 
-> Check out example config file `conf/experiments/lightgbm_training/cpu.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training/cpu.yaml`.
 
 To enable multi-node training, simple modify the number of nodes under:
 
@@ -80,7 +92,8 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 
 ### Gpu training (experimental)
 
-> Check out example config file `conf/experiments/lightgbm_training/gpu.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training/gpu.yaml`.
 
 To enable gpu training, modify the options below:
 
@@ -98,14 +111,15 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 
 ### Running a custom lightgbm build (experimental)
 
-> Check out example config file `conf/experiments/lightgbm_training/cpu-custom.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training/cpu-custom.yaml`.
 
 To enable gpu training, modify the options below:
 
 ```yaml
 lightgbm_training:
   reference_training:
-    override_docker: "../../../../../src/scripts/lightgbm_python/dockers/lightgbm_cpu_mpi_custom.dockerfile"
+    override_docker: "dockers/lightgbm_cpu_mpi_custom.dockerfile" # relative to lightgbm_python folder
 ```
 
 When running the pipeline, it will build the container from this custom dockerfile and use it to run your job.
@@ -118,7 +132,8 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 
 AzureML has a feature to [tune model hyperparameters](https://docs.microsoft.com/en-us/azure/machine-learning/algorithm-module-reference/tune-model-hyperparameters), we've implemented it in this training pipeline.
 
-> Check out example config file `conf/experiments/lightgbm_training_sweep/cpu.yaml`.
+!!! hint
+    Check out example config file `conf/experiments/lightgbm_training_sweep/cpu.yaml`.
 
 To enable parameter sweep, just change the "sweepable" parameters (see below) to use the [syntax allowed by AzureML sweep](https://docs.microsoft.com/en-us/azure/machine-learning/how-to-tune-hyperparameters#define-the-search-space):
 
@@ -164,29 +179,33 @@ The structure of `lightbm_training` settings relies on 3 main sections:
 
 So you can create as many tasks and variants as you'd like and run them all into one single pipeline.
 
-An example use case is training on cpu versus gpu. See the example file [training-cpu-vs-gpu.yaml](https://github.com/microsoft/lightgbm-benchmark/tree/main/pipelines/azureml/conf/experiments/benchmarks/training-cpu-vs-gpu.yaml). In this file, the variant just consists in overriding the `device_type` and docker image path:
+An example use case is training on cpu versus gpu. See the example file [training-cpu-vs-gpu.yaml](https://github.com/microsoft/lightgbm-benchmark/tree/main/pipelines/azureml/conf/experiments/benchmarks/training-cpu-num-trees.yaml). In this file, the variant just consists in overriding the `num_iterations`:
 
 ```yaml
 lightgbm_training:
-  benchmark_name: "benchmark-gpu-vs-cpu"
+  benchmark_name: "benchmark-cpu-num-trees"
 
   # list all the train/test pairs to train on
   tasks:
-    - train_dataset: "synthetic-regression-10cols-100000samples-train"
-      test_dataset: "synthetic-regression-10cols-10000samples-test"
-    - train_dataset: "synthetic-regression-100cols-100000samples-train"
-      test_dataset: "synthetic-regression-100cols-10000samples-test"
-    - train_dataset: "synthetic-regression-1000cols-100000samples-train"
-      test_dataset: "synthetic-regression-1000cols-10000samples-test"
+    - train_dataset: "data-synthetic-regression-10cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-10cols-10000samples-test"
+      task_key: "synthetic-regression-10cols" # optional, user to register outputs
+    - train_dataset: "data-synthetic-regression-100cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-100cols-10000samples-test"
+      task_key: "synthetic-regression-100cols" # optional, user to register outputs
+    - train_dataset: "data-synthetic-regression-1000cols-100000samples-train"
+      test_dataset: "data-synthetic-regression-1000cols-10000samples-test"
+      task_key: "synthetic-regression-1000cols" # optional, user to register outputs
 
   # reference settings for the benchmark
   # all variants will be based on this
   reference_training:
     # lots of other params here
-    device_type: "cpu"
+    num_iterations: 100
 
   # variant settings override what is in reference_training
   variants:
-    - device_type: "gpu"
-      override_docker: "....."
+    - num_iterations: 10
+    - num_iterations: 1000
+    - num_iterations: 5000
 ```

@@ -17,7 +17,9 @@ RUN apt-get install --no-install-recommends nvidia-375 -y && \
 RUN apt-get install --no-install-recommends git cmake build-essential libboost-dev libboost-system-dev libboost-filesystem-dev -y
 
 # Clone lightgbm official repository (master branch)
-RUN git clone --recursive https://github.com/microsoft/LightGBM
+RUN git clone --recursive https://github.com/microsoft/LightGBM && \
+    cd LightGBM && \
+    git checkout tags/v3.2.1
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
 RUN cd /LightGBM && \

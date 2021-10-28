@@ -9,6 +9,7 @@ import sys
 import argparse
 import logging
 import traceback
+import json
 from distutils.util import strtobool
 import lightgbm
 from mpi4py import MPI
@@ -24,7 +25,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.metrics import MetricsLogger
-from common.io import input_file_path
+from common.io import get_all_files
 from common.lightgbm import LightGBMCallbackHandler
 
 def get_arg_parser(parser=None):
@@ -47,7 +48,9 @@ def get_arg_parser(parser=None):
     group_i.add_argument("--train",
         required=True, type=str, help="Training data location (file or dir path)")
     group_i.add_argument("--test",
-        required=True, type=input_file_path, help="Testing data location (file path)")
+        required=True, type=str, help="Testing data location (file path)")
+    group_i.add_argument("--construct",
+        required=False, default=True, type=strtobool, help="use lazy initialization during data loading phase")
     group_i.add_argument("--header", required=False, default=False, type=strtobool)
     group_i.add_argument("--label_column", required=False, default="0", type=str)
     group_i.add_argument("--group_column", required=False, default=None, type=str)
@@ -62,6 +65,7 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--metric", required=True, type=str)
     group_lgbm.add_argument("--boosting_type", required=True, type=str)
     group_lgbm.add_argument("--tree_learner", required=True, type=str)
+    group_lgbm.add_argument("--label_gain", required=False, type=str, default=None)
     group_lgbm.add_argument("--num_trees", required=True, type=int)
     group_lgbm.add_argument("--num_leaves", required=True, type=int)
     group_lgbm.add_argument("--min_data_in_leaf", required=True, type=int)
@@ -69,6 +73,7 @@ def get_arg_parser(parser=None):
     group_lgbm.add_argument("--max_bin", required=True, type=int)
     group_lgbm.add_argument("--feature_fraction", required=True, type=float)
     group_lgbm.add_argument("--device_type", required=True, type=str)
+    group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 
     group_general = parser.add_argument_group("General parameters")
     group_general.add_argument(
@@ -134,7 +139,7 @@ def load_lgbm_params_from_cli(args, mpi_config):
     cli_params = dict(vars(args))
 
     # removing arguments that are purely CLI
-    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train']:
+    for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params', 'construct']:
         del cli_params[key]
 
     # doing some fixes and hardcoded values
@@ -149,31 +154,17 @@ def load_lgbm_params_from_cli(args, mpi_config):
         lgbm_params['num_machines'] = mpi_config.world_size
         lgbm_params['machines'] = ":"
 
+    # process custom params
+    if args.custom_params:
+        custom_params = json.loads(args.custom_params)
+        lgbm_params.update(custom_params)
+
     return lgbm_params
-
-
-def get_train_files(path):
-    """ Scans input path and returns a list of files. """
-    # if input path is already a file, return as list
-    if os.path.isfile(path):
-        logging.getLogger().info(f"Found INPUT file {path}")
-        return [path]
-    
-    # if input path is a directory, list all files and return
-    if os.path.isdir(path):
-        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
-        if not all_files:
-            raise Exception(f"Could not find any file in specified input directory {path}")
-        return all_files
-
-    logging.getLogger(__name__).critical(f"Provided INPUT path {path} is neither a directory or a file???")
-    return path
 
 
 def assign_train_data(args, mpi_config):
     """ Identifies which training file to load on this node.
     Checks for consistency between number of files and mpi config.
-
     Args:
         args (argparse.Namespace)
         mpi_config (namedtuple): as returned from detect_mpi_config()
@@ -181,7 +172,7 @@ def assign_train_data(args, mpi_config):
     Returns:
         str: path to the data file for this node
     """
-    train_file_paths = get_train_files(args.train)
+    train_file_paths = get_all_files(args.train)
 
     if mpi_config.mpi_available:    
         # depending on mode, we'll require different number of training files
@@ -235,7 +226,7 @@ def run(args, unknown_args=[]):
     # below: initialize reporting of metrics with a custom session name
     metrics_logger = MetricsLogger(
         "lightgbm_python.train",
-        metrics_prefix=f"node_{mpi_config.world_rank}/" if mpi_config.mpi_available else None
+        metrics_prefix=f"node_{mpi_config.world_rank}/"
     )
     callbacks_handler = LightGBMCallbackHandler(metrics_logger = metrics_logger)
 
@@ -259,7 +250,8 @@ def run(args, unknown_args=[]):
         metrics_logger.set_platform_properties()
 
         # log lgbm parameters
-        #metrics_logger.log_parameters(**lgbm_params)
+        logger.info(f"LGBM Params: {lgbm_params}")
+        metrics_logger.log_parameters(**lgbm_params)
 
     # register logger for lightgbm logs
     lightgbm.register_logger(logger)
@@ -268,21 +260,34 @@ def run(args, unknown_args=[]):
     with metrics_logger.log_time_block("time_data_loading"):
         # obtain the path to the train data for this node
         train_data_path = assign_train_data(args, mpi_config)
-        train_data = lightgbm.Dataset(train_data_path, params=lgbm_params).construct()
-        val_data = train_data.create_valid(args.test).construct()
+        test_data_paths = get_all_files(args.test)
 
-    # capture data shape in metrics
-    metrics_logger.log_metric(key="train_data.length", value=train_data.num_data())
-    metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature())
-    metrics_logger.log_metric(key="test_data.length", value=val_data.num_data())
-    metrics_logger.log_metric(key="test_data.width", value=val_data.num_feature())
+        logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
+
+        # construct datasets
+        if args.construct:
+            train_data = lightgbm.Dataset(train_data_path, params=lgbm_params).construct()
+            val_datasets = [
+                train_data.create_valid(test_data_path).construct() for test_data_path in test_data_paths
+            ]
+            # capture data shape in metrics
+            metrics_logger.log_metric(key="train_data.length", value=train_data.num_data())
+            metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature())
+        else:
+            train_data = lightgbm.Dataset(train_data_path, params=lgbm_params)
+            val_datasets = [
+                train_data.create_valid(test_data_path) for test_data_path in test_data_paths
+            ]
+            # can't count rows if dataset is not constructed
+            metrics_logger.log_metric(key="train_data.length", value="n/a")
+            metrics_logger.log_metric(key="train_data.width", value="n/a")
 
     logger.info(f"Training LightGBM with parameters: {lgbm_params}")
     with metrics_logger.log_time_block("time_training"):
         booster = lightgbm.train(
             lgbm_params,
             train_data,
-            valid_sets = val_data,
+            valid_sets = val_datasets,
             callbacks=[callbacks_handler.callback]
         )
 

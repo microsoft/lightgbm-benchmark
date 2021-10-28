@@ -2,7 +2,8 @@
 
 The following document details the proposed structure for this repo, the benchmark scripts and libraries.
 
-> Quickstart: please check out `/src/scripts/sample/sample.py` for a full sample python script implementing the recommendations below.
+!!! hint
+    For a quickstart: please check out `/src/scripts/sample/sample.py` for a full sample python script implementing the recommendations below.
 
 ## General design and motivations
 
