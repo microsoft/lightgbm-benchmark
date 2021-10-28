@@ -26,7 +26,7 @@ nav:
         - aml.py: references/common/aml.md
         - components.py: references/common/components.md
         - io.py: references/common/io.md
-        - lightgbm.py: references/common/lightgbm.md
+        - lightgbm_utils.py: references/common/lightgbm_utils.md
         - metrics.py: references/common/metrics.md
         - tasks.py: references/common/tasks.md
     - src/scripts/:
