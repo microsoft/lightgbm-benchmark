@@ -3,9 +3,6 @@
 !!! note
     The report below has been automatically generated with results from the [lightgbm-benchmark repo](https://github.com/microsoft/lightgbm-benchmark).
 
-!!! warning
-    This is work in progress, to check out current work items check the [project open issues](https://github.com/microsoft/lightgbm-benchmark/issues). In particular, **do not trust these numbers yet** until we've removed this header!
-
 ## Variants
 
 | variant_id        |   index | framework       | version          | build                                                      |   cpu count |   num threads | machine   | system   |
@@ -36,19 +33,22 @@
 
 ## Percentile metrics for each variant
 
+Some variants above report percentile metrics. Those are reported by computing inferencing latency per request batch (currently, batch size = 1, and number of threads = 1). Not all variants provide those (work in progress).
+
+
 ### lightgbm#4
 
-| inferencing task config                |   metrics.batch_time_inferencing_p50_usecs |   metrics.batch_time_inferencing_p90_usecs |   metrics.batch_time_inferencing_p99_usecs |
-|:---------------------------------------|-------------------------------------------:|-------------------------------------------:|-------------------------------------------:|
-| 10 trees<br/>31 leaves<br/>10 cols     |                                      0.6   |                                      0.7   |                                      2.7   |
-| 10 trees<br/>31 leaves<br/>100 cols    |                                      0.6   |                                      0.8   |                                      1.1   |
-| 10 trees<br/>31 leaves<br/>1000 cols   |                                      1     |                                      1.1   |                                      1.201 |
-| 100 trees<br/>31 leaves<br/>10 cols    |                                      5.6   |                                      5.7   |                                      7.9   |
-| 100 trees<br/>31 leaves<br/>100 cols   |                                      5.3   |                                      5.4   |                                      6.501 |
-| 100 trees<br/>31 leaves<br/>1000 cols  |                                     10.401 |                                     11.2   |                                     23.402 |
-| 1000 trees<br/>31 leaves<br/>10 cols   |                                     67.597 |                                     69.097 |                                     80.796 |
-| 1000 trees<br/>31 leaves<br/>100 cols  |                                    158.206 |                                    164.505 |                                    186.506 |
-| 1000 trees<br/>31 leaves<br/>1000 cols |                                    168.095 |                                    169.695 |                                    182.696 |
-| 5000 trees<br/>31 leaves<br/>10 cols   |                                    333.61  |                                    345.821 |                                    359.91  |
-| 5000 trees<br/>31 leaves<br/>100 cols  |                                    468.213 |                                    479.114 |                                    488.814 |
-| 5000 trees<br/>31 leaves<br/>1000 cols |                                    648.023 |                                    681.324 |                                   1249.85  |
+| inferencing task config                |   p50_usecs |   p90_usecs |   p99_usecs |
+|:---------------------------------------|------------:|------------:|------------:|
+| 10 trees<br/>31 leaves<br/>10 cols     |       0.6   |       0.7   |       2.7   |
+| 10 trees<br/>31 leaves<br/>100 cols    |       0.6   |       0.8   |       1.1   |
+| 10 trees<br/>31 leaves<br/>1000 cols   |       1     |       1.1   |       1.201 |
+| 100 trees<br/>31 leaves<br/>10 cols    |       5.6   |       5.7   |       7.9   |
+| 100 trees<br/>31 leaves<br/>100 cols   |       5.3   |       5.4   |       6.501 |
+| 100 trees<br/>31 leaves<br/>1000 cols  |      10.401 |      11.2   |      23.402 |
+| 1000 trees<br/>31 leaves<br/>10 cols   |      67.597 |      69.097 |      80.796 |
+| 1000 trees<br/>31 leaves<br/>100 cols  |     158.206 |     164.505 |     186.506 |
+| 1000 trees<br/>31 leaves<br/>1000 cols |     168.095 |     169.695 |     182.696 |
+| 5000 trees<br/>31 leaves<br/>10 cols   |     333.61  |     345.821 |     359.91  |
+| 5000 trees<br/>31 leaves<br/>100 cols  |     468.213 |     479.114 |     488.814 |
+| 5000 trees<br/>31 leaves<br/>1000 cols |     648.023 |     681.324 |    1249.85  |

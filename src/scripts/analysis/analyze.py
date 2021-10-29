@@ -235,7 +235,7 @@ class AnalysisEngine():
                     values=['metrics.batch_time_inferencing_p50_usecs', 'metrics.batch_time_inferencing_p90_usecs', 'metrics.batch_time_inferencing_p99_usecs']
                 )
             )
-            percentile_metrics.columns = [ col[0] for col in percentile_metrics.columns ]
+            percentile_metrics.columns = [ col[0].lstrip("metrics.batch_time_inferencing_") for col in percentile_metrics.columns ]
 
             percentile_metrics_reports.append(
                 {
