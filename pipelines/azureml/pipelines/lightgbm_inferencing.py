@@ -195,9 +195,13 @@ class LightGBMInferencing(AMLPipelineHelper):
         full_pipeline_description="\n".join([
             "Inferencing on all specified tasks (see yaml below).",
             "```yaml""",
-            OmegaConf.to_yaml(config),
+            "lightgbm_inferencing:",
+            OmegaConf.to_yaml(config.lightgbm_inferencing),
             "```"
         ])
+
+        if len(full_pipeline_description) > 5000:
+            full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
         # Here you should create an instance of a pipeline function (using your custom config dataclass)
         @dsl.pipeline(name="inferencing_all_tasks", # pythonic name
