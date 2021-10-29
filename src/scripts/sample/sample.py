@@ -2,7 +2,10 @@
 # Licensed under the MIT license.
 
 """
-Sample benchmark script (lightgbm inferencing)
+This script is a tutorial sample script to explain how all the benchmark
+scripts are structured and standardized using the `RunnableScript` helper class.
+
+See `src/common/components.py` for details on that class.
 """
 import os
 import sys
@@ -26,7 +29,16 @@ from common.components import RunnableScript
 
 
 class SampleScript(RunnableScript):
+    """
+    This class inherits from RunnableScript, that factors
+    duplicate code to achieve usual routines
+    of every script in the lightgbm-benchmark repo.
+    """
     def __init__(self):
+        """ Specific constructor for this SampleScript class. It has no arguments,
+        as it will be called from the helper `main()` method.
+        """
+        # you need to call the super constructor with these parameters
         super().__init__(
             task="sample_task",
             framework="sample_framework",
@@ -38,18 +50,16 @@ class SampleScript(RunnableScript):
         """Adds component/module arguments to a given argument parser.
 
         Args:
-            parser (argparse.ArgumentParser): an argument parser instance
+            parser (argparse.ArgumentParser): an existing argument parser instance
 
         Returns:
             ArgumentParser: the argument parser instance
-
-        Notes:
-            if parser is None, creates a new parser instance
         """
-        # add generic arguments
+        # IMPORTANT: call this to add generic benchmark arguments
         parser = RunnableScript.get_arg_parser(parser)
 
-        # add arguments that are specific to the script
+        # add arguments that are specific to your script
+        # here's a couple examples
         group_i = parser.add_argument_group("I/O Arguments")
         group_i.add_argument(
             "--data",
@@ -71,16 +81,18 @@ class SampleScript(RunnableScript):
             help="Some output location (directory)",
         )
 
+        # make sure to return parser
         return parser
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
-        """Run script with arguments (the core of the component)
+        """The run function of your script. You are required to override this method
+        with your own implementation.
 
         Args:
             args (argparse.namespace): command line arguments provided to script
-            logger (logging.getLogger() for this script)
-            metrics_logger (common.metrics.MetricLogger)
+            logger (logging.logger): a logger initialized for this script
+            metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow
             unknown_args (list[str]): list of arguments not recognized during argparse
         """
         # make sure the output argument exists

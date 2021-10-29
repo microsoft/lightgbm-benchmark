@@ -21,6 +21,16 @@ nav:
 - Results:
     Inferencing: results/inferencing.md
     Manual: results/manual.md
+- Reference Docs:
+    - src/common/:
+        - aml.py: references/common/aml.md
+        - components.py: references/common/components.md
+        - io.py: references/common/io.md
+        - lightgbm_utils.py: references/common/lightgbm_utils.md
+        - metrics.py: references/common/metrics.md
+        - tasks.py: references/common/tasks.md
+    - src/scripts/:
+        - sample/sample.py: references/scripts/sample/sample.md
 
 theme:
   name: readthedocs
@@ -41,4 +51,19 @@ markdown_extensions:
 
 plugins:
 - search
-- mkdocstrings
+- mkdocstrings:
+    default_handler: python
+    handlers:
+        python:
+            setup_commands:
+            - import sys
+            - sys.path.append("src")
+            rendering:
+                show_source: true
+                show_if_no_docstring: false
+                members_order: "source"
+                show_root_toc_entry: false
+                show_root_heading: false
+    #custom_templates: templates
+    watch:
+      - src/

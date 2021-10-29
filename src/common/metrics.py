@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 """
-These classes provide some tools to automate wall time compute and logging
+These classes provide some tools to automate wall time compute and logging.
 """
 import os
 import time
@@ -16,14 +16,7 @@ import logging
 
 class MetricsLogger():
     """
-    Class for handling metrics logging in a singleton
-
-    Example:
-    --------
-    >> from common.metrics import MetricsLogger
-    >>
-    >> metrics_logger = MetricsLogger()
-    >> metrics_logger.log_metrics("rmse", 0.456)
+    Class for handling metrics logging in MLFlow. This class is a singleton.
     """
     _initialized = False
     _instance = None
@@ -32,7 +25,7 @@ class MetricsLogger():
     _logger = logging.getLogger(__name__)
 
     def __new__(cls, session_name=None, metrics_prefix=None):
-        """ Create a new instance of the Singleton if necessary """
+        """ Create a new instance of the Singleton """
         if not cls._initialized:
             # if this is the first time we're initializing
             cls._instance = super(MetricsLogger, cls).__new__(cls)
@@ -57,6 +50,7 @@ class MetricsLogger():
 
     @classmethod
     def close(cls):
+        """Close the MLFlow session."""
         if cls._initialized:
             cls._logger.info(f"Finalizing MLFLOW [session='{cls._session_name}']")
             mlflow.end_run()
@@ -69,7 +63,13 @@ class MetricsLogger():
         return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
 
     def log_metric(self, key, value, step=None):
-        """ Logs a metric key/value pair """
+        """Logs a metric key/value pair.
+        
+        Args:
+            key (str): metric key
+            value (str): metric value
+            step (int): which step to log this metric? (see mlflow.log_metric())
+        """
         if self._metrics_prefix:
             key = self._metrics_prefix + key
 
@@ -82,12 +82,16 @@ class MetricsLogger():
         mlflow.log_metric(key, value, step=step)
 
     def set_properties(self, **kwargs):
-        """ Set properties/tags for the session """
+        """Set properties/tags for the session.
+        
+        Args:
+            kwargs (dict): any keyword argument will be passed as tags to MLFLow
+        """
         self._logger.debug(f"mlflow[session={self._session_name}].set_tags({kwargs})")
         mlflow.set_tags(kwargs)
 
     def set_platform_properties(self):
-        """ Capture platform sysinfo and record as properties """
+        """ Capture platform sysinfo and record as properties. """
         self.set_properties(
             machine=platform.machine(),
             processor=platform.processor(),
@@ -97,7 +101,11 @@ class MetricsLogger():
         )
 
     def set_properties_from_json(self, json_string):
-        """ Set properties/tags for the session from a json_string """
+        """ Set properties/tags for the session from a json_string.
+        
+        Args:
+            json_string (str): a string parsable as json, contains a dict.
+        """
         try:
             json_dict = json.loads(json_string)
         except:
@@ -115,7 +123,11 @@ class MetricsLogger():
         self.set_properties(**properties_dict)
 
     def log_parameters(self, **kwargs):
-        """ Set parameters for the session """
+        """ Logs parameters to MLFlow.
+        
+        Args:
+            kwargs (dict): any keyword arguments will be passed as parameters to MLFlow
+        """
         self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
         # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
         for key,value in kwargs.items():
@@ -125,7 +137,17 @@ class MetricsLogger():
                 mlflow.log_param(key,value)
 
     def log_time_block(self, metric_name):
-        """ [Proxy] Records time of execution for block of code """
+        """ [Proxy] Use in a `with` statement to measure execution time of a code block.
+        Uses LogTimeBlock.
+        
+        Example
+        -------
+        ```python
+        with LogTimeBlock("my_perf_metric_name"):
+            print("(((sleeping for 1 second)))")
+            time.sleep(1)
+        ```
+        """
         # see class below with proper __enter__ and __exit__
         return LogTimeBlock(metric_name)
 
@@ -137,34 +159,24 @@ class MetricsLogger():
 
 class LogTimeBlock(object):
     """ This class should be used to time a code block.
-    The time diff is computed from __enter__ to __exit__
-    and can be:
-    - printed out (see kwargs verbose)
-    - logged as metric in a run (see kwargs run)
-    - added to a dictionary (see kwargs profile)
+    The time diff is computed from __enter__ to __exit__.
 
     Example
     -------
-    >>> with LogTimeBlock("my_perf_metric_name"):
-            print("(((sleeping for 1 second)))")
-            time.sleep(1)
-    --- time elapsted my_perf_metric_name : 1.0 s
-    { 'my_perf_metric_name': 1.0 }
+    ```python
+    with LogTimeBlock("my_perf_metric_name"):
+        print("(((sleeping for 1 second)))")
+        time.sleep(1)
+    ```
     """
 
     def __init__(self, name, **kwargs):
         """
         Constructs the LogTimeBlock.
 
-        Arguments
-        ---------
-        name: {str}
-            key for the time difference (for storing as metric)
-
-        Keyword Arguments
-        -----------------
-        tags: {dict}
-            add properties to metrics for logging as log_row()
+        Args:
+        name (str): key for the time difference (for storing as metric)
+        kwargs (dict): any keyword will be added  as properties to metrics for logging (work in progress)
         """
         # kwargs
         self.tags = kwargs.get('tags', None)
@@ -181,7 +193,10 @@ class LogTimeBlock(object):
     def __exit__(self, exc_type, value, traceback):
         """ Stops the timer and stores accordingly
         gets triggered at beginning of code block.
-        Note: arguments are by design for with statements. """
+        
+        Note:
+            arguments are by design for with statements.
+        """
         run_time = time.time() - self.start_time # stops "timer"
 
         self._logger.info(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))

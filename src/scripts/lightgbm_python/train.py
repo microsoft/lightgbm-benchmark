@@ -26,7 +26,7 @@ if COMMON_ROOT not in sys.path:
 # useful imports from common
 from common.components import RunnableScript
 from common.io import get_all_files
-from common.lightgbm import LightGBMCallbackHandler
+from common.lightgbm_utils import LightGBMCallbackHandler
 
 def detect_mpi_config():
     """ Detects if we're running in MPI.

@@ -432,9 +432,13 @@ class LightGBMTraining(AMLPipelineHelper):
         full_pipeline_description="\n".join([
             "Training on all specified tasks (see yaml below).",
             "```yaml""",
-            OmegaConf.to_yaml(config),
+            "lightgbm_training:",
+            OmegaConf.to_yaml(config.lightgbm_training),
             "```"
         ])
+
+        if len(full_pipeline_description) > 5000:
+            full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
         # creating an overall pipeline using pipeline_function for each task given
         @dsl.pipeline(name="training_all_tasks", # pythonic name
