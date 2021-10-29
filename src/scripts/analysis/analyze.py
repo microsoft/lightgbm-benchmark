@@ -182,7 +182,7 @@ class AnalysisEngine():
         #variants = variants.transpose()
 
         # reduce time_inferencing to predict time per request, in micro seconds
-        self.benchmark_data['predict_time_usecs'] = self.benchmark_data['metrics.time_inferencing'].astype(float) / self.benchmark_data['dataset_samples'].astype(int) * 1000000
+        self.benchmark_data['avg_predict_time_usecs'] = self.benchmark_data['metrics.time_inferencing'].astype(float) / self.benchmark_data['dataset_samples'].astype(int) * 1000000
 
         # create a readable name for each task configuration
         self.benchmark_data['inferencing task config'] = (
@@ -195,10 +195,17 @@ class AnalysisEngine():
         metrics = self.benchmark_data.pivot(
             index=['inferencing task config'],
             columns=['variant_id'],
-            values=['predict_time_usecs']
+            values=['avg_predict_time_usecs']
         )
         # rename columns to have only variant_id
         metrics.columns = [ col[1] for col in metrics.columns ]
+
+        percentile_metrics = self.benchmark_data.pivot(
+            index=['inferencing task config'],
+            columns=['variant_id'],
+            values=['metrics.batch_time_inferencing_p50_usecs', 'metrics.batch_time_inferencing_p90_usecs', 'metrics.batch_time_inferencing_p99_usecs']
+        )
+        #print(percentile_metrics.to_markdown())
 
         # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:
