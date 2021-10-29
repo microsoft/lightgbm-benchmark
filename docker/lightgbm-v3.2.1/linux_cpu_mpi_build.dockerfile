@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20211012.v1
+LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.2.1/20211029.1"
 
 RUN apt-get update && \
     apt-get -y install build-essential cmake

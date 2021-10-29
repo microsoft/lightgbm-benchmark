@@ -164,7 +164,6 @@ class LightGBMCAPIInferecingScript(RunnableScript):
             metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
             metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
             metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
-            metrics_logger.log_metric("time_inferencing", np.sum(batch_run_times))
 
 
 def get_arg_parser(parser=None):
