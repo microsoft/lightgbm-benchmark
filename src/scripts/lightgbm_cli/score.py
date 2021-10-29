@@ -9,6 +9,7 @@ import sys
 import argparse
 import logging
 from distutils.util import strtobool
+import lightgbm
 from lightgbm import Booster, Dataset
 from subprocess import PIPE
 from subprocess import run as subprocess_run
@@ -23,143 +24,111 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
-from common.metrics import MetricsLogger
+from common.components import RunnableScript
 from common.io import input_file_path
 
 
-def get_arg_parser(parser=None):
-    """Adds component/module arguments to a given argument parser.
-
-    Args:
-        parser (argparse.ArgumentParser): an argument parser instance
-
-    Returns:
-        ArgumentParser: the argument parser instance
-
-    Notes:
-        if parser is None, creates a new parser instance
-    """
-    # add arguments that are specific to the script
-    if parser is None:
-        parser = argparse.ArgumentParser(__doc__)
-
-    group_i = parser.add_argument_group("Input Data")
-    group_i.add_argument("--lightgbm_exec",
-        required=True, type=str, help="Path to lightgbm.exe (file path)")
-    group_i.add_argument("--data",
-        required=True, type=input_file_path, help="Inferencing data location (file path)")
-    group_i.add_argument("--model",
-        required=False, type=input_file_path, help="Exported model location")
-    group_i.add_argument("--output",
-        required=False, default=None, type=str, help="Inferencing output location (file path)")
-    group_general = parser.add_argument_group("General parameters")
-    group_general.add_argument(
-        "--verbose",
-        required=False,
-        default=False,
-        type=strtobool,  # use this for bool args, do not use action_store=True
-        help="set True to show DEBUG logs",
-    )
-    group_general.add_argument(
-        "--custom_properties",
-        required=False,
-        default=None,
-        type=str,
-        help="provide custom properties as json dict",
-    )
-    
-    return parser
-
-
-def run(args, unknown_args=[]):
-    """Run script with arguments (the core of the component)
-
-    Args:
-        args (argparse.namespace): command line arguments provided to script
-        unknown_args (list[str]): list of arguments not known
-    """
-    # get logger for general outputs
-    logger = logging.getLogger()
-
-    # get Metrics logger for benchmark metrics
-    # below: initialize reporting of metrics with a custom session name
-    metrics_logger = MetricsLogger("sample_framework.sample_task")
-
-    # add common properties to the session
-    metrics_logger.set_properties(
-        task="inferencing", framework="lightgbm_cli", framework_version="n/a"
-    )
-
-    # if provided some custom_properties by the outside orchestrator
-    if args.custom_properties:
-        metrics_logger.set_properties_from_json(args.custom_properties)
-
-    # add properties about environment of this script
-    metrics_logger.set_platform_properties()
-
-    if args.output:
-        # make sure the output argument exists
-        os.makedirs(args.output, exist_ok=True)
-        
-        # and create your own file inside the output
-        args.output = os.path.join(args.output, "predictions.txt")
-
-    if not os.path.isfile(args.lightgbm_exec):
-        raise Exception(f"Could not find lightgbm exec under path {args.lightgbm_exec}")
-
-    # assemble a command for lightgbm cli
-    lightgbm_cli_command = [
-        args.lightgbm_exec,
-        "task=prediction",
-        f"data={args.data}",
-        f"input_model={args.model}",
-        "verbosity=2"
-    ]
-    if args.output:
-        lightgbm_cli_command.append(f"output_result={args.output}")
-
-
-    logger.info(f"Running .predict()")
-    with metrics_logger.log_time_block(metric_name="time_inferencing"):
-        lightgbm_cli_call = subprocess_run(
-            lightgbm_cli_command,
-            stdout=PIPE,
-            stderr=PIPE,
-            universal_newlines=True,
-            check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
-            timeout=None
+class LightGBMCLIInferencingScript(RunnableScript):
+    def __init__(self):
+        super().__init__(
+            task="score",
+            framework="lightgbm",
+            framework_version=lightgbm.__version__
         )
-        logger.info(f"LightGBM stdout: {lightgbm_cli_call.stdout}")
-        logger.info(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
-        logger.info(f"LightGBM return code: {lightgbm_cli_call.returncode}")
 
-    # Important: close logging session before exiting
-    metrics_logger.close()
+    @classmethod
+    def get_arg_parser(cls, parser=None):
+        """Adds component/module arguments to a given argument parser.
 
+        Args:
+            parser (argparse.ArgumentParser): an argument parser instance
+
+        Returns:
+            ArgumentParser: the argument parser instance
+
+        Notes:
+            if parser is None, creates a new parser instance
+        """
+        # add generic arguments
+        parser = RunnableScript.get_arg_parser(parser)
+
+        group_i = parser.add_argument_group("Input Data")
+        group_i.add_argument("--lightgbm_exec_path",
+            required=False, type=str, default="lightgbm", help="Path to lightgbm.exe (file path)")
+        group_i.add_argument("--data",
+            required=True, type=input_file_path, help="Inferencing data location (file path)")
+        group_i.add_argument("--model",
+            required=False, type=input_file_path, help="Exported model location")
+        group_i.add_argument("--output",
+            required=False, default=None, type=str, help="Inferencing output location (file path)")
+
+        group_params = parser.add_argument_group("Scoring parameters")
+        group_params.add_argument("--num_threads",
+            required=False, default=1, type=int, help="number of threads")
+        group_params.add_argument("--predict_disable_shape_check",
+            required=False, default=False, type=strtobool, help="See LightGBM documentation")
+
+        return parser
+
+
+    def run(self, args, logger, metrics_logger, unknown_args):
+        """Run script with arguments (the core of the component)
+
+        Args:
+            args (argparse.namespace): command line arguments provided to script
+            logger (logging.getLogger() for this script)
+            metrics_logger (common.metrics.MetricLogger)
+            unknown_args (list[str]): list of arguments not recognized during argparse
+        """
+        # record relevant parameters
+        metrics_logger.log_parameters(
+            num_threads=args.num_threads
+        )
+
+        if args.output:
+            # make sure the output argument exists
+            os.makedirs(args.output, exist_ok=True)
+            
+            # and create your own file inside the output
+            args.output = os.path.join(args.output, "predictions.txt")
+
+        # assemble a command for lightgbm cli
+        lightgbm_cli_command = [
+            args.lightgbm_exec_path,
+            "task=prediction",
+            f"data={args.data}",
+            f"input_model={args.model}",
+            "verbosity=2",
+            f"num_threads={args.num_threads}",
+            f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
+        ]
+
+        if args.output:
+            lightgbm_cli_command.append(f"output_result={args.output}")
+
+
+        logger.info(f"Running .predict()")
+        with metrics_logger.log_time_block(metric_name="time_inferencing"):
+            lightgbm_cli_call = subprocess_run(
+                lightgbm_cli_command,
+                stdout=PIPE,
+                stderr=PIPE,
+                universal_newlines=True,
+                check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
+                timeout=None
+            )
+            logger.info(f"LightGBM stdout: {lightgbm_cli_call.stdout}")
+            logger.info(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
+            logger.info(f"LightGBM return code: {lightgbm_cli_call.returncode}")
+
+
+def get_arg_parser(parser=None):
+    """ To ensure compatibility with shrike unit tests """
+    return LightGBMCLIInferencingScript.get_arg_parser(parser)
 
 def main(cli_args=None):
-    """Component main function, parses arguments and executes run() function.
-
-    Args:
-        cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
-    """
-    # initialize root logger
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    console_handler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    # construct arg parser and parse arguments
-    parser = get_arg_parser()
-    args, unknown_args = parser.parse_known_args(cli_args)
-
-    logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
-
-    # run the actual thing
-    run(args, unknown_args)
-
+    """ To ensure compatibility with shrike unit tests """
+    LightGBMCLIInferencingScript.main(cli_args)
 
 if __name__ == "__main__":
     main()

@@ -15,6 +15,9 @@ inputs:
     type: AnyDirectory
     description: directory to the model
     optional: false
+  n_threads:
+    type: Integer
+    optional: true
   verbose:
     type: Boolean
     optional: true
@@ -28,6 +31,7 @@ command: >-
   python score.py
   --data {inputs.data}
   --so_path {inputs.compiled_model}
+  [--num_threads {inputs.n_threads}]
   [--verbose {inputs.verbose}]
   [--custom_properties {inputs.custom_properties}]
 
