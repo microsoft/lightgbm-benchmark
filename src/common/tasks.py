@@ -59,6 +59,35 @@ class training_task:
 
 
 @dataclass
+class sweep_early_termination_settings:
+    policy_type: str = 'default' # truncation_selection | median_stopping | bandit
+    evaluation_interval: Optional[int] = None
+    delay_evaluation: Optional[int] = None
+
+    # truncation settings
+    truncation_percentage: Optional[int] = None # for truncation_selection
+
+    # bandit settings
+    slack_factor: Optional[float] = None
+
+@dataclass
+class sweep_limits_settings:
+    max_total_trials: int = MISSING
+    max_concurrent_trials: Optional[int] = None # must be between 1 and 100
+    timeout_minutes: Optional[int] = None
+
+@dataclass
+class sweep_settings:
+    # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809
+    # goal settings
+    primary_metric: Optional[str] = None
+    goal: Optional[str] = None
+    algorithm: str = "random"
+
+    early_termination: Optional[sweep_early_termination_settings] = None
+    limits: Optional[sweep_limits_settings] = None
+
+@dataclass
 class training_variant:
     # input parametes
     header: bool = False
@@ -97,12 +126,7 @@ class training_variant:
     pre_convert_to_binary: bool = False # doesn't work with partitioned data (yet)
 
     # SWEEP
-    # TODO: add all parameters from shrike https://github.com/Azure/shrike/blob/387fadb47d69e46bd7e5ac6f243250dc6044afaa/shrike/pipeline/pipeline_helper.py#L809
-    sweep_algorithm: str = "random"
-    sweep_goal: str = "minimize"
-    sweep_max_total_trials: Optional[int] = None
-    sweep_max_concurrent_trials: Optional[int] = None
-    sweep_timeout_minutes: Optional[int] = None
+
 
     # OUTPUT REGISTRATION
     register_model: bool = False # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
