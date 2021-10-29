@@ -13,3 +13,10 @@
 ## Metric time_inferencing per prediction (usecs)
 
 {{metrics_table}}
+
+## Percentile metrics for each variant
+{% for entry in percentile_metrics_reports %}
+### {{entry.variant_id}}
+
+{{entry.report}}
+{% endfor %}

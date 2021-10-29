@@ -168,6 +168,7 @@ class AnalysisEngine():
             [
                 # select variant specific columns/tags
                 'variant_id',
+                'tags.variant_index',
                 'tags.framework',
                 'tags.framework_version',
                 'tags.framework_build',
@@ -176,9 +177,19 @@ class AnalysisEngine():
                 'tags.machine',
                 'tags.system'
             ]
-        ].drop_duplicates().set_index('variant_id').sort_values(by='variant_id')
+        ].drop_duplicates().set_index('variant_id').sort_values(by='tags.variant_index')
 
-        variants.columns = ['framework', 'version', 'build', 'cpu count', 'num threads', 'machine', 'system']
+        # get a list of variant_id ordered by tags.variant_index
+        variant_indices = (
+            self.benchmark_data[['tags.variant_index', 'variant_id']]
+            .drop_duplicates()
+            .set_index('tags.variant_index')
+            .to_dict()
+        )['variant_id']
+        variant_indices_sorted_keys = sorted(list(variant_indices.keys()))
+        variant_indices_sorted = [ variant_indices[k] for k in variant_indices_sorted_keys ]
+
+        variants.columns = ['index', 'framework', 'version', 'build', 'cpu count', 'num threads', 'machine', 'system']
         #variants = variants.transpose()
 
         # reduce time_inferencing to predict time per request, in micro seconds
@@ -199,13 +210,39 @@ class AnalysisEngine():
         )
         # rename columns to have only variant_id
         metrics.columns = [ col[1] for col in metrics.columns ]
+        metrics = metrics[variant_indices_sorted] # order columns by increasing tags.variant_index
 
-        percentile_metrics = self.benchmark_data.pivot(
-            index=['inferencing task config'],
-            columns=['variant_id'],
-            values=['metrics.batch_time_inferencing_p50_usecs', 'metrics.batch_time_inferencing_p90_usecs', 'metrics.batch_time_inferencing_p99_usecs']
-        )
-        #print(percentile_metrics.to_markdown())
+        percentile_metrics_reports = []
+
+        for variant_id in variant_indices_sorted:
+            percentile_metrics_values = (
+                self.benchmark_data.loc[self.benchmark_data['variant_id'] == variant_id][[
+                    'inferencing task config',
+                    'variant_id',
+                    'metrics.batch_time_inferencing_p50_usecs',
+                    'metrics.batch_time_inferencing_p90_usecs',
+                    'metrics.batch_time_inferencing_p99_usecs'
+                ]]
+            ).dropna()
+            
+            if len(percentile_metrics_values) == 0:
+                continue
+
+            percentile_metrics = (
+                percentile_metrics_values.pivot(
+                    index=['inferencing task config'],
+                    columns=['variant_id'],
+                    values=['metrics.batch_time_inferencing_p50_usecs', 'metrics.batch_time_inferencing_p90_usecs', 'metrics.batch_time_inferencing_p99_usecs']
+                )
+            )
+            percentile_metrics.columns = [ col[0] for col in percentile_metrics.columns ]
+
+            percentile_metrics_reports.append(
+                {
+                    'variant_id' : variant_id,
+                    'report' : percentile_metrics.to_markdown()
+                }
+            )
 
         # load the jinja template from local files
         with open(os.path.join(self.templates_dir, "inferencing.md"), "r") as i_file:
@@ -217,7 +254,8 @@ class AnalysisEngine():
         # render the template
         rendered_report = template_obj.render(
             variants_table=variants.to_markdown(),
-            metrics_table=metrics.to_markdown()
+            metrics_table=metrics.to_markdown(),
+            percentile_metrics_reports=percentile_metrics_reports
         )
 
         # save or print
