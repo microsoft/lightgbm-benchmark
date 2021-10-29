@@ -97,7 +97,7 @@ def run(args, unknown_args=[]):
 
     # add common properties to the session
     metrics_logger.set_properties(
-        task="inferencing", framework="lightgbm_c_api", framework_version="n/a"
+        task="score", framework="lightgbm_c_api", framework_version="n/a"
     )
 
     # if provided some custom_properties by the outside orchestrator
