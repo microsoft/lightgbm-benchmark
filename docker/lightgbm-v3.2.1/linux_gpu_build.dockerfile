@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04
+LABEL lightgbmbenchmark.linux.gpu.build.version="3.2.1/20211029.1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 

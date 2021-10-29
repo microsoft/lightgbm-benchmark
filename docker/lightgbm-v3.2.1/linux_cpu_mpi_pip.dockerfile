@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
+LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.2.1/20211029.1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
