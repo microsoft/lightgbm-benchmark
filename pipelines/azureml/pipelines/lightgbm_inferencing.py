@@ -105,8 +105,8 @@ class LightGBMInferencing(AMLPipelineHelper):
                 custom_properties = benchmark_custom_properties.copy()
                 custom_properties.update({
                     # adding build settings (docker+os)
-                    'framework_build' : variant.build or "n/a",
-                    'framework_build_os' : variant.os or "n/a",
+                    'framework_build' : variant.build or "default",
+                    'framework_build_os' : variant.os or "default",
                     # adding variant_index to spot which variant is the reference
                     'variant_index' : variant_index
                 })
@@ -168,6 +168,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                     variant_comment.append(f"build {variant.build}")
                 else:
                     variant_comment.append(f"default build")
+
 
                 # add some comment to the component
                 inferencing_step.comment = " -- ".join(variant_comment)
