@@ -2,13 +2,13 @@
 manifest:
   - name: "generate_synthetic_data"
     version: null
-    yaml: "generate_data/generate_spec.yaml"
+    yaml: "generate_data/spec.yaml"
   - name: "partition_data"
     version: null
-    yaml: "partition_data/partition_spec.yaml"
+    yaml: "partition_data/spec.yaml"
   - name: "lightgbm_python_data2bin"
     version: null
-    yaml: "lightgbm_data2bin/data2bin_spec.yaml"
+    yaml: "lightgbm_data2bin/spec.yaml"
   - name: "lightgbm_python_train"
     version: null
     yaml: "lightgbm_python/train_spec.yaml"
@@ -18,6 +18,9 @@ manifest:
   - name: "lightgbm_c_api_score"
     version: null
     yaml: "lightgbm_c_api/spec.yaml"
+  - name: "lightgbm_cli_score"
+    version: null
+    yaml: "lightgbm_cli/score_spec.yaml"
   - name: "lightgbm_python_score"
     version: null
     yaml: "lightgbm_python/score_spec.yaml"
