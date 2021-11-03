@@ -251,9 +251,10 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                 val_datasets = [
                     train_data.create_valid(test_data_path) for test_data_path in test_data_paths
                 ]
-                # can't count rows if dataset is not constructed
-                metrics_logger.log_metric(key="train_data.length", value="n/a")
-                metrics_logger.log_metric(key="train_data.width", value="n/a")
+                # can't count rows if dataset is not constructed 
+                # mlflow can only log float. 
+                # metrics_logger.log_metric(key="train_data.length", value="n/a")
+                # metrics_logger.log_metric(key="train_data.width", value="n/a")
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
         with metrics_logger.log_time_block("time_training"):
