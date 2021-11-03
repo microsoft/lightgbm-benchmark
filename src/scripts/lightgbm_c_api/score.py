@@ -29,6 +29,18 @@ from common.components import RunnableScript
 from common.io import input_file_path
 
 
+def locate_lightgbm_lib():
+    import site
+
+    for entry in site.getsitepackages():
+        if os.path.isdir(os.path.join(entry, "lightgbm")):
+            ret_val = os.path.join(entry, "lightgbm")
+            logging.info(f"Found lightgbm/ at {ret_val}")
+            return ret_val
+
+    return None    
+
+
 class LightGBMCAPIInferecingScript(RunnableScript):
     def __init__(self):
         super().__init__(
@@ -57,7 +69,7 @@ class LightGBMCAPIInferecingScript(RunnableScript):
         group_i.add_argument("--lightgbm_lib_path",
             required=False, type=str, default=None, help="Path to lightgbm library (file path)")
         group_i.add_argument("--binaries_path",
-            required=False, type=str, default=os.environ.get("LIGHTGBM_BENCHMARK_BINARIES_PATH", None), help="Path to lightgbm_predict (file path)")
+            required=False, type=str, default=os.path.abspath(os.path.dirname(__file__)), help="Path to lightgbm_predict (file path)")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
         group_i.add_argument("--model",
@@ -112,9 +124,18 @@ class LightGBMCAPIInferecingScript(RunnableScript):
 
         # create custom environment variables for the exec
         custom_env = os.environ.copy()
+
+        if args.lightgbm_lib_path is None:
+            # try to locate the library
+            args.lightgbm_lib_path = locate_lightgbm_lib()
+
         if args.lightgbm_lib_path:
             logger.info(f"Adding to PATH: {args.lightgbm_lib_path}")
-            custom_env["PATH"] = os.path.abspath(args.lightgbm_lib_path) + ":" + custom_env["PATH"]
+            if sys.platform == "win32":
+                custom_env["PATH"] = os.path.abspath(args.lightgbm_lib_path) + ";" + custom_env["PATH"]
+            else:
+                custom_env["PATH"] = os.path.abspath(args.lightgbm_lib_path) + ":" + custom_env["PATH"]
+
 
         logger.info("Running command {}".format(" ".join(lightgbm_predict_command)))
         lightgbm_predict_call = subprocess_run(
