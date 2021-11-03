@@ -21,7 +21,6 @@ RUN pip install 'pandas>=1.1,<1.2' \
                 'azureml-telemetry==1.30.0' \
                 'lightgbm==3.2.1'
 
-
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
 
