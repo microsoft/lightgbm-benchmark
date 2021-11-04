@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 """
-LightGBM/CLI inferencing script
+LightGBM inferencing script using an executable lightgbm_predict to run C API predictions.
 """
 import os
 import sys
@@ -29,9 +29,14 @@ from common.components import RunnableScript
 from common.io import input_file_path
 
 
-def locate_lightgbm_lib():
+def locate_lightgbm_lib(lightgbm_lib_path=None):
+    """Locates the lightgbm library installed in the python site packages"""
     import site
 
+    if lightgbm_lib_path:
+        # if a value is provided, return that value (from argparse)
+        return lightgbm_lib_path
+    
     for entry in site.getsitepackages():
         if os.path.isdir(os.path.join(entry, "lightgbm")):
             ret_val = os.path.join(entry, "lightgbm")
@@ -39,6 +44,33 @@ def locate_lightgbm_lib():
             return ret_val
 
     return None    
+
+def locate_lightgbm_benchmark_binaries(binaries_path=None):
+    """Locates the lightgbm benchmark binaries (lightgbm_predict executable)"""
+    executable_name = "lightgbm_predict.exe" if sys.platform == "win32" else "lightgbm_predict"
+
+    if binaries_path:
+        if os.path.isfile(binaries_path):
+            # if path to exec is provided directly as a file path
+            return binaries_path
+
+        # if provided a directory, look for executable        
+        if os.path.isfile(os.path.join(binaries_path, executable_name)):
+            return os.path.join(binaries_path, executable_name)
+        else:
+            raise FileNotFoundError(f"Could not find executable '{executable_name}' at path provided from command line arguments {binaries_path}")
+    
+    if "LIGHTGBM_BENCHMARK_BINARIES_PATH" in os.environ:
+        if os.path.isfile(os.path.join(os.environ["LIGHTGBM_BENCHMARK_BINARIES_PATH"], executable_name)):
+            return os.path.join(os.environ["LIGHTGBM_BENCHMARK_BINARIES_PATH"], executable_name)
+        else:
+            raise FileNotFoundError(f"Could not find executable '{executable_name}' at path provided from environment variable LIGHTGBM_BENCHMARK_BINARIES_PATH={os.environ['LIGHTGBM_BENCHMARK_BINARIES_PATH']}")
+    
+    # if all fails, return local path to component directory
+    if os.path.isfile(os.path.join(os.path.abspath(os.path.dirname(__file__)), executable_name)):
+        return os.path.join(os.path.abspath(os.path.dirname(__file__)), executable_name)
+    else:
+        raise FileNotFoundError(f"Could not find executable '{executable_name}' at the location of this script.")
 
 
 class LightGBMCAPIInferecingScript(RunnableScript):
@@ -69,7 +101,7 @@ class LightGBMCAPIInferecingScript(RunnableScript):
         group_i.add_argument("--lightgbm_lib_path",
             required=False, type=str, default=None, help="Path to lightgbm library (file path)")
         group_i.add_argument("--binaries_path",
-            required=False, type=str, default=os.path.abspath(os.path.dirname(__file__)), help="Path to lightgbm_predict (file path)")
+            required=False, type=str, default=None, help="Path to lightgbm_predict (file path)")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
         group_i.add_argument("--model",
@@ -107,7 +139,7 @@ class LightGBMCAPIInferecingScript(RunnableScript):
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
-        lightgbm_predict_path = os.path.join(os.path.abspath(args.binaries_path), "lightgbm_predict")
+        lightgbm_predict_path = locate_lightgbm_benchmark_binaries(args.binaries_path)
 
         # assemble a command for lightgbm cli
         lightgbm_predict_command = [
@@ -125,9 +157,8 @@ class LightGBMCAPIInferecingScript(RunnableScript):
         # create custom environment variables for the exec
         custom_env = os.environ.copy()
 
-        if args.lightgbm_lib_path is None:
-            # try to locate the library
-            args.lightgbm_lib_path = locate_lightgbm_lib()
+        # try to locate the library
+        args.lightgbm_lib_path = locate_lightgbm_lib(args.lightgbm_lib_path)
 
         if args.lightgbm_lib_path:
             logger.info(f"Adding to PATH: {args.lightgbm_lib_path}")
