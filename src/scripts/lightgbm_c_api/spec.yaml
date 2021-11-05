@@ -45,3 +45,4 @@ environment:
       dockerfile: file:./docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
   conda:
     userManagedDependencies: true
+  os: "Linux"
