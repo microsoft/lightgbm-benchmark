@@ -26,7 +26,7 @@ manifest:
     yaml: "inferencing/lightgbm_python/spec.yaml"
   - name: "treelite_compile"
     version: null
-    yaml: "model_transformation/treelite_python/spec.yaml"
+    yaml: "model_transformation/treelite_compile/spec.yaml"
   - name: "treelite_score"
     version: null
     yaml: "inferencing/treelite_python/spec.yaml"
