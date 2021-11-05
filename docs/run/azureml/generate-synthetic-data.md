@@ -5,6 +5,7 @@
 - generate multiple synthetic regression datasets to benchmark lightgbm training or inferencing
 
 **Requirements** - To enjoy this tutorial, you need to:
+
 - have an existing [AzureML workspace with relevant compute resource](azure-setup.md).
 - have [setup your local environment](local-setup.md) to run our benchmarking pipelines.
 
@@ -54,7 +55,7 @@ In particular, the configuration consists in listing `tasks` which are made of k
 ```
 
 !!! note
-    This actually corresponds to a dataclass detailed in [src/common/tasks.py](../../references/common/tasks.md).  
+    This actually corresponds to a dataclass `data_generation_task` detailed in [src/common/tasks.py](../../references/common/tasks.md).  
     All the items are required except `n_informative`.
 
 The current list corresponds to the default settings required to run the [training benchmark pipeline](benchmark-training.md) and the [inferencing benchmark pipeline](benchmark-inferencing.md).
