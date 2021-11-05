@@ -8,12 +8,12 @@ import tempfile
 import pytest
 from unittest.mock import patch
 
-from scripts.generate_data import generate
+from scripts.data_processing.generate_data import generate
 
 
 @pytest.mark.parametrize("task_type", ["regression", "classification"])
 def test_generate_data(temporary_dir, task_type):
-    """Tests src/scripts/generate_data/generate.py"""
+    """Tests src/scripts/data_processing/generate_data/generate.py"""
     output_train = os.path.join(temporary_dir, "train")
     output_test = os.path.join(temporary_dir, "test")
     output_inference = os.path.join(temporary_dir, "inference")

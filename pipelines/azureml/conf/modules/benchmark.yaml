@@ -2,31 +2,31 @@
 manifest:
   - name: "generate_synthetic_data"
     version: null
-    yaml: "generate_data/spec.yaml"
+    yaml: "data_processing/generate_data/spec.yaml"
   - name: "partition_data"
     version: null
-    yaml: "partition_data/spec.yaml"
+    yaml: "data_processing/partition_data/spec.yaml"
   - name: "lightgbm_python_data2bin"
     version: null
-    yaml: "lightgbm_data2bin/spec.yaml"
+    yaml: "data_processing/lightgbm_data2bin/spec.yaml"
   - name: "lightgbm_python_train"
     version: null
-    yaml: "lightgbm_python/train_spec.yaml"
+    yaml: "training/lightgbm_python/spec.yaml"
   - name: "lightgbm_python_train_sweep"
     version: null
-    yaml: "lightgbm_python/train_sweep_spec.yaml"
+    yaml: "training/lightgbm_python/sweep_spec.yaml"
   - name: "lightgbm_c_api_score"
     version: null
-    yaml: "lightgbm_c_api/spec.yaml"
+    yaml: "inferencing/lightgbm_c_api/spec.yaml"
   - name: "lightgbm_cli_score"
     version: null
-    yaml: "lightgbm_cli/score_spec.yaml"
+    yaml: "inferencing/lightgbm_cli/spec.yaml"
   - name: "lightgbm_python_score"
     version: null
-    yaml: "lightgbm_python/score_spec.yaml"
+    yaml: "inferencing/lightgbm_python/spec.yaml"
   - name: "treelite_compile"
     version: null
-    yaml: "treelite_python/compile_spec.yaml"
+    yaml: "model_transformation/treelite_compile/spec.yaml"
   - name: "treelite_score"
     version: null
-    yaml: "treelite_python/score_spec.yaml"
+    yaml: "inferencing/treelite_python/spec.yaml"
