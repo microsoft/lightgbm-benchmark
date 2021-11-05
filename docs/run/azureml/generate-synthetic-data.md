@@ -90,6 +90,6 @@ python pipelines/data_generation.py --config-dir ./conf --config-name experiment
 
 To find the resulting datasets, go into your workspace under the **Datasets** tab.
 
-# Next Steps
+## Next Steps
 
 When the pipeline completes and you can see the registered dataset in your workspace, you are now ready to test running the [training benchmark pipeline](benchmark-training.md).
