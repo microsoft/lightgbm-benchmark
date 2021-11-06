@@ -14,7 +14,7 @@ To generate a synthetic dataset based on sklearn:
 === "Bash"
 
     ``` bash
-    python src/scripts/generate_data/generate.py \
+    python src/scripts/data_processing/generate_data/generate.py \
         --train_samples 30000 \
         --test_samples 3000 \
         --inferencing_samples 30000 \
@@ -30,7 +30,7 @@ To generate a synthetic dataset based on sklearn:
 === "Powershell"
 
     ``` powershell
-    python src/scripts/generate_data/generate.py `
+    python src/scripts/data_processing/generate_data/generate.py `
         --train_samples 30000 `
         --test_samples 3000 `
         --inferencing_samples 30000 `
@@ -51,7 +51,7 @@ Note: Running the synthetic data generation script with these parameter values r
 === "Bash"
 
     ``` bash
-    python src/scripts/lightgbm_python/train.py \
+    python src/scripts/training/lightgbm_python/train.py \
         --train ./data/synthetic/train/ \
         --test ./data/synthetic/test/ \
         --export_model ./data/models/synthetic-100trees-4000cols/ \
@@ -70,7 +70,7 @@ Note: Running the synthetic data generation script with these parameter values r
 === "Powershell"
 
     ``` powershell
-    python src/scripts/lightgbm_python/train.py `
+    python src/scripts/training/lightgbm_python/train.py `
         --train ./data/synthetic/train/ `
         --test ./data/synthetic/test/ `
         --export_model ./data/models/synthetic-100trees-4000cols/ `
@@ -91,7 +91,7 @@ Note: Running the synthetic data generation script with these parameter values r
 === "Bash"
 
     ```bash
-    python src/scripts/lightgbm_python/score.py \
+    python src/scripts/inferencing/lightgbm_python/score.py \
         --data ./data/synthetic/inference/ \
         --model ./data/models/synthetic-100trees-4000cols/ \
         --output ./data/outputs/predictions/
@@ -100,7 +100,7 @@ Note: Running the synthetic data generation script with these parameter values r
 === "Powershell"
 
     ``` powershell
-    python src/scripts/lightgbm_python/score.py `
+    python src/scripts/inferencing/lightgbm_python/score.py `
         --data ./data/synthetic/inference/ `
         --model ./data/models/synthetic-100trees-4000cols/ `
         --output ./data/outputs/predictions/
@@ -113,7 +113,7 @@ If you have a local installation of lightgbm cli, run the `lightgbm_cli` script 
 === "Bash"
 
     ```bash
-    python src/scripts/lightgbm_cli/score.py \
+    python src/scripts/inferencing/lightgbm_cli/score.py \
         --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe \
         --data ./data/synthetic/inference/ \
         --model ./data/models/synthetic-100trees-4000cols/ \
@@ -123,7 +123,7 @@ If you have a local installation of lightgbm cli, run the `lightgbm_cli` script 
 === "Powershell"
 
     ``` powershell
-    python src/scripts/lightgbm_cli/score.py `
+    python src/scripts/inferencing/lightgbm_cli/score.py `
         --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe `
         --data ./data/synthetic/inference/ `
         --model ./data/models/synthetic-100trees-4000cols/ `

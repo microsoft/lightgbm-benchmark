@@ -17,7 +17,7 @@ is_deterministic: false
 #    type: path
 #    description: writes some stats file of the trial component.
 
-trial: file:./train_spec.yaml
+trial: file:./spec.yaml
 
 algorithm: random
 

@@ -7,8 +7,8 @@ import sys
 import tempfile
 from unittest.mock import patch
 
-from scripts.treelite_python import compile_treelite
-from scripts.treelite_python import score
+from scripts.model_transformation.treelite_compile import compile_treelite
+from scripts.inferencing.treelite_python import score
 
 # IMPORTANT: see conftest.py for fixtures
 
