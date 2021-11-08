@@ -11,8 +11,6 @@ else()
     message(SEND_ERROR "We could not find lightgbm/src/. Please provide -DLIGHTGBM_SRC=... to cmake command")
 endif()
 
-
-
 if(LIGHTGBM_LIB)
     message(STATUS "Looking for lib_lightgbm at ${LIGHTGBM_LIB}")
     find_library(LIGHTGBM_LIBRARIES NAMES _lightgbm lib_lightgbm PATHS "${LIGHTGBM_LIB}" REQUIRED)
