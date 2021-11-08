@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20211012.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0/20211029.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0/20211108.1"
 
 RUN apt-get update && \
     apt-get -y install build-essential cmake
@@ -61,6 +61,9 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0'
 
-# https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#install-python-interface-optional
+# Install python lightgbm API based on built library
 RUN cd /LightGBM/python-package/ && \
     python setup.py install --precompile
+
+# This is needed for mpi to locate libpython
+ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
