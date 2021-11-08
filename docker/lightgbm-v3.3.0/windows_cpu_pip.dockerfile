@@ -1,6 +1,11 @@
 FROM mcr.microsoft.com/azureml/windows-servercore-1809:latest
 LABEL lightgbmbenchmark.windows.cpu.mpi.pip.version="3.3.0/20211108.1"
 
+# Those arguments will NOT be used by AzureML
+# they are here just to allow for lightgbm-benchmark build to actually check
+# dockerfiles in a PR against their actual branch
+ARG lightgbm_version="3.3.0"
+
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
 # Create conda environment
@@ -19,8 +24,7 @@ RUN pip install 'pandas>=1.1,<1.2' \
                 'azureml-defaults==1.35.0' \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
-                'lightgbm==3.3.0'
+                'lightgbm==${lightgbm_version}'
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
-

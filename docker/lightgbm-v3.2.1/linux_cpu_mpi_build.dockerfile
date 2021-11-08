@@ -1,11 +1,10 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20211012.v1
 LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.2.1/20211108.1"
 
-
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
 # dockerfiles in a PR against their actual branch
-ARG lightgbm_branch=tags/v3.3.0
+ARG lightgbm_version="3.2.1"
 ARG lightgbm_benchmark_branch=main
 
 RUN apt-get update && \
@@ -16,7 +15,7 @@ RUN apt-get update && \
 # Clone lightgbm official repository (master branch)
 RUN git clone --recursive https://github.com/microsoft/LightGBM && \
     cd LightGBM && \
-    git checkout ${lightgbm_branch}
+    git checkout tags/v${lightgbm_version}
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
 RUN cd /LightGBM && \
@@ -70,6 +69,9 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0'
 
-# https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#install-python-interface-optional
+# Install LightGBM Python API from build
 RUN cd /LightGBM/python-package/ && \
     python setup.py install --precompile
+
+# This is needed for mpi to locate libpython
+ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
