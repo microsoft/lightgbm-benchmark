@@ -37,8 +37,6 @@ jobs:
 
     - name: Query Git branch name
       uses: petehouston/github-actions-query-branch-name@v1.2
-      with:
-        name: queryBranch
   
     - name: Check branch name
       run: |-
