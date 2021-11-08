@@ -35,6 +35,11 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+        
     - uses: marceloprado/has-changed-path@v1
       id: dockerfile-changed
       with:
@@ -42,7 +47,7 @@ jobs:
 
     - name: Build the Docker image
       if: steps.dockerfile-changed.outputs.changed == 'true'
-      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s)
+      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s) --build-arg lightgbm_benchmark_branch=${{ steps.extract_branch.outputs.branch }}
       working-directory: docker/
 
   windows_container_build:
