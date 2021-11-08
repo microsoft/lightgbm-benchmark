@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20211029.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20211108.1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
@@ -16,10 +16,10 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'numpy>=1.10,<1.20' \
                 'scipy~=1.5.0' \
                 'scikit-learn~=0.24.1' \
-                'azureml-core==1.30.0' \
-                'azureml-defaults==1.30.0' \
-                'azureml-mlflow==1.30.0' \
-                'azureml-telemetry==1.30.0' \
+                'azureml-core==1.35.0' \
+                'azureml-defaults==1.35.0' \
+                'azureml-mlflow==1.35.0' \
+                'azureml-telemetry==1.35.0' \
                 'mpi4py==3.1.1'
 
 # install lightgbm with mpi
