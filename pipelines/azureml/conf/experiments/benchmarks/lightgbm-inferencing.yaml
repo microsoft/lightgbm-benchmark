@@ -28,7 +28,7 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-  benchmark_name: "benchmark-inferencing-20211029" # need to be provided at runtime!
+  benchmark_name: "benchmark-inferencing-20211108.1" # need to be provided at runtime!
 
   tasks:
     - data:
@@ -82,14 +82,9 @@ lightgbm_inferencing:
 
   variants:
     - framework: lightgbm_python # v3.3.0 via pypi
-    - framework: lightgbm_python # v3.2.1 via pypi
-      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_pip.dockerfile
-      os: "Linux" # 'Linux' or 'Windows', linux is default
-    - framework: lightgbm_python # v3.2.1 via build
-      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
-      os: "Linux" # 'Linux' or 'Windows', linux is default
-    - framework: lightgbm_python # v3.2.1 modified
-      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
-      os: "Linux" # 'Linux' or 'Windows', linux is default
     - framework: lightgbm_c_api # v3.3.0 with C API prediction
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
     - framework: treelite_python # v1.3.0
