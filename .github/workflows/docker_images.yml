@@ -41,13 +41,13 @@ jobs:
         name: queryBranch
   
     - name: Check branch name
-        run: |-
-          echo "GIT_BRANCH_NAME = $GIT_BRANCH_NAME"
-          echo "GIT_BRANCH_NAME_HEAD = $GIT_BRANCH_NAME_BEAD"
-          echo "GIT_BRANCH_NAME_BASE = $GIT_BRANCH_NAME_BASE"
-          echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name }}"
-          echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_head }}"
-          echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_base }}"
+      run: |-
+        echo "GIT_BRANCH_NAME = $GIT_BRANCH_NAME"
+        echo "GIT_BRANCH_NAME_HEAD = $GIT_BRANCH_NAME_BEAD"
+        echo "GIT_BRANCH_NAME_BASE = $GIT_BRANCH_NAME_BASE"
+        echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name }}"
+        echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_head }}"
+        echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_base }}"
   
     - uses: marceloprado/has-changed-path@v1
       id: dockerfile-changed
