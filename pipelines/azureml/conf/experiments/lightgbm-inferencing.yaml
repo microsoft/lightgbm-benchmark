@@ -45,10 +45,8 @@ lightgbm_inferencing:
     - framework: lightgbm_python
     - framework: lightgbm_python
       build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile # relative to repo root
-      os: "Linux" # 'Linux' or 'Windows', linux is default
     - framework: lightgbm_python
       build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile # relative to repo root
-      os: "Linux" # 'Linux' or 'Windows', linux is default
     - framework: lightgbm_cli
     - framework: lightgbm_c_api
     - framework: treelite_python
