@@ -13,6 +13,7 @@ Licensed under the MIT license.
 #include <string>
 #include <chrono>
 #include "LightGBM/c_api.h"
+#include "LightGBM/dataset.h"
 
 using std::cout; 
 using std::cerr;
@@ -23,6 +24,8 @@ using std::chrono::high_resolution_clock;
 using std::chrono::duration_cast;
 using std::chrono::duration;
 using std::chrono::milliseconds;
+using LightGBM::Parser;
+
 
 // struct to organize arguments for call to LGBM_BoosterPredictForCSRSingleRow()
 // see https://lightgbm.readthedocs.io/en/latest/C-API.html#c.LGBM_BoosterPredictForCSRSingleRow
@@ -51,25 +54,34 @@ struct CSRDataRow_t {
 };
 
 // class to read libsvm file and iterate on each line
-class LibSVMReader {
+class LightGBMDataReader {
     private:
         // counts how many rows have been processed so far
         int row_counter;
         int num_features;
         ifstream * file_handler;
+        Parser * lightgbm_parser;
 
     public:
         // Constructor
-        LibSVMReader() {
+        LightGBMDataReader() {
             this->row_counter = 0;
             this->num_features = 0;
             this->file_handler = nullptr;
+            this->lightgbm_parser = nullptr;
         };
         // Destructor
-        ~LibSVMReader() {};
+        ~LightGBMDataReader() {};
 
         // open the file for parsing
         int open(const string file_path, int32_t num_features) {
+            // use Parser class from LightGBM source code
+            this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
+            if (this->lightgbm_parser == nullptr) {
+                throw std::runtime_error("Could not recognize data format");
+            }
+
+            // but handle file reading separately
             this->num_features = num_features;
             this->file_handler = new ifstream(file_path);
             string line;
@@ -133,6 +145,8 @@ class LibSVMReader {
         CSRDataRow_t * iter(CSRDataRow_t * replace_row = nullptr) {
             CSRDataRow_t * csr_row;
             string input_line;
+            std::vector<std::pair<int, double>> oneline_features;
+            double row_label;
 
             if (this->file_handler == nullptr) {
                 throw std::runtime_error("You need to open() the file before iterating on it.");
@@ -149,32 +163,20 @@ class LibSVMReader {
 
             // allocate or re-allocate a new row struct
             csr_row = this->init_row(replace_row, num_features);
+            csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
 
-            // split line by whitespace
-            char * token = strtok(const_cast<char*>(input_line.c_str()), " ");
-            // first token is label (float)
+            oneline_features.clear();
+            this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
 
-            float row_label = atof(token);
             cout << " label=" << row_label;
 
-            while ((token = strtok(nullptr, " ")) != nullptr)
-            {
-                // we use csr_row->num_features to count values in sparse row
-                if (csr_row->num_features > num_features) {
-                    throw std::runtime_error("Number of features found is above expected number.");
-                }
-
-                string token_str = string(token);
-                int colon_index = token_str.find(":");
-                int32_t key = atoi(token_str.substr(0, colon_index).c_str());
-                float value = atof(token_str.substr(colon_index+1,token_str.length()).c_str());
-
-                csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
-                csr_row->row_headers[1] = csr_row->num_features; // memory index end of row (length)
-
-                csr_row->indices[csr_row->num_features] = key;
-                csr_row->row[csr_row->num_features] = value;
+            // convert output from Parser into expected format for C API call
+            for (std::pair<int, double>& inner_data : oneline_features) {
+                csr_row->indices[csr_row->num_features] = inner_data.first;
+                csr_row->row[csr_row->num_features] = inner_data.second;
                 csr_row->num_features++;
+                
+                csr_row->row_headers[1] = csr_row->num_features; // memory index end of row (actual length)
             }
 
             // number of null elements
@@ -263,7 +265,7 @@ int main(int argc, char* argv[]) {
     double * out_result = new double[num_classes];
 
     // custom class for reading libsvm
-    LibSVMReader * data_reader = new LibSVMReader();
+    LightGBMDataReader * data_reader = new LightGBMDataReader();
     data_reader->open(data_filename, num_features);
 
     // variables for metrics

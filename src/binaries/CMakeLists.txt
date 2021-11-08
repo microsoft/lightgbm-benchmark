@@ -4,7 +4,14 @@ project(lightgbm_benchmark_utils VERSION 0.3.0)
 set(SOURCE_CODE
     ./lightgbm_predict/main.cc)
 
-add_executable(lightgbm_predict ./lightgbm_predict/main.cc)
+if(LIGHTGBM_SRC)
+    message(STATUS "Looking for lightgbm/src/ at ${LIGHTGBM_SRC}")
+    add_executable(lightgbm_predict ./lightgbm_predict/main.cc ${LIGHTGBM_SRC}/io/parser.hpp ${LIGHTGBM_SRC}/io/parser.cpp ${LIGHTGBM_SRC}/io/file_io.cpp)
+else()
+    message(SEND_ERROR "We could not find lightgbm/src/. Please provide -DLIGHTGBM_SRC=... to cmake command")
+endif()
+
+
 
 if(LIGHTGBM_LIB)
     message(STATUS "Looking for lib_lightgbm at ${LIGHTGBM_LIB}")
