@@ -1,5 +1,10 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-cuda10.1-cudnn7-ubuntu18.04
-LABEL lightgbmbenchmark.linux.gpu.build.version="3.2.1/20211029.1"
+LABEL lightgbmbenchmark.linux.gpu.build.version="3.2.1/20211108.1"
+
+# Those arguments will NOT be used by AzureML
+# they are here just to allow for lightgbm-benchmark build to actually check
+# dockerfiles in a PR against their actual branch
+ARG lightgbm_version="3.2.1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
@@ -20,7 +25,7 @@ RUN apt-get install --no-install-recommends git cmake build-essential libboost-d
 # Clone lightgbm official repository (master branch)
 RUN git clone --recursive https://github.com/microsoft/LightGBM && \
     cd LightGBM && \
-    git checkout tags/v3.2.1
+    git checkout tags/v${lightgbm_version}
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
 RUN cd /LightGBM && \
@@ -35,16 +40,16 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'numpy>=1.10,<1.20' \
                 'scipy~=1.5.0' \
                 'scikit-learn~=0.24.1' \
-                'azureml-core==1.30.0' \
-                'azureml-defaults==1.30.0' \
-                'azureml-mlflow==1.30.0' \
-                'azureml-telemetry==1.30.0' \
+                'azureml-core==1.35.0' \
+                'azureml-defaults==1.35.0' \
+                'azureml-mlflow==1.35.0' \
+                'azureml-telemetry==1.35.0' \
                 'mpi4py==3.1.1'
 
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' 
 
-# https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#install-python-interface-optional
+# Install LightGBM Python API from build
 RUN cd /LightGBM/python-package/ && \
     python setup.py install --precompile
 
