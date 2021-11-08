@@ -24,11 +24,14 @@ Do not build with `ALL_BUILD`, as you don't need all the artefacts, just the lig
 
 (For now, only lightgbm_predict)
 
-Run the following in `src/binaries/`. Provide the path to built LightGBM library using `-DLIGHTGBM_LIB`, and the path to includes using `-DLIGHTGBM_INC`.
+Run the following in `src/binaries/`. You will beed to provode paths:
+- `-DLIGHTGBM_LIB`: the path to built LightGBM library,
+- `-DLIGHTGBM_INC`: the path to the LightGBM includes,
+- `-DLIGHTGBM_SRC`: the path to the LightGBM sources.
 
 ```bash
 mkdir build
 cd build
-cmake -A x64 -DLIGHTGBM_LIB=___ -DLIGHTGBM_INC=___ ..
+cmake -A x64 -DLIGHTGBM_LIB=___ -DLIGHTGBM_INC=___ -DLIGHTGBM_SRC=___..
 cmake --build . --target lightgbm_predict --config Release
 ```
