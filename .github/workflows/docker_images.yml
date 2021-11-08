@@ -35,13 +35,19 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Extract branch name
-      shell: bash
-      run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
-      id: extract_branch
-
+    - name: Query Git branch name
+      uses: petehouston/github-actions-query-branch-name@v1.2
+      with:
+        name: queryBranch
+  
     - name: Check branch name
-      run: echo ${{ steps.extract_branch.outputs.branch }}
+        run: |-
+          echo "GIT_BRANCH_NAME = $GIT_BRANCH_NAME"
+          echo "GIT_BRANCH_NAME_HEAD = $GIT_BRANCH_NAME_BEAD"
+          echo "GIT_BRANCH_NAME_BASE = $GIT_BRANCH_NAME_BASE"
+          echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name }}"
+          echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_head }}"
+          echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_base }}"
   
     - uses: marceloprado/has-changed-path@v1
       id: dockerfile-changed
@@ -50,7 +56,7 @@ jobs:
 
     - name: Build the Docker image
       if: steps.dockerfile-changed.outputs.changed == 'true'
-      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s) --build-arg lightgbm_benchmark_branch=${{ steps.extract_branch.outputs.branch }}
+      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s) --build-arg lightgbm_benchmark_branch=$GIT_BRANCH_NAME
       working-directory: docker/
 
   windows_container_build:
