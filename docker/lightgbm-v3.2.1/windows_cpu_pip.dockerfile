@@ -24,4 +24,4 @@ RUN pip install 'pandas>=1.1,<1.2' \
                 'azureml-defaults==1.35.0' \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
-                lightgbm==${lightgbm_version}
+                lightgbm==$($Env:lightgbm_version)
