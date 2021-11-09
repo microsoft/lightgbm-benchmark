@@ -41,7 +41,7 @@ RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git &&
 RUN cd /lightgbm-benchmark/src/binaries/ && \
     mkdir build && \
     cd build && \
-    cmake -DLIGHTGBM_INC=/LightGBM/include -DLIGHTGBM_LIB=/LightGBM .. && \
+    cmake -DLIGHTGBM_INC=/LightGBM/include -DLIGHTGBM_LIB=/LightGBM -DLIGHTGBM_SRC=/LightGBM/src .. && \
     cmake --build . --target lightgbm_predict --config Release
 
 # provide env variable with path to built binaries
