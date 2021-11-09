@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20211012.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0/20211108.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0/20211109.1"
 
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
@@ -36,7 +36,7 @@ RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git &&
 RUN cd /lightgbm-benchmark/src/binaries/ && \
     mkdir build && \
     cd build && \
-    cmake -DLIGHTGBM_INC=/LightGBM/include -DLIGHTGBM_LIB=/LightGBM .. && \
+    cmake -DLIGHTGBM_CLONE=/LightGBM .. && \
     cmake --build . --target lightgbm_predict --config Release
 
 # provide env variable with path to built binaries
