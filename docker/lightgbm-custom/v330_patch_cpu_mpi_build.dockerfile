@@ -4,7 +4,7 @@ LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.2.1-patch/20211109.1"
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
 # dockerfiles in a PR against their actual branch
-ARG lightgbm_version="3.2.1"
+ARG lightgbm_version="3.3.0"
 ARG lightgbm_benchmark_branch=main
 
 RUN apt-get update && \
@@ -41,7 +41,7 @@ RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git &&
 RUN cd /lightgbm-benchmark/src/binaries/ && \
     mkdir build && \
     cd build && \
-    cmake -DLIGHTGBM_CLONE=/LightGBM -DUSE_LIGHTGBM_V321_PARSER=ON .. && \
+    cmake -DLIGHTGBM_CLONE=/LightGBM .. && \
     cmake --build . --target lightgbm_predict --config Release
 
 # provide env variable with path to built binaries

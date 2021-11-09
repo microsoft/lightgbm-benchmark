@@ -24,11 +24,13 @@ Do not build with `ALL_BUILD`, as you don't need all the artefacts, just the lig
 
 (For now, only lightgbm_predict)
 
-Run the following in `src/binaries/`. Provide the path to built LightGBM library using `-DLIGHTGBM_LIB`, and the path to includes using `-DLIGHTGBM_INC`.
+Run the following in `src/binaries/`. You will beed to provde path to the clone repository built above using `-DLIGHTGBM_CLONE=...`.
 
 ```bash
 mkdir build
 cd build
-cmake -A x64 -DLIGHTGBM_LIB=___ -DLIGHTGBM_INC=___ ..
+cmake -A x64 -DLIGHTGBM_CLONE=___ ..
 cmake --build . --target lightgbm_predict --config Release
 ```
+
+**Note**: to compile for LightGBM v3.2.1, you need to add `-DUSE_LIGHTGBM_V321_PARSER=ON`
