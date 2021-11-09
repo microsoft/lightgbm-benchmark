@@ -1,7 +1,7 @@
 # LightGBM Inferencing Benchmark
 
 !!! note
-    The report below has been automatically generated with results from the [lightgbm-benchmark repo](https://github.com/microsoft/lightgbm-benchmark).
+    The report below has been automatically generated with results from the [lightgbm-benchmark repo](https://github.com/microsoft/lightgbm-benchmark).  
 
 !!! warning
     This is work in progress, to check out current work items check the [project open inferencing issues](https://github.com/microsoft/lightgbm-benchmark/issues?q=is%3Aissue+is%3Aopen+label%3Ainferencing-benchmark). In particular, **do not trust these numbers yet** until we've removed this header!
@@ -12,26 +12,27 @@
 |:------------------|--------:|:----------------|:-----------------|:-----------------------------------------------------------|------------:|--------------:|:----------|:---------|
 | lightgbm#0        |       0 | lightgbm        | PYTHON_API.3.3.0 | default                                                    |          16 |             1 | x86_64    | Linux    |
 | lightgbm#1        |       1 | lightgbm        | C_API.3.3.0      | default                                                    |          16 |             1 | x86_64    | Linux    |
-| lightgbm#2        |       2 | lightgbm        | C_API.3.2.1      | docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile      |          16 |             1 | x86_64    | Linux    |
-| lightgbm#3        |       3 | lightgbm        | C_API.3.2.1      | docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile |          16 |             1 | x86_64    | Linux    |
-| treelite_python#4 |       4 | treelite_python | 1.3.0            | default                                                    |          16 |             1 | x86_64    | Linux    |
+| lightgbm#2        |       2 | lightgbm        | C_API.3.3.0      | docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile |          16 |             1 | x86_64    | Linux    |
+| lightgbm#3        |       3 | lightgbm        | C_API.3.2.1      | docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile      |          16 |             1 | x86_64    | Linux    |
+| lightgbm#4        |       4 | lightgbm        | C_API.3.2.1      | docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile |          16 |             1 | x86_64    | Linux    |
+| treelite_python#5 |       5 | treelite_python | 1.3.0            | default                                                    |          16 |             1 | x86_64    | Linux    |
 
 ## Metric time_inferencing per prediction (usecs)
 
-| inferencing task config                |   lightgbm#0 |   lightgbm#1 |   lightgbm#2 |   lightgbm#3 |   treelite_python#4 |
-|:---------------------------------------|-------------:|-------------:|-------------:|-------------:|--------------------:|
-| 10 trees<br/>31 leaves<br/>10 cols     |       6.6782 |      1.64384 |     0.674529 |      0.6571  |            0.244832 |
-| 10 trees<br/>31 leaves<br/>100 cols    |      10.2975 |      1.12449 |     1.80957  |      1.01547 |            0.376225 |
-| 10 trees<br/>31 leaves<br/>1000 cols   |      41.6222 |      2.31878 |     1.13139  |      0.97278 |            1.8821   |
-| 100 trees<br/>31 leaves<br/>10 cols    |      22.618  |     12.0014  |    12.6983   |      5.91319 |            5.57137  |
-| 100 trees<br/>31 leaves<br/>100 cols   |      24.7328 |     11.9549  |    11.4674   |      5.51865 |            6.09224  |
-| 100 trees<br/>31 leaves<br/>1000 cols  |      51.3106 |     12.1792  |     5.52488  |     13.0928  |            9.02305  |
-| 1000 trees<br/>31 leaves<br/>10 cols   |     110.798  |     70.9829  |    66.5644   |     79.937   |           32.0208   |
-| 1000 trees<br/>31 leaves<br/>100 cols  |     161.674  |    181.517   |   156.472    |    175.729   |           98.3616   |
-| 1000 trees<br/>31 leaves<br/>1000 cols |     177.93   |    153.365   |   156.771    |    154.881   |           98.6686   |
-| 5000 trees<br/>31 leaves<br/>10 cols   |     372.706  |    366.744   |   336.039    |    317.522   |          226.819    |
-| 5000 trees<br/>31 leaves<br/>100 cols  |     473.022  |    441.521   |   444.257    |    482.049   |          311.862    |
-| 5000 trees<br/>31 leaves<br/>1000 cols |     689.319  |    643.467   |   731.767    |    674.668   |          543.936    |
+| inferencing task config                |   lightgbm#0 |   lightgbm#1 |   lightgbm#2 |   lightgbm#3 |   lightgbm#4 |   treelite_python#5 |
+|:---------------------------------------|-------------:|-------------:|-------------:|-------------:|-------------:|--------------------:|
+| 10 trees<br/>31 leaves<br/>10 cols     |      6.71442 |      1.27191 |      1.88084 |      1.97014 |      1.50457 |            0.299835 |
+| 10 trees<br/>31 leaves<br/>100 cols    |     10.0109  |      1.87281 |      1.89273 |      1.51227 |      1.93901 |            0.465536 |
+| 10 trees<br/>31 leaves<br/>1000 cols   |     37.308   |      4.32708 |      4.70362 |      7.06888 |      4.72284 |            2.08173  |
+| 100 trees<br/>31 leaves<br/>10 cols    |     18.8272  |     12.7087  |     14.9646  |     10.8278  |     16.6011  |            5.27241  |
+| 100 trees<br/>31 leaves<br/>100 cols   |     23.524   |      9.6317  |     11.2825  |     15.0675  |     13.3228  |            7.3904   |
+| 100 trees<br/>31 leaves<br/>1000 cols  |     45.8476  |     14.3042  |     18.5159  |     15.6538  |     14.9914  |            7.93605  |
+| 1000 trees<br/>31 leaves<br/>10 cols   |    113.854   |     95.4644  |    104.575   |     93.1975  |    107.137   |           28.5369   |
+| 1000 trees<br/>31 leaves<br/>100 cols  |    173.506   |    136.601   |    137.953   |    137.349   |    165.446   |           96.1941   |
+| 1000 trees<br/>31 leaves<br/>1000 cols |    178.49    |    143.14    |    143.734   |    146.814   |    149.186   |           98.9669   |
+| 5000 trees<br/>31 leaves<br/>10 cols   |    395.046   |    394.296   |    425.493   |    326.193   |    443.607   |          251.199    |
+| 5000 trees<br/>31 leaves<br/>100 cols  |    467.79    |    459.998   |    535.714   |    537.431   |    450.346   |          295.183    |
+| 5000 trees<br/>31 leaves<br/>1000 cols |    645.185   |    580.791   |    574.005   |    643.234   |    591.006   |          442.544    |
 
 ## Percentile metrics for each variant
 
@@ -42,49 +43,66 @@ Some variants above report percentile metrics. Those are reported by computing i
 
 | inferencing task config                |   p50_usecs |   p90_usecs |   p99_usecs |
 |:---------------------------------------|------------:|------------:|------------:|
-| 10 trees<br/>31 leaves<br/>10 cols     |       1.401 |      2.1    |       2.801 |
-| 10 trees<br/>31 leaves<br/>100 cols    |       1     |      1.3    |       3.7   |
-| 10 trees<br/>31 leaves<br/>1000 cols   |       1.9   |      2.3    |       5     |
-| 100 trees<br/>31 leaves<br/>10 cols    |      10.4   |     11      |      28.899 |
-| 100 trees<br/>31 leaves<br/>100 cols   |      11.1   |     11.801  |      24.5   |
-| 100 trees<br/>31 leaves<br/>1000 cols  |      11.2   |     12      |      24.299 |
-| 1000 trees<br/>31 leaves<br/>10 cols   |      61.799 |     90.6099 |     158.4   |
-| 1000 trees<br/>31 leaves<br/>100 cols  |     166.798 |    218.607  |     295.797 |
-| 1000 trees<br/>31 leaves<br/>1000 cols |     143.299 |    178.398  |     259.699 |
-| 5000 trees<br/>31 leaves<br/>10 cols   |     368.715 |    395.217  |     417.117 |
-| 5000 trees<br/>31 leaves<br/>100 cols  |     427.81  |    493.111  |     728.425 |
-| 5000 trees<br/>31 leaves<br/>1000 cols |     617.894 |    741.442  |     967.791 |
+| 10 trees<br/>31 leaves<br/>10 cols     |      1.3    |       1.5   |       1.6   |
+| 10 trees<br/>31 leaves<br/>100 cols    |      1.8    |       2     |       3.1   |
+| 10 trees<br/>31 leaves<br/>1000 cols   |      4.201  |       4.5   |       5.6   |
+| 100 trees<br/>31 leaves<br/>10 cols    |     12.6    |      13.8   |      19.1   |
+| 100 trees<br/>31 leaves<br/>100 cols   |      9.501  |      10     |      12.802 |
+| 100 trees<br/>31 leaves<br/>1000 cols  |     14.301  |      15.601 |      25.001 |
+| 1000 trees<br/>31 leaves<br/>10 cols   |     95.1015 |      98.801 |     108.803 |
+| 1000 trees<br/>31 leaves<br/>100 cols  |    131.001  |     145.6   |     215.101 |
+| 1000 trees<br/>31 leaves<br/>1000 cols |    142.601  |     145.202 |     157.302 |
+| 5000 trees<br/>31 leaves<br/>10 cols   |    383.404  |     430.905 |     584.61  |
+| 5000 trees<br/>31 leaves<br/>100 cols  |    448.404  |     504.305 |     633.407 |
+| 5000 trees<br/>31 leaves<br/>1000 cols |    557.003  |     640.203 |     836.145 |
 
 ### lightgbm#2
 
 | inferencing task config                |   p50_usecs |   p90_usecs |   p99_usecs |
 |:---------------------------------------|------------:|------------:|------------:|
-| 10 trees<br/>31 leaves<br/>10 cols     |       0.7   |       0.8   |       0.9   |
-| 10 trees<br/>31 leaves<br/>100 cols    |       1.6   |       2.1   |       4.401 |
-| 10 trees<br/>31 leaves<br/>1000 cols   |       1.1   |       1.2   |       1.4   |
-| 100 trees<br/>31 leaves<br/>10 cols    |      11.3   |      12     |      29.601 |
-| 100 trees<br/>31 leaves<br/>100 cols   |      10     |      11.2   |      30.901 |
-| 100 trees<br/>31 leaves<br/>1000 cols  |       5.5   |       5.6   |       6.3   |
-| 1000 trees<br/>31 leaves<br/>10 cols   |      65.199 |      69.799 |      79.199 |
-| 1000 trees<br/>31 leaves<br/>100 cols  |     150.099 |     188.598 |     274.501 |
-| 1000 trees<br/>31 leaves<br/>1000 cols |     149.699 |     188.898 |     258.097 |
-| 5000 trees<br/>31 leaves<br/>10 cols   |     320.597 |     400.807 |     537.207 |
-| 5000 trees<br/>31 leaves<br/>100 cols  |     443.101 |     452.601 |     461.901 |
-| 5000 trees<br/>31 leaves<br/>1000 cols |     706.195 |     836.994 |    1072.75  |
+| 10 trees<br/>31 leaves<br/>10 cols     |       1.8   |       2.1   |     2.601   |
+| 10 trees<br/>31 leaves<br/>100 cols    |       1.9   |       2     |     2.10001 |
+| 10 trees<br/>31 leaves<br/>1000 cols   |       4.7   |       4.901 |     5.4     |
+| 100 trees<br/>31 leaves<br/>10 cols    |      13.7   |      15.4   |    37.204   |
+| 100 trees<br/>31 leaves<br/>100 cols   |      10.8   |      12.901 |    17.301   |
+| 100 trees<br/>31 leaves<br/>1000 cols  |      17.7   |      19.001 |    31.4     |
+| 1000 trees<br/>31 leaves<br/>10 cols   |     104.003 |     108.703 |   122.603   |
+| 1000 trees<br/>31 leaves<br/>100 cols  |     132.501 |     149.701 |   221.015   |
+| 1000 trees<br/>31 leaves<br/>1000 cols |     138.702 |     160.802 |   219.107   |
+| 5000 trees<br/>31 leaves<br/>10 cols   |     425.024 |     463.626 |   496.927   |
+| 5000 trees<br/>31 leaves<br/>100 cols  |     508.705 |     588.917 |   946.39    |
+| 5000 trees<br/>31 leaves<br/>1000 cols |     550.905 |     624.606 |   810.269   |
 
 ### lightgbm#3
 
 | inferencing task config                |   p50_usecs |   p90_usecs |   p99_usecs |
 |:---------------------------------------|------------:|------------:|------------:|
-| 10 trees<br/>31 leaves<br/>10 cols     |       0.6   |      0.7    |       2.6   |
-| 10 trees<br/>31 leaves<br/>100 cols    |       0.9   |      1.1    |       3.2   |
-| 10 trees<br/>31 leaves<br/>1000 cols   |       1     |      1.1    |       1.3   |
-| 100 trees<br/>31 leaves<br/>10 cols    |       5.8   |      5.9    |       8.1   |
-| 100 trees<br/>31 leaves<br/>100 cols   |       5.4   |      5.5    |       7.6   |
-| 100 trees<br/>31 leaves<br/>1000 cols  |      12.2   |     13.1    |      25.7   |
-| 1000 trees<br/>31 leaves<br/>10 cols   |      70.6   |     89.5991 |     194.5   |
-| 1000 trees<br/>31 leaves<br/>100 cols  |     174.997 |    176.997  |     189.897 |
-| 1000 trees<br/>31 leaves<br/>1000 cols |     145.052 |    182.705  |     265.01  |
-| 5000 trees<br/>31 leaves<br/>10 cols   |     309.496 |    366.595  |     474.694 |
-| 5000 trees<br/>31 leaves<br/>100 cols  |     441.699 |    594.399  |     756.604 |
-| 5000 trees<br/>31 leaves<br/>1000 cols |     670.905 |    690.206  |     711.207 |
+| 10 trees<br/>31 leaves<br/>10 cols     |       1.8   |       2.3   |       3.1   |
+| 10 trees<br/>31 leaves<br/>100 cols    |       1.5   |       1.6   |       1.9   |
+| 10 trees<br/>31 leaves<br/>1000 cols   |       6.3   |       7.2   |      23.901 |
+| 100 trees<br/>31 leaves<br/>10 cols    |      10.8   |      11.6   |      12.6   |
+| 100 trees<br/>31 leaves<br/>100 cols   |      14.3   |      15.7   |      29.903 |
+| 100 trees<br/>31 leaves<br/>1000 cols  |      15.1   |      16.2   |      27.201 |
+| 1000 trees<br/>31 leaves<br/>10 cols   |      85.301 |     109.901 |     168.301 |
+| 1000 trees<br/>31 leaves<br/>100 cols  |     132.401 |     149.601 |     201.402 |
+| 1000 trees<br/>31 leaves<br/>1000 cols |     146.202 |     148.903 |     161.503 |
+| 5000 trees<br/>31 leaves<br/>10 cols   |     312.703 |     354.715 |     505.311 |
+| 5000 trees<br/>31 leaves<br/>100 cols  |     537.638 |     582.651 |     608.343 |
+| 5000 trees<br/>31 leaves<br/>1000 cols |     641.307 |     654.907 |     667.409 |
+
+### lightgbm#4
+
+| inferencing task config                |   p50_usecs |   p90_usecs |   p99_usecs |
+|:---------------------------------------|------------:|------------:|------------:|
+| 10 trees<br/>31 leaves<br/>10 cols     |       1.3   |       1.7   |       2.7   |
+| 10 trees<br/>31 leaves<br/>100 cols    |       1.8   |       2.2   |       2.6   |
+| 10 trees<br/>31 leaves<br/>1000 cols   |       4.7   |       4.9   |       5.3   |
+| 100 trees<br/>31 leaves<br/>10 cols    |      15.7   |      17.2   |      34.9   |
+| 100 trees<br/>31 leaves<br/>100 cols   |      12.201 |      13.501 |      48.706 |
+| 100 trees<br/>31 leaves<br/>1000 cols  |      14.901 |      16.101 |      24.701 |
+| 1000 trees<br/>31 leaves<br/>10 cols   |      97.301 |     136.401 |     201.902 |
+| 1000 trees<br/>31 leaves<br/>100 cols  |     164.901 |     170.101 |     182.801 |
+| 1000 trees<br/>31 leaves<br/>1000 cols |     148.403 |     151.003 |     166.205 |
+| 5000 trees<br/>31 leaves<br/>10 cols   |     439.327 |     492.54  |     602.444 |
+| 5000 trees<br/>31 leaves<br/>100 cols  |     439.432 |     490.245 |     605.846 |
+| 5000 trees<br/>31 leaves<br/>1000 cols |     571.902 |     640.112 |     827.614 |
