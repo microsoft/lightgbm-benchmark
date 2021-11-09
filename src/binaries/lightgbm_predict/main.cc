@@ -76,7 +76,12 @@ class LightGBMDataReader {
         // open the file for parsing
         int open(const string file_path, int32_t num_features) {
             // use Parser class from LightGBM source code
+#ifdef USE_LIGHTGBM_V321_PARSER
+            // LightGBM::Parser <3.2.1 uses 4 arguments, not 5
+            this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0);
+#else
             this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
+#endif
             if (this->lightgbm_parser == nullptr) {
                 throw std::runtime_error("Could not recognize data format");
             }
