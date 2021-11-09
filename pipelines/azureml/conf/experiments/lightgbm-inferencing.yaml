@@ -44,6 +44,8 @@ lightgbm_inferencing:
   variants:
     - framework: lightgbm_python # v3.3.0 via pypi
     - framework: lightgbm_c_api # v3.3.0 with C API prediction
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+      build: docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction
       build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction
