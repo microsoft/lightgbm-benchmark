@@ -84,7 +84,7 @@ class LightGBMDataReader {
                 this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
 #endif
             } catch (...) {
-                cerr << "Failed during Parser::CreateParser() call"
+                cerr << "Failed during Parser::CreateParser() call";
                 throw;
             }
 
@@ -164,27 +164,36 @@ class LightGBMDataReader {
             }
 
             // get a line from the file handler
-            if(getline(*this->file_handler, input_line)) {
-                this->row_counter++;
-                cout << "ROW line=" << this->row_counter;
-            } else {
-                // if we're done
-                return nullptr;
-            }
+            
+            bool fetched_parsable_line = false;
+            do {
+                if(getline(*this->file_handler, input_line)) {
+                    this->row_counter++;
+                    cout << "ROW line=" << this->row_counter;
+                } else {
+                    // if we're done, let's just return
+                    return nullptr;
+                }
+
+                oneline_features.clear();
+
+                // let's make sure the line is parsable
+                try {
+                    this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
+
+                    // if we go that far, it means the line has been parsed
+                    fetched_parsable_line = true;
+                } catch (...) {
+                    cout << " FAILED" << endl;
+                    cout << "Line: " << input_line << endl;
+                }
+            } while (!fetched_parsable_line);
+
+            cout << " label=" << row_label;
 
             // allocate or re-allocate a new row struct
             csr_row = this->init_row(replace_row, num_features);
             csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
-
-            oneline_features.clear();
-            try {
-                this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
-            } catch (...) {
-                cout << " FAIL";
-                return nullptr;
-            }
-
-            cout << " label=" << row_label;
 
             // convert output from Parser into expected format for C API call
             for (std::pair<int, double>& inner_data : oneline_features) {
