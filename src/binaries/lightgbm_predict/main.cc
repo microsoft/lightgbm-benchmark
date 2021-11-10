@@ -79,9 +79,9 @@ class LightGBMDataReader {
             try {
 #ifdef USE_LIGHTGBM_V321_PARSER
             // LightGBM::Parser <3.2.1 uses 4 arguments, not 5
-                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0);
+                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, 0, 0);
 #else
-                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
+                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, 0, 0, false);
 #endif
             } catch (...) {
                 cerr << "Failed during Parser::CreateParser() call";
