@@ -76,12 +76,18 @@ class LightGBMDataReader {
         // open the file for parsing
         int open(const string file_path, int32_t num_features) {
             // use Parser class from LightGBM source code
+            try {
 #ifdef USE_LIGHTGBM_V321_PARSER
             // LightGBM::Parser <3.2.1 uses 4 arguments, not 5
-            this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0);
+                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0);
 #else
-            this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
+                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
 #endif
+            } catch (...) {
+                cerr << "Failed during Parser::CreateParser() call"
+                throw;
+            }
+
             if (this->lightgbm_parser == nullptr) {
                 throw std::runtime_error("Could not recognize data format");
             }
@@ -171,7 +177,12 @@ class LightGBMDataReader {
             csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
 
             oneline_features.clear();
-            this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
+            try {
+                this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
+            } catch (...) {
+                cout << " FAIL";
+                return nullptr;
+            }
 
             cout << " label=" << row_label;
 
