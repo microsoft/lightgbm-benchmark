@@ -8,7 +8,7 @@ defaults:
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline
-  experiment_name: "benchmark-lightgbm-inferencing-dev" # IMPORTANT
+  experiment_name: "benchmark-lightgbm-inferencing" # IMPORTANT
   regenerate_outputs: false
   continue_on_failure: false
   verbose: false
