@@ -168,6 +168,19 @@ class LightGBMDataReader {
             bool fetched_parsable_line = false;
             do {
                 if(getline(*this->file_handler, input_line)) {
+                    if (!input_line.empty() && input_line.back() == '\n')
+                    {
+                        input_line.pop_back();
+                    }
+                    if (!input_line.empty() && input_line.back() == '\r')
+                    {
+                        input_line.pop_back();
+                    }
+                    if (input_line.empty())
+                    {
+                        cout << "Empty line" << endl;
+                        return nullptr;
+                    }
                     this->row_counter++;
                     cout << "ROW line=" << this->row_counter;
                 } else {
