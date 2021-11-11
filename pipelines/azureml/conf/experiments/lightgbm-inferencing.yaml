@@ -42,12 +42,15 @@ lightgbm_inferencing:
 
   # list all inferencing frameworks and their builds
   variants:
-    - framework: lightgbm_python
-    - framework: lightgbm_python
-      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile # relative to repo root
-    - framework: lightgbm_python
-      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile # relative to repo root
-    - framework: lightgbm_c_api
-    #- framework: lightgbm_c_api_windows
-    - framework: lightgbm_cli
-    - framework: treelite_python
+    - framework: lightgbm_python # v3.3.0 via pypi
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+      build: docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+    - framework: treelite_python # v1.3.0
+    #- framework: lightgbm_c_api_windows # v3.3.0 with C API prediction on Windows compute
+
+

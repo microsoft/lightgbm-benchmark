@@ -1,10 +1,10 @@
-FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20211012.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.2.1/20211109.1"
+FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
+LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0-patch/20211109.1"
 
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
 # dockerfiles in a PR against their actual branch
-ARG lightgbm_version="3.2.1"
+ARG lightgbm_version="3.3.0"
 ARG lightgbm_benchmark_branch=main
 
 RUN apt-get update && \
@@ -16,6 +16,11 @@ RUN apt-get update && \
 RUN git clone --recursive https://github.com/microsoft/LightGBM && \
     cd LightGBM && \
     git checkout tags/v${lightgbm_version}
+
+# Download and apply a particular patch
+RUN cd /LightGBM && \
+    wget https://raw.githubusercontent.com/microsoft/lightgbm-benchmark/32cbb007b61f5bed89af1423c7da250607726a35/pipelines/azureml_sdk15/components/lightgbm_python_custom/lightgbm_custom.python.patch && \
+    git apply --whitespace=fix ./lightgbm_custom.python.patch
 
 # https://lightgbm.readthedocs.io/en/latest/GPU-Tutorial.html#build-lightgbm
 RUN cd /LightGBM && \
@@ -36,7 +41,7 @@ RUN git clone --recursive https://github.com/microsoft/lightgbm-benchmark.git &&
 RUN cd /lightgbm-benchmark/src/binaries/ && \
     mkdir build && \
     cd build && \
-    cmake -DLIGHTGBM_CLONE=/LightGBM -DUSE_LIGHTGBM_V321_PARSER=ON .. && \
+    cmake -DLIGHTGBM_CLONE=/LightGBM .. && \
     cmake --build . --target lightgbm_predict --config Release
 
 # provide env variable with path to built binaries

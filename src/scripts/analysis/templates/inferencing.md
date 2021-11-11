@@ -3,6 +3,9 @@
 !!! note
     The report below has been automatically generated with results from the [lightgbm-benchmark repo](https://github.com/microsoft/lightgbm-benchmark).
 
+!!! warning
+    This is work in progress, to check out current work items check the [project open inferencing issues](https://github.com/microsoft/lightgbm-benchmark/issues?q=is%3Aissue+is%3Aopen+label%3Ainferencing-benchmark). In particular, **do not trust these numbers yet** until we've removed this header!
+
 ## Variants
 
 {{variants_table}}
