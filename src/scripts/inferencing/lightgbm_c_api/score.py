@@ -11,6 +11,7 @@ import logging
 import re
 import lightgbm
 import numpy as np
+import matplotlib.pyplot as plt
 from distutils.util import strtobool
 from subprocess import PIPE
 from subprocess import run as subprocess_run
@@ -214,8 +215,21 @@ class LightGBMCAPIInferecingScript(RunnableScript):
         if len(time_inferencing_per_query) > 1:
             batch_run_times = np.array(time_inferencing_per_query)
             metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
+            metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
             metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
+            metrics_logger.log_metric("batch_time_inferencing_p95_usecs", np.percentile(batch_run_times, 95))
             metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(batch_run_times, bins=100)
+            ax.set_title("Latency-per-query histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            metrics_logger.log_figure(fig, "latency_log_histogram.png")
 
 
 def get_arg_parser(parser=None):
