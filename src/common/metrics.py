@@ -81,6 +81,15 @@ class MetricsLogger():
             key = key[:50]
         mlflow.log_metric(key, value, step=step)
 
+    def log_figure(self, figure, artifact_file):
+        """Logs a figure using mlflow
+        
+        Args:
+            figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
+            artifact_file (str): name of file to record
+        """
+        mlflow.log_figure(figure, artifact_file)
+
     def set_properties(self, **kwargs):
         """Set properties/tags for the session.
         
