@@ -28,11 +28,7 @@ module_loader: # module loading params
 
 lightgbm_inferencing:
   # name of your particular benchmark
-<<<<<<< HEAD
-  benchmark_name: "benchmark-inferencing-20211029e" # need to be provided at runtime!
-=======
   benchmark_name: "benchmark-inferencing-20211109.3" # need to be provided at runtime!
->>>>>>> main
 
   tasks:
     - data:
