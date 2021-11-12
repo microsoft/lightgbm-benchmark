@@ -26,6 +26,8 @@ COMPONENT_ROOT_FOLDER = os.path.abspath(
 
 # modules that should ALSO pass advanced tests (design pattern)
 COMPONENT_SPEC_FILES = [
+    "sample/spec.yaml",
+
     "data_processing/generate_data/spec.yaml",
     "data_processing/lightgbm_data2bin/spec.yaml",
     "data_processing/partition_data/spec.yaml",
