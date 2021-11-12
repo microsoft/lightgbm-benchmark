@@ -111,7 +111,13 @@ class RunnableScript():
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-        # create script instance
+        # construct arg parser
+        parser = cls.get_arg_parser()
+    
+        # if argument parsing fails, or if unknown arguments, will except
+        args, unknown_args = parser.parse_known_args(cli_args)
+
+        # create script instance, initialize mlflow
         script_instance = cls()
 
         if not script_instance.do_not_log_properties:
@@ -120,12 +126,6 @@ class RunnableScript():
                 framework = script_instance.framework,
                 framework_version = script_instance.framework_version
             )
-
-        # construct arg parser
-        parser = script_instance.get_arg_parser()
-    
-        # if argument parsing fails, or if unknown arguments, will except
-        args, unknown_args = parser.parse_known_args(cli_args)
 
         logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
