@@ -69,7 +69,7 @@ lightgbm_training:
     device_type: "cpu"
     nodes: 1
     processes: 1
-    #override_docker: "dockers/lightgbm_cpu_mpi_pip.dockerfile" # relative to lightgbm_python folder
+    #override_docker: "docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile" # relative to lightgbm_python folder
 
     # SWEEP
     sweep_algorithm: "random"
