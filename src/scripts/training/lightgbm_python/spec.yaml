@@ -19,12 +19,12 @@ inputs:
   construct:
     type: Boolean
     description: "use lazy intialization during data loading phase, see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.Dataset.html#lightgbm.Dataset.construct"
-    optional: true
+    default: True
 
   # Input Parameters
   header:
     type: Boolean
-    optional: true
+    default: False
     description: "does data have a header, see https://lightgbm.readthedocs.io/en/latest/Parameters.html#header"
   label_column:
     type: String
@@ -60,6 +60,7 @@ inputs:
   metric:
     # let's not use Enum here to allow for custom metrics
     type: String
+    default: ''
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#metric"
   boosting:
     type: Enum
@@ -113,7 +114,7 @@ inputs:
     description: "https://lightgbm.readthedocs.io/en/latest/Parameters.html#feature_fraction"
   device_type:
     type: Enum
-    optional: true
+    default: 'cpu'
     enum:
       - cpu
       - gpu
@@ -127,7 +128,7 @@ inputs:
   # generic benchmark parameters
   verbose:
     type: Boolean
-    optional: true
+    default: False
   custom_properties:
     type: String
     description: additional custom tags for the job
@@ -143,11 +144,11 @@ launcher:
     python train.py
     --train {inputs.train}
     --test {inputs.test}
-    [--construct {inputs.construct}]
-    [--header {inputs.header}]
+    --construct {inputs.construct}
+    --header {inputs.header}
     [--label_column {inputs.label_column}]
     [--group_column {inputs.group_column}]
-    [--device_type {inputs.device_type}]
+    --device_type {inputs.device_type}
     --objective {inputs.objective}
     --metric {inputs.metric}
     [--label_gain {inputs.label_gain}]
@@ -161,7 +162,7 @@ launcher:
     --max_bin {inputs.max_bin}
     --feature_fraction {inputs.feature_fraction}
     --export_model {outputs.model}
-    [--verbose {inputs.verbose}]
+    --verbose {inputs.verbose}
     [--custom_properties {inputs.custom_properties}]
 
 environment:
