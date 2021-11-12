@@ -76,12 +76,18 @@ class LightGBMDataReader {
         // open the file for parsing
         int open(const string file_path, int32_t num_features) {
             // use Parser class from LightGBM source code
+            try {
 #ifdef USE_LIGHTGBM_V321_PARSER
             // LightGBM::Parser <3.2.1 uses 4 arguments, not 5
-            this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0);
+                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, 0, 0);
 #else
-            this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, num_features, 0, false);
+                this->lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, 0, 0, false);
 #endif
+            } catch (...) {
+                cerr << "Failed during Parser::CreateParser() call";
+                throw;
+            }
+
             if (this->lightgbm_parser == nullptr) {
                 throw std::runtime_error("Could not recognize data format");
             }
@@ -158,22 +164,49 @@ class LightGBMDataReader {
             }
 
             // get a line from the file handler
-            if(getline(*this->file_handler, input_line)) {
-                this->row_counter++;
-                cout << "ROW line=" << this->row_counter;
-            } else {
-                // if we're done
-                return nullptr;
-            }
+            
+            bool fetched_parsable_line = false;
+            do {
+                if(getline(*this->file_handler, input_line)) {
+                    if (!input_line.empty() && input_line.back() == '\n')
+                    {
+                        input_line.pop_back();
+                    }
+                    if (!input_line.empty() && input_line.back() == '\r')
+                    {
+                        input_line.pop_back();
+                    }
+                    if (input_line.empty())
+                    {
+                        cout << "Empty line" << endl;
+                        return nullptr;
+                    }
+                    this->row_counter++;
+                    cout << "ROW line=" << this->row_counter;
+                } else {
+                    // if we're done, let's just return
+                    return nullptr;
+                }
+
+                oneline_features.clear();
+
+                // let's make sure the line is parsable
+                try {
+                    this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
+
+                    // if we go that far, it means the line has been parsed
+                    fetched_parsable_line = true;
+                } catch (...) {
+                    cout << " FAILED" << endl;
+                    cout << "Line: " << input_line << endl;
+                }
+            } while (!fetched_parsable_line);
+
+            cout << " label=" << row_label;
 
             // allocate or re-allocate a new row struct
             csr_row = this->init_row(replace_row, num_features);
             csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
-
-            oneline_features.clear();
-            this->lightgbm_parser->ParseOneLine(input_line.c_str(), &oneline_features, &row_label);
-
-            cout << " label=" << row_label;
 
             // convert output from Parser into expected format for C API call
             for (std::pair<int, double>& inner_data : oneline_features) {
