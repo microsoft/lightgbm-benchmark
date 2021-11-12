@@ -5,5 +5,5 @@ dependencies:
 - python=3.8
 - pip=20.0
 - pip:
-  - azureml-defaults==1.30.0
-  - azureml-mlflow==1.30.0
+  - azureml-defaults==1.35.0
+  - azureml-mlflow==1.35.0
