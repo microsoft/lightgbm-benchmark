@@ -11,7 +11,7 @@ from distutils.util import strtobool
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
-COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 if COMMON_ROOT not in sys.path:
     print(f"Adding {COMMON_ROOT} to PYTHONPATH")
