@@ -67,4 +67,4 @@ lightgbm_training:
     device_type: "gpu"
     nodes: 1
     processes: 1
-    override_docker: "dockers/lightgbm_gpu_pip.dockerfile" # relative to lightgbm_python folder
+    override_docker: "docker/lightgbm-v3.3.0/linux_gpu_pip.dockerfile" # relative to lightgbm_python folder

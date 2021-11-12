@@ -17,10 +17,11 @@ from shrike.pipeline.pipeline_helper import AMLPipelineHelper
 from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
-LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
+LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
 if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
-    sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
+    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT}/src/ to path")
+    sys.path.append(str(os.path.join(LIGHTGBM_BENCHMARK_ROOT, "src")))
 
 from common.sweep import SweepParameterParser
 from common.tasks import training_task, training_variant
@@ -379,7 +380,7 @@ class LightGBMTraining(AMLPipelineHelper):
 
                 # optional: override environment (ex: to test custom builds)
                 if 'override_docker' in runsettings and runsettings['override_docker']:
-                    custom_docker = Docker(file=os.path.join(config.module_loader.local_steps_folder, "lightgbm_python", runsettings['override_docker']))
+                    custom_docker = Docker(file=os.path.join(LIGHTGBM_BENCHMARK_ROOT, runsettings['override_docker']))
                     lightgbm_train_step.runsettings.environment.configure(
                         docker=custom_docker,
                         os=runsettings.get('override_os', 'Linux')
