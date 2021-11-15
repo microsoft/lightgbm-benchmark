@@ -4,6 +4,8 @@ project(lightgbm_benchmark_utils VERSION 0.3.0)
 set(SOURCE_CODE
     ./lightgbm_predict/main.cc)
 
+include_directories("./common")
+
 if(LIGHTGBM_CLONE)
     if(NOT DEFINED LIGHTGBM_SRC)
         set(LIGHTGBM_SRC ${LIGHTGBM_CLONE}/src)
@@ -18,7 +20,7 @@ endif()
 
 if(LIGHTGBM_SRC)
     message(STATUS "Looking for lightgbm/src/ at ${LIGHTGBM_SRC}")
-    add_executable(lightgbm_predict ./lightgbm_predict/main.cc ${LIGHTGBM_SRC}/io/parser.hpp ${LIGHTGBM_SRC}/io/parser.cpp ${LIGHTGBM_SRC}/io/file_io.cpp)
+    add_executable(lightgbm_predict ./lightgbm_predict/main.cc ./common/custom_loader.hpp ${LIGHTGBM_SRC}/io/parser.hpp ${LIGHTGBM_SRC}/io/parser.cpp ${LIGHTGBM_SRC}/io/file_io.cpp)
 else()
     message(SEND_ERROR "We could not find lightgbm/src/. Please provide -DLIGHTGBM_SRC=... to cmake command")
 endif()
