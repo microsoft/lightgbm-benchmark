@@ -29,6 +29,10 @@ struct CSRDataRow_t {
 
     // number of null elements in the row (?)
     int64_t null_elem;
+
+    // some metadata for debugging
+    int32_t file_line_index;
+    float row_label;
 };
 
 // class to read libsvm file and iterate on each line

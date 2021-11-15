@@ -130,11 +130,10 @@ CSRDataRow_t * LightGBMDataReader::iter(CSRDataRow_t * replace_row) {
             }
             if (input_line.empty())
             {
-                cout << "Empty line" << endl;
+                cout << "LOG empty line at " << row_counter+1 << endl;
                 return nullptr;
             }
             row_counter++;
-            cout << "ROW line=" << row_counter;
         } else {
             // if we're done, let's just return
             return nullptr;
@@ -149,16 +148,15 @@ CSRDataRow_t * LightGBMDataReader::iter(CSRDataRow_t * replace_row) {
             // if we go that far, it means the line has been parsed
             fetched_parsable_line = true;
         } catch (...) {
-            cout << " FAILED" << endl;
-            cout << "Line: " << input_line << endl;
+            cout << "FAILED at line " << row_counter << " : " << input_line << endl;
         }
     } while (!fetched_parsable_line);
-
-    cout << " label=" << row_label;
 
     // allocate or re-allocate a new row struct
     csr_row = init_row(replace_row, num_features);
     csr_row->row_headers[0] = 0; // memory index begin of row (0, duh)
+    csr_row->row_label = row_label;
+    csr_row->file_line_index = row_counter;
 
     // convert output from Parser into expected format for C API call
     for (std::pair<int, double>& inner_data : oneline_features) {
@@ -187,6 +185,5 @@ CSRDataRow_t * LightGBMDataReader::iter(CSRDataRow_t * replace_row) {
         csr_row->num_features = num_features;
     }
 
-    cout << " null_elem=" << csr_row->null_elem;
     return csr_row;
 };

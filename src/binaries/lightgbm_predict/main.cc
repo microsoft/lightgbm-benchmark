@@ -14,8 +14,6 @@ Licensed under the MIT license.
 #include <chrono>
 
 #include "LightGBM/c_api.h" // in LightGBM includes
-#include "LightGBM/dataset.h" // in LightGBM includes
-
 #include "custom_loader.hpp" // in common folder
 
 using std::cout; 
@@ -116,18 +114,22 @@ int main(int argc, char* argv[]) {
             auto t2 = high_resolution_clock::now();
 
             if (ret_val != 0) {
-                std::cout << endl << "ERROR failed prediction for some reason" << endl;
+                std::cout << "ERROR failed prediction for some reason" << endl;
             } else {
+                // now do some stdout prints
+                std::cout << "ROW line=" << csr_row->file_line_index;
+                std::cout << " label=" << csr_row->row_label;
+                std::cout << " null_elem=" << csr_row->null_elem;
                 std::cout << " prediction=" << out_result[0];
+
+                // compute metric
+                duration<double> ms_double = t2 - t1;
+                std::cout << " time_usecs=" << ms_double.count()*1000000 << endl;
+
+                // record the rest and iterate
+                prediction_per_request += ms_double.count();
+                count_request++;
             }
-
-            // compute metric
-            duration<double> ms_double = t2 - t1;
-            std::cout << " time_usecs=" << ms_double.count()*1000000 << endl;
-
-            // record the rest and iterate
-            prediction_per_request += ms_double.count();
-            count_request++;
         } catch (std::exception e) {
             std::cout << endl << "ERROR exception" << endl;
         }
