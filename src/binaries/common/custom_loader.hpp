@@ -52,7 +52,7 @@ class LightGBMDataReader {
         ~LightGBMDataReader();
 
         // open the file for parsing
-        int open(const std::string file_path, int32_t num_features);
+        int open(const std::string file_path, int32_t init_num_features);
 
         // close the file handler (duh)
         void close();

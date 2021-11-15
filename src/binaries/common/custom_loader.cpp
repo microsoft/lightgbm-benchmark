@@ -26,14 +26,14 @@ LightGBMDataReader::~LightGBMDataReader() {};
 
 
 // open the file for parsing
-int LightGBMDataReader::open(const string file_path, int32_t num_features) {
+int LightGBMDataReader::open(const string file_path, int32_t init_num_features) {
     // use Parser class from LightGBM source code
     try {
 #ifdef USE_LIGHTGBM_V321_PARSER
     // LightGBM::Parser <3.2.1 uses 4 arguments, not 5
-        lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, 0, 0);
+        lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, init_num_features, 0);
 #else
-        lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, 0, 0, false);
+        lightgbm_parser = Parser::CreateParser(file_path.c_str(), false, init_num_features, 0, false);
 #endif
     } catch (...) {
         cerr << "Failed during Parser::CreateParser() call";
@@ -45,7 +45,7 @@ int LightGBMDataReader::open(const string file_path, int32_t num_features) {
     }
 
     // but handle file reading separately
-    num_features = num_features;
+    num_features = init_num_features;
     file_handler = new ifstream(file_path);
     string line;
 
