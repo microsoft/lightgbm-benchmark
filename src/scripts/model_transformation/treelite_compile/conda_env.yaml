@@ -9,3 +9,6 @@ dependencies:
   - azureml-mlflow==1.35.0
   - treelite==2.1.0
   - treelite_runtime==2.1.0
+  - pandas>=1.1,<1.2
+  - numpy>=1.10,<1.20
+  
