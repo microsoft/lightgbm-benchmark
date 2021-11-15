@@ -1,3 +1,8 @@
+/*
+Copyright (c) Microsoft Corporation.
+Licensed under the MIT license.
+*/
+
 #ifndef LIGHTGBM_BENCHMARK_COMMON_CUSTOM_LOADER_H_
 #define LIGHTGBM_BENCHMARK_COMMON_CUSTOM_LOADER_H_
 
