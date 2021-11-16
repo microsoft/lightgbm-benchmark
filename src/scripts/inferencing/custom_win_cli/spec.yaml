@@ -1,0 +1,39 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: custom_win_cli_score
+version: 1.0.0
+display_name: "Custom Binaries (Windows)"
+type: CommandComponent
+description: "Running custom windows binaries for inferencing"
+is_deterministic: true
+inputs:
+  data:
+    type: AnyDirectory
+    description: directory to the inference data
+    optional: false
+  model:
+    type: AnyDirectory
+    description: directory to the model
+    optional: false
+  n_threads:
+    type: Integer
+    optional: true
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job
+    optional: true
+
+command: >-
+  python score.py
+  --data {inputs.data}
+  --model {inputs.model}
+  [--num_threads {inputs.n_threads}]
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
+
+environment:
+  docker:
+    image: mcr.microsoft.com/azureml/windows-servercore-1809:latest
+  os: "Windows"
