@@ -141,3 +141,4 @@ outputs/
 # ignore aml references
 pipelines/azureml/conf/aml/
 pipelines/azureml/conf/compute/
+src/scripts/inferencing/custom_win_cli/static_binaries/

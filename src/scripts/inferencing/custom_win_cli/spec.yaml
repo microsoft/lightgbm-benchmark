@@ -36,4 +36,7 @@ command: >-
 environment:
   docker:
     image: mcr.microsoft.com/azureml/windows-servercore-1809:latest
+  conda:
+    # conda file path is resolved after additional includes
+    conda_dependencies_file: conda_env.yaml
   os: "Windows"
