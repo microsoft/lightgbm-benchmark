@@ -2,15 +2,13 @@
 # Licensed under the MIT license.
 
 """
-LightGBM/CLI inferencing script
+Custom Binaries inferencing script
 """
 import os
 import sys
 import argparse
 import logging
 from distutils.util import strtobool
-import lightgbm
-from lightgbm import Booster, Dataset
 from subprocess import PIPE
 from subprocess import run as subprocess_run
 from subprocess import TimeoutExpired
@@ -97,9 +95,9 @@ class CustomCLIInferencingScript(RunnableScript):
             BINARY_FILE_PATH,
             f"model={args.model}",
             f"data={args.data}",
-            "verbosity=2",
-            f"num_threads={args.num_threads}",
-            f"predict_disable_shape_check=True"
+            #"verbosity=2",
+            #f"num_threads={args.num_threads}",
+            #f"predict_disable_shape_check=True"
         ]
 
         if args.output:
@@ -116,9 +114,9 @@ class CustomCLIInferencingScript(RunnableScript):
                 check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
                 timeout=None
             )
-            logger.info(f"LightGBM stdout: {custom_cli_call.stdout}")
-            logger.info(f"LightGBM stderr: {custom_cli_call.stderr}")
-            logger.info(f"LightGBM return code: {custom_cli_call.returncode}")
+            logger.info(f"RETURN CODE: {custom_cli_call.returncode}")
+            logger.info(f"STDOUT: {custom_cli_call.stdout}")
+            logger.info(f"STDERR: {custom_cli_call.stderr}")
 
         # apply any post processing on logs here (ex: extract metrics)
 
