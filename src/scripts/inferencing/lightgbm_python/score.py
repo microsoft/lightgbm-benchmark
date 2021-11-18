@@ -105,10 +105,23 @@ class LightGBMPythonInferecingScript(RunnableScript):
 
         logger.info(f"Running .predict()")
         with metrics_logger.log_time_block("time_inferencing"):
-            booster.predict(
+            predictions_array = booster.predict(
                 data=inference_raw_data,
                 num_threads=args.num_threads,
                 predict_disable_shape_check=bool(args.predict_disable_shape_check)
+            )
+        
+        if args.output:
+            numpy.savetxt(
+                args.output,
+                predictions_array,
+                fmt='%f',
+                delimiter=',',
+                newline='\n',
+                header='',
+                footer='',
+                comments='# ',
+                encoding=None
             )
 
 
