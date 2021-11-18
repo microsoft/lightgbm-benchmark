@@ -152,9 +152,6 @@ class LightGBMCAPIInferecingScript(RunnableScript):
             f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
         ]
 
-        if args.output:
-            lightgbm_predict_command.append(f"output_result={args.output}")
-
         # create custom environment variables for the exec
         custom_env = os.environ.copy()
 
@@ -188,12 +185,14 @@ class LightGBMCAPIInferecingScript(RunnableScript):
 
         # now parsing executable logs for prediction per query time in ms
         time_inferencing_per_query = []
+        predictions_array = []
         for line in lightgbm_predict_call.stdout.split("\n"):
             if line.startswith("ROW"):
                 row_pattern = r"ROW line=([0-9\.]+) label=([0-9\.e\-]+) null_elem=([0-9\.]+) prediction=([0-9\.e\-]+) time_usecs=([0-9\.e\-]+)"
                 row_matched = re.match(row_pattern, line.strip())
                 if row_matched:
                     time_inferencing_per_query.append(float(row_matched.group(5)))
+                    predictions_array.append(float(row_matched.group(4)))
                 else:
                     logger.warning(f"log row {line} does not match expected pattern {row_pattern}")
             elif line.startswith("METRIC"):
@@ -231,6 +230,18 @@ class LightGBMCAPIInferecingScript(RunnableScript):
             # record in mlflow
             metrics_logger.log_figure(fig, "latency_log_histogram.png")
 
+        if args.output:
+            np.savetxt(
+                args.output,
+                predictions_array,
+                fmt='%f',
+                delimiter=',',
+                newline='\n',
+                header='',
+                footer='',
+                comments='# ',
+                encoding=None
+            )
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """
