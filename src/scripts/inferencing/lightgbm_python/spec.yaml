@@ -39,7 +39,7 @@ command: >-
   --model {inputs.model}
   --output {outputs.predictions}
   [--num_threads {inputs.n_threads}]
-  [--predict_disable_shape_check {inputs.predict_disable_shape_check}]
+  --predict_disable_shape_check {inputs.predict_disable_shape_check}
   --verbose {inputs.verbose}
   --custom_properties {inputs.custom_properties}
 
