@@ -1,4 +1,4 @@
-name: treelite_conda_env
+name: custom_win_conda_env
 channels:
 - defaults
 dependencies:
