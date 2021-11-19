@@ -25,13 +25,15 @@ if COMMON_ROOT not in sys.path:
 from common.components import RunnableScript
 from common.io import input_file_path
 
-# STEP 1 : provide or verify these
+# STEP 1 : provide the name of your binary executable
+# (copy it inside the static_binaries subfolder)
 BINARY_FILE_NAME = "custom.exe" # <<< rename to fit your binary
 BINARIES_FOLDER = os.path.join(os.path.dirname(__file__), "static_binaries")
 BINARY_FILE_PATH = os.path.join(os.path.dirname(__file__), "static_binaries", BINARY_FILE_NAME)
 
 class CustomCLIInferencingScript(RunnableScript):
     def __init__(self):
+        # STEP 2 : feel free to update those to reflect your custom binary framework/version
         super().__init__(
             task="score",
             framework="custom_bin",
@@ -54,6 +56,10 @@ class CustomCLIInferencingScript(RunnableScript):
         # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
+        # STEP 3 : below are the arguments that will be passed
+        # by the inferencing benchmark pipeline, if you want to add more arguments
+        # you will have to modify the pipeline itself
+        # alternatively, you can hardcode values in the custom_cli_command list below (see STEP 4)
         group_i = parser.add_argument_group("Input Data")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
@@ -90,21 +96,25 @@ class CustomCLIInferencingScript(RunnableScript):
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
-        # STEP 2: write the command for your custom cli as a list
+        # STEP 4: write the command for your custom cli as a list
+        # the example below corresponds to commands for lightgbm_cli.exe
+        # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
         custom_cli_command = [
             BINARY_FILE_PATH,
+            "task=prediction",
             f"model={args.model}",
             f"data={args.data}",
-            #"verbosity=2",
-            #f"num_threads={args.num_threads}",
+            "verbosity=2",
+            f"num_threads={args.num_threads}",
             #f"predict_disable_shape_check=True"
         ]
 
+        # STEP 5 : if you need to add an output
+        # the example below corresponds to commands for lightgbm_cli.exe
         if args.output:
-            custom_cli_command.append(f"output_result={args.output}")
+            custom_cli_command.append(f"output_result ={args.output}")
 
-
-        logger.info(f"Running .predict()")
+        logger.info(f"Running custom command: {custom_cli_command}")
         with metrics_logger.log_time_block(metric_name="time_inferencing"):
             custom_cli_call = subprocess_run(
                 custom_cli_command,
@@ -114,11 +124,11 @@ class CustomCLIInferencingScript(RunnableScript):
                 check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
                 timeout=None
             )
-            logger.info(f"RETURN CODE: {custom_cli_call.returncode}")
-            logger.info(f"STDOUT: {custom_cli_call.stdout}")
-            logger.info(f"STDERR: {custom_cli_call.stderr}")
+        logger.info(f"RETURN CODE: {custom_cli_call.returncode}")
+        logger.info(f"STDOUT: {custom_cli_call.stdout}")
+        logger.info(f"STDERR: {custom_cli_call.stderr}")
 
-        # apply any post processing on logs here (ex: extract metrics)
+        # OPTIONAL: apply any post processing on logs here (ex: extract metrics)
 
 
 def get_arg_parser(parser=None):
