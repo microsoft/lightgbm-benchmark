@@ -24,6 +24,7 @@ from typing import Optional, List
 from azure.ml.component import Component
 from azure.ml.component import dsl
 from shrike.pipeline.pipeline_config import default_config_dict
+from shrike.pipeline.aml_connect import azureml_connect, current_workspace
 
 # when running this script directly, needed to import common
 LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -62,22 +63,22 @@ generate_data_component = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_
 ### DATA GENERATION TASKS ###
 
 @dsl.pipeline(name="generate_all_datasets", # pythonic name
-              non_pipeline_parameters=["data_generation_config"])
-def all_inferencing_tasks_pipeline_function(data_generation_config):
+              non_pipeline_parameters=["config"])
+def all_inferencing_tasks_pipeline_function(config):
     benchmark_custom_properties = json.dumps({
-        'benchmark_name' : data_generation_config.benchmark_name
+        'benchmark_name' : config.data_generation.benchmark_name
     })
     full_pipeline_description="\n".join([
         "Generate all datasets for lightgbm benchmark",
         "```yaml""",
-        OmegaConf.to_yaml(data_generation_config),
+        OmegaConf.to_yaml(config.data_generation),
         "```"
     ])
 
     if len(full_pipeline_description) > 5000:
         full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
-    for generation_task in data_generation_config.tasks:
+    for generation_task in config.data_generation.tasks:
         generate_data_step = generate_data_component(
             learning_task = generation_task.task,
             train_samples = generation_task.train_samples,
@@ -90,9 +91,9 @@ def all_inferencing_tasks_pipeline_function(data_generation_config):
             custom_properties = benchmark_custom_properties
         )
 
-        if data_generation_config.register_outputs:
+        if config.data_generation.register_outputs:
             dataset_prefix = "{prefix}-{task}-{cols}cols".format(
-                prefix=data_generation_config.register_outputs_prefix,
+                prefix=config.data_generation.register_outputs_prefix,
                 task=generation_task.task,
                 cols=generation_task.n_features
             )
@@ -110,17 +111,33 @@ def all_inferencing_tasks_pipeline_function(data_generation_config):
                 create_new_version=True
             )  
 
+def run(pipeline_config):
+    pipeline_instance = all_inferencing_tasks_pipeline_function(pipeline_config)
+
+    # Connect to AzureML
+    workspace = azureml_connect(
+        aml_subscription_id=pipeline_config.aml.subscription_id,
+        aml_resource_group=pipeline_config.aml.resource_group,
+        aml_workspace_name=pipeline_config.aml.workspace_name,
+        aml_auth=pipeline_config.aml.auth,
+        aml_tenant=pipeline_config.aml.tenant,
+        #aml_force=pipeline_config.aml.force,
+    )  # NOTE: this also stores aml workspace in internal global variable
+
+    # Submit or Validate ?
+    pipeline_instance.validate(workspace=workspace)
+
 
 def cli_main():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--experiment-conf", required=True)
+    arg_parser.add_argument("--exp-conf", required=True)
     args, hydra_args = arg_parser.parse_known_args()
 
     #config_dict = default_config()
     # resolve config_dir and config_name
-    config_abspath = os.path.abspath(args.experiment_conf)
+    config_abspath = os.path.abspath(args.exp_conf)
     print(f"CONFIG_PATH={CONFIG_PATH}")
-    print(f"config_path={args.experiment_conf}")
+    print(f"config_path={args.exp_conf}")
     print(f"config_abspath={config_abspath}")
     print(f"unknown_args={hydra_args}")
 
@@ -132,6 +149,9 @@ def cli_main():
     def hydra_main(cfg : DictConfig) -> None:
         #cfg = OmegaConf.merge(config_dict, cfg)
         print(OmegaConf.to_yaml(cfg))
+
+        run(cfg)
+
 
     # override argv with only unknown args
     sys.argv = [sys.argv[0]] + hydra_args
