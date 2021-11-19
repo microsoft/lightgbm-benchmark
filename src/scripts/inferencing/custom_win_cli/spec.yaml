@@ -25,10 +25,15 @@ inputs:
     description: additional custom tags for the job
     optional: true
 
+outputs:
+  predictions:
+    type: AnyDirectory
+
 command: >-
   python score.py
   --data {inputs.data}
   --model {inputs.model}
+  --output {outputs.predictions}
   [--num_threads {inputs.n_threads}]
   [--verbose {inputs.verbose}]
   [--custom_properties {inputs.custom_properties}]
