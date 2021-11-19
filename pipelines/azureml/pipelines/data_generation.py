@@ -9,22 +9,32 @@ to execute:
 import os
 import sys
 import json
+import logging
+import argparse
+
+# config management
 from dataclasses import dataclass
-from omegaconf import MISSING, OmegaConf
+import hydra
+from hydra.core.config_store import ConfigStore
+from hydra.core.hydra_config import HydraConfig
+from omegaconf import DictConfig, OmegaConf, MISSING
 from typing import Optional, List
+
+# AzureML
+from azure.ml.component import Component
 from azure.ml.component import dsl
-from shrike.pipeline.pipeline_helper import AMLPipelineHelper
-from azure.ml.component.environment import Docker
+from shrike.pipeline.pipeline_config import default_config_dict
 
 # when running this script directly, needed to import common
-LIGHTGBM_BENCHMARK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src'))
-COMPONENTS_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'src', 'scripts'))
+LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+SCRIPTS_SOURCES_ROOT = os.path.join(LIGHTGBM_REPO_ROOT, 'src')
+COMPONENTS_ROOT = os.path.join(LIGHTGBM_REPO_ROOT, 'src', 'scripts')
+CONFIG_PATH = os.path.join(LIGHTGBM_REPO_ROOT, 'pipelines', 'azureml', 'conf')
 
-if LIGHTGBM_BENCHMARK_ROOT not in sys.path:
-    print(f"Adding {LIGHTGBM_BENCHMARK_ROOT} to path")
-    sys.path.append(str(LIGHTGBM_BENCHMARK_ROOT))
+if SCRIPTS_SOURCES_ROOT not in sys.path:
+    logging.info(f"Adding {SCRIPTS_SOURCES_ROOT} to path")
+    sys.path.append(str(SCRIPTS_SOURCES_ROOT))
 
-from common.sweep import SweepParameterParser
 from common.tasks import data_generation_task
 
 ### CONFIG DATACLASS ###
@@ -47,7 +57,7 @@ class data_generation: # pylint: disable=invalid-name
 
 ### PIPELINE COMPONENTS ###
 
-generate_data_component = Component.from_yaml(os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
+generate_data_component = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
 
 ### DATA GENERATION TASKS ###
 
@@ -68,7 +78,7 @@ def all_inferencing_tasks_pipeline_function(data_generation_config):
         full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     for generation_task in data_generation_config.tasks:
-        generate_data_step = generate_data_module(
+        generate_data_step = generate_data_component(
             learning_task = generation_task.task,
             train_samples = generation_task.train_samples,
             test_samples = generation_task.test_samples,
@@ -87,23 +97,47 @@ def all_inferencing_tasks_pipeline_function(data_generation_config):
                 cols=generation_task.n_features
             )
             
-            generation_task_subgraph_step.outputs.train.register_as(
+            generate_data_step.outputs.train.register_as(
                 name=f"{dataset_prefix}-{generation_task.train_samples}samples-train",
                 create_new_version=True
             )  
-            generation_task_subgraph_step.outputs.test.register_as(
+            generate_data_step.outputs.test.register_as(
                 name=f"{dataset_prefix}-{generation_task.test_samples}samples-test",
                 create_new_version=True
             )  
-            generation_task_subgraph_step.outputs.inference.register_as(
+            generate_data_step.outputs.inference.register_as(
                 name=f"{dataset_prefix}-{generation_task.inferencing_samples}samples-inference",
                 create_new_version=True
             )  
 
 
-def main():
+def cli_main():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("--experiment-conf", required=True)
+    args, hydra_args = arg_parser.parse_known_args()
+
+    #config_dict = default_config()
+    # resolve config_dir and config_name
+    config_abspath = os.path.abspath(args.experiment_conf)
+    print(f"CONFIG_PATH={CONFIG_PATH}")
+    print(f"config_path={args.experiment_conf}")
+    print(f"config_abspath={config_abspath}")
+    print(f"unknown_args={hydra_args}")
+
+    # hacky, need a better solution
+    config_name = os.path.relpath(config_abspath, start=CONFIG_PATH).replace("\\","/").rstrip(".yaml")
+    print(f"config_name={config_name}")
+
+    @hydra.main(config_path=CONFIG_PATH, config_name=config_name)
+    def hydra_main(cfg : DictConfig) -> None:
+        #cfg = OmegaConf.merge(config_dict, cfg)
+        print(OmegaConf.to_yaml(cfg))
+
+    # override argv with only unknown args
+    sys.argv = [sys.argv[0]] + hydra_args
+    hydra_main()
 
 
 # NOTE: main block is necessary only if script is intended to be run from command line
 if __name__ == "__main__":
-    main()
+    cli_main()
