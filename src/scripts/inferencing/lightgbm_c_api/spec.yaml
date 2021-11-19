@@ -47,7 +47,7 @@ environment:
   docker:
     build:
       # file path is resolved after additional includes
-      dockerfile: file:./docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
+      dockerfile: file:./default.dockerfile
   conda:
     userManagedDependencies: true
   os: "Linux"
