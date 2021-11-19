@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: treelite_score
-version: 1.0.0
+version: 1.0.1
 display_name: "Treelite Inferencing (Python API)"
 type: CommandComponent
 description: "Use Treelite Python API for inferencing"

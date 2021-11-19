@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: lightgbm_python_score
-version: 1.0.0
+version: 1.0.1
 display_name: "LightGBM Inferencing (Python API)"
 type: CommandComponent
 description: "LightGBM inferencing using the Python API."

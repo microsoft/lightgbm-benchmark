@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: generate_synthetic_data
-version: 1.0.0
+version: 1.0.1
 display_name: "Generate Synthetic Data (small)"
 type: CommandComponent
 description: "generate synthetic data using scikit-learn make_* functions"
