@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: sample_module
-version: 1.0.0
+version: 1.0.1
 display_name: "Sample Module"
 type: CommandComponent
 description: A sample module to implement your own
