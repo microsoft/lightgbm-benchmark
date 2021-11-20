@@ -27,7 +27,7 @@ from common.io import input_file_path
 
 # STEP 1 : provide the name of your binary executable
 # (copy it inside the static_binaries subfolder)
-BINARY_FILE_NAME = "custom.exe" # <<< rename to fit your binary
+BINARY_FILE_NAME = "lightgbm.exe" # <<< rename to fit your binary
 BINARIES_FOLDER = os.path.join(os.path.dirname(__file__), "static_binaries")
 BINARY_FILE_PATH = os.path.join(os.path.dirname(__file__), "static_binaries", BINARY_FILE_NAME)
 
