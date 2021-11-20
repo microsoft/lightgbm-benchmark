@@ -1,9 +1,9 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: treelite_score
-version: 1.0.0
+version: 1.0.1
 display_name: "Treelite Inferencing (Python API)"
 type: CommandComponent
-description: treelite score
+description: "Use Treelite Python API for inferencing"
 is_deterministic: true
 
 inputs:
@@ -20,7 +20,7 @@ inputs:
     optional: true
   verbose:
     type: Boolean
-    optional: true
+    default: False
   custom_properties:
     type: String
     description: additional custom tags for the job
@@ -32,7 +32,7 @@ command: >-
   --data {inputs.data}
   --so_path {inputs.compiled_model}
   [--num_threads {inputs.n_threads}]
-  [--verbose {inputs.verbose}]
+  --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
 
 environment:

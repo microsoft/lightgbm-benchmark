@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: generate_synthetic_data
-version: 1.0.0
+version: 1.0.1
 display_name: "Generate Synthetic Data (small)"
 type: CommandComponent
 description: "generate synthetic data using scikit-learn make_* functions"
@@ -43,7 +43,7 @@ inputs:
     optional: true
   verbose:
     type: Boolean
-    optional: true
+    default: False
   custom_properties:
     type: String
     description: additional custom tags for the job (as json dict)
@@ -70,7 +70,7 @@ command: >-
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}
-  [--verbose {inputs.verbose}]
+  --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
 
 environment:

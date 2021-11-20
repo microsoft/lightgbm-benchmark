@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: lightgbm_python_data2bin
-version: 1.0.0
+version: 1.0.1
 display_name: "Save LightGBM data to binary (Python API)"
 type: CommandComponent
 description: "Uses lightgbm.Dataset() construct and save_binary to save training/testing data in binary format."
