@@ -8,13 +8,13 @@ import tempfile
 import pytest
 from unittest.mock import patch
 
-from scripts.lightgbm_python import train
-from scripts.lightgbm_python import score
+from scripts.training.lightgbm_python import train
+from scripts.inferencing.lightgbm_python import score
 
 # IMPORTANT: see conftest.py for fixtures
 
 def test_lightgbm_python_train(temporary_dir, regression_train_sample, regression_test_sample):
-    """Tests src/scripts/lightgbm_python/train.py"""
+    """Tests src/scripts/training/lightgbm_python/train.py"""
     model_dir = os.path.join(temporary_dir, "model")
 
     # create test arguments for the script
@@ -49,7 +49,7 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
 
 
 def test_lightgbm_python_score(temporary_dir, regression_model_sample, regression_inference_sample):
-    """Tests src/scripts/lightgbm_python/score.py"""
+    """Tests src/scripts/inferencing/lightgbm_python/score.py"""
     predictions_dir = os.path.join(temporary_dir, "predictions")
 
     # create test arguments for the script
@@ -65,4 +65,4 @@ def test_lightgbm_python_score(temporary_dir, regression_model_sample, regressio
         score.main()
 
     # test expected outputs
-    #assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))
+    assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))

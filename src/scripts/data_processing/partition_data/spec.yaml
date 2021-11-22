@@ -1,0 +1,60 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: partition_data
+version: 1.0.1
+display_name: "Partition Data"
+type: CommandComponent
+description: Split one dataset into multiple files
+is_deterministic: true
+
+inputs:
+  input_data:
+    type: AnyDirectory
+    description: Directory of input data (flat text file)
+  mode:
+    type: Enum
+    description: How data is partition
+    enum:
+    - roundrobin
+    - chunk
+    - append
+    default: roundrobin
+  number:
+    type: Integer
+    description: If roundrobin number of partition, if chunk number of records per
+      partition
+    min: 1
+  header:
+    type: Boolean
+    description : "Should we preserve firstline into each partition?"
+    optional: True
+
+  # generic benchmark parameters
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job
+    optional: true
+
+outputs:
+  output_data:
+    type: AnyDirectory
+    description: partitioned dataset
+
+command: >-
+  python partition.py
+  --input {inputs.input_data}
+  --output {outputs.output_data}
+  --mode {inputs.mode}
+  --number {inputs.number}
+  [--header {inputs.header}]
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
+
+environment:
+  docker:
+    image: mcr.microsoft.com/azureml/base:latest
+  conda:
+    conda_dependencies_file: conda_env.yml
+  os: Linux

@@ -5,7 +5,10 @@
 This script is a tutorial sample script to explain how all the benchmark
 scripts are structured and standardized using the `RunnableScript` helper class.
 
-See `src/common/components.py` for details on that class.
+We've numbered the steps you need to modify and adapt this sample script
+to your own needs.
+
+Follow each STEP below, and their associated TODO.
 """
 import os
 import sys
@@ -30,25 +33,48 @@ from common.components import RunnableScript
 
 class SampleScript(RunnableScript):
     """
+    STEP 1 : Package your script as a class.
+
     This class inherits from RunnableScript, that factors
     duplicate code to achieve usual routines
     of every script in the lightgbm-benchmark repo.
+    
+    It has a standard main() function (see below)
+    that you should not need to modify except for edge cases.
+
+    See `src/common/components.py` for details on that class.
+
+    TODO: name your class specifically for this script
     """
     def __init__(self):
-        """ Specific constructor for this SampleScript class. It has no arguments,
-        as it will be called from the helper `main()` method.
         """
-        # you need to call the super constructor with these parameters
+        STEP 3 : Define your benchmark "task" in the constructor.
+        
+        This Specific constructor for this SampleScript class. It has no arguments,
+        as it will be called from the helper `main()` method.
+
+        In your custom script class, you need to call the super constructor with the parameters below.
+
+        TODO: pick your task (score, train, generate, compile, ...)
+        TODO: name your framework and version
+        """
         super().__init__(
-            task="sample_task",
-            framework="sample_framework",
-            framework_version="0.0.1"
+            task="sample_task", # str
+            framework="sample_framework", # str
+            framework_version="0.0.1" # str
         )
 
     @classmethod
     def get_arg_parser(cls, parser=None):
-        """Adds component/module arguments to a given argument parser.
+        """
+        STEP 4 : Define your arguments
+        
+        This method will be called by the main() function
+        to add your script custom arguments to argparse,
+        on top of standard arguments of the benchmark.
 
+        TODO: align this section with your requirements.
+        
         Args:
             parser (argparse.ArgumentParser): an existing argument parser instance
 
@@ -86,8 +112,11 @@ class SampleScript(RunnableScript):
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
-        """The run function of your script. You are required to override this method
-        with your own implementation.
+        """
+        STEP 5 : Define your run function.
+        
+        This is the core function of your script.
+        You are required to override this method with your own implementation.
 
         Args:
             args (argparse.namespace): command line arguments provided to script
@@ -127,12 +156,26 @@ class SampleScript(RunnableScript):
 
 
 def get_arg_parser(parser=None):
-    """ To ensure compatibility with shrike unit tests """
+    """
+    STEP 2: main function block
+
+    The section below (get_arg_parser(), main() and main block) should go unchanged,
+    except for the name of your class.
+
+    Those are standard functions we enforce in order to get some unit tests
+    on the module (arguments parsing mainly).
+
+    To ensure compatibility with shrike unit tests
+    
+    TODO: just replace SampleScript to the name of your class
+    """
     return SampleScript.get_arg_parser(parser)
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """
-    SampleScript.main()
+    SampleScript.main(cli_args)
 
 if __name__ == "__main__":
+    # The main function is defined in src/common/components.py
+    # and is standard to all scripts.
     main()

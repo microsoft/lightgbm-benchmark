@@ -7,7 +7,7 @@ import tempfile
 import pytest
 from unittest.mock import patch
 
-from scripts.partition_data import partition
+from scripts.data_processing.partition_data import partition
 
 # IMPORTANT: see conftest.py for fixtures
 
@@ -28,7 +28,7 @@ def verify_partitioned_files(partitioned_data_dir, expected_file_count, expected
         assert (count+1) == expected_file_length # expected size of each chunk
 
 def test_partition_data_roundrobin(temporary_dir, regression_train_sample):
-    """Tests src/scripts/partition_data/partition.py"""
+    """Tests src/scripts/data_processing/partition_data/partition.py"""
     partitioned_data_dir = os.path.join(temporary_dir, "partitioned_data")
 
     # create test arguments for the script
@@ -54,7 +54,7 @@ def test_partition_data_roundrobin(temporary_dir, regression_train_sample):
     )
 
 def test_partition_data_chunk(temporary_dir, regression_train_sample):
-    """Tests src/scripts/partition_data/partition.py"""
+    """Tests src/scripts/data_processing/partition_data/partition.py"""
     partitioned_data_dir = os.path.join(temporary_dir, "partitioned_data")
 
     # create test arguments for the script

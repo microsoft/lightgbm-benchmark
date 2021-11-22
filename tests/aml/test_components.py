@@ -26,13 +26,20 @@ COMPONENT_ROOT_FOLDER = os.path.abspath(
 
 # modules that should ALSO pass advanced tests (design pattern)
 COMPONENT_SPEC_FILES = [
-    "generate_data/generate_spec.yaml",
-    "lightgbm_data2bin/data2bin_spec.yaml",
-    "lightgbm_python/train_spec.yaml",
-    "lightgbm_python/score_spec.yaml",
-    "partition_data/partition_spec.yaml",
-    "treelite_python/compile_spec.yaml",
-    "treelite_python/score_spec.yaml",
+    "sample/spec.yaml",
+
+    "data_processing/generate_data/spec.yaml",
+    "data_processing/lightgbm_data2bin/spec.yaml",
+    "data_processing/partition_data/spec.yaml",
+
+    "training/lightgbm_python/spec.yaml",
+
+    "model_transformation/treelite_compile/spec.yaml",
+
+    "inferencing/lightgbm_python/spec.yaml",
+    "inferencing/lightgbm_c_api/spec.yaml",
+    "inferencing/lightgbm_cli/spec.yaml",
+    "inferencing/treelite_python/spec.yaml",
 ]
 
 
