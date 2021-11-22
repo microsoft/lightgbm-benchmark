@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: partition_data
-version: 1.0.0
+version: 1.0.1
 display_name: "Partition Data"
 type: CommandComponent
 description: Split one dataset into multiple files
