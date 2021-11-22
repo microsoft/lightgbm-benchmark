@@ -1,53 +1,56 @@
-$schema: http://azureml/sdk-2-0/CommandComponent.json
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: lightgbm_python_score
-version: 1.0.1
+version: 1.0.3
 display_name: "LightGBM Inferencing (Python API)"
-type: CommandComponent
+type: command
 description: "LightGBM inferencing using the Python API."
 is_deterministic: true
+
+tags:
+  repo: https://github.com/microsoft/lightgbm-benchmark
+  docs: https://microsoft.github.io/lightgbm-benchmark
+  framework: lightgbm
+  framework_version: "3.3.0"
+
 inputs:
   data:
-    type: AnyDirectory
+    type: path
     description: directory to the inference data
     optional: false
   model:
-    type: AnyDirectory
+    type: path
     description: directory to the model
     optional: false
   predict_disable_shape_check:
-    type: Boolean
+    type: boolean
     description: "control whether or not LightGBM raises an error when you try to predict on data with a different number of features than the training data"
     default: False
   n_threads:
-    type: Integer
+    type: integer
     optional: true
   verbose:
-    type: Boolean
+    type: boolean
     default: False
   custom_properties:
-    type: String
+    type: string
     description: additional custom tags for the job
     optional: true
 
 outputs:
   predictions:
-    type: AnyDirectory
+    type: path
 
 command: >-
   python score.py
-  --data {inputs.data}
-  --model {inputs.model}
-  --output {outputs.predictions}
-  [--num_threads {inputs.n_threads}]
-  --predict_disable_shape_check {inputs.predict_disable_shape_check}
-  --verbose {inputs.verbose}
-  [--custom_properties {inputs.custom_properties}]
+  --data ${{inputs.data}}
+  --model ${{inputs.model}}
+  --output ${{outputs.predictions}}
+  [--num_threads ${{inputs.n_threads}}]
+  --predict_disable_shape_check ${{inputs.predict_disable_shape_check}}
+  --verbose ${{inputs.verbose}}
+  [--custom_properties ${{inputs.custom_properties}}]
 
 environment:
-  docker:
-    build:
-      # file path is resolved after additional includes
-      dockerfile: file:./default.dockerfile
-  conda:
-    userManagedDependencies: true
-  os: Linux
+  build:
+    dockerfile_path: ./default.dockerfile
+  os_type: linux
