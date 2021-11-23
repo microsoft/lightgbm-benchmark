@@ -47,7 +47,7 @@ lightgbm_training:
     # input parameters
     data:
       auto_partitioning: True # inserts partitioning to match expected number of partitions (if nodes*processes > 1)
-      pre_convert_to_binary: True # inserts convertion of train/test data into binary to speed up training (not compatible with auto_partitioning yet)
+      pre_convert_to_binary: False # inserts convertion of train/test data into binary to speed up training (not compatible with auto_partitioning yet)
       header: false
       label_column: "0"
       group_column: null
