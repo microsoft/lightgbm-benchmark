@@ -141,7 +141,7 @@ class training_variant:
     # three below are mandatory sections of the variant config
     data: lightgbm_training_data_variant_parameters = MISSING
     training: lightgbm_training_variant_parameters = MISSING
-    environment: lightgbm_training_environment_variant_parameters = MISSING
+    runtime: lightgbm_training_environment_variant_parameters = MISSING
 
     # two below are optional
     sweep: Optional[sweep_settings] = None

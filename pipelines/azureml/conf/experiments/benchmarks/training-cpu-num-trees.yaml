@@ -75,7 +75,7 @@ lightgbm_training:
           use_two_round_loading: True
 
     # compute parameters
-    environment:
+    runtime:
       #target: null # optional: force target for this training job
       nodes: 1
       processes: 1

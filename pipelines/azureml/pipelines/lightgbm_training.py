@@ -172,11 +172,11 @@ class LightGBMTraining(AMLPipelineHelper):
                 # if we're using multinode, add partitioning
                 if variant_params.data.auto_partitioning and (variant_params.training.tree_learner == "data" or variant_params.training.tree_learner == "voting"):
                     # if using data parallel, train data has to be partitioned first
-                    if (variant_params.environment.nodes * variant_params.environment.processes) > 1:
+                    if (variant_params.runtime.nodes * variant_params.runtime.processes) > 1:
                         partition_data_step = partition_data_module(
                             input_data=train_dataset,
                             mode="roundrobin",
-                            number=(variant_params.environment.nodes * variant_params.environment.processes),
+                            number=(variant_params.runtime.nodes * variant_params.runtime.processes),
                             header=variant_params.data.header,
                             verbose=variant_params.training.verbose
                         )
@@ -241,7 +241,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 variant_custom_properties = {
                     'variant_index': variant_index,
                     'framework': "lightgbm",
-                    'framework_build': variant_params.environment.build,
+                    'framework_build': variant_params.runtime.build,
                 }
                 variant_custom_properties.update(benchmark_custom_properties)
                 training_params['custom_properties'] = json.dumps(variant_custom_properties)
@@ -265,10 +265,10 @@ class LightGBMTraining(AMLPipelineHelper):
                     # apply runsettings
                     self.apply_smart_runsettings(
                         lightgbm_train_step,
-                        node_count = variant_params.environment.nodes,
-                        process_count_per_node = variant_params.environment.processes,
+                        node_count = variant_params.runtime.nodes,
+                        process_count_per_node = variant_params.runtime.processes,
                         gpu = (variant_params.training.device_type == 'gpu' or variant_params.training.device_type == 'cuda'),
-                        target = variant_params.environment.target
+                        target = variant_params.runtime.target
                     )
                     # apply settings from our custom yaml config
                     apply_sweep_settings(lightgbm_train_step, variant_params.sweep)
@@ -283,19 +283,19 @@ class LightGBMTraining(AMLPipelineHelper):
                     # apply runsettings
                     self.apply_smart_runsettings(
                         lightgbm_train_step,
-                        node_count = variant_params.environment.nodes,
-                        process_count_per_node = variant_params.environment.processes,
+                        node_count = variant_params.runtime.nodes,
+                        process_count_per_node = variant_params.runtime.processes,
                         gpu = (variant_params.training.device_type == 'gpu' or variant_params.training.device_type == 'cuda'),
-                        target = variant_params.environment.target
+                        target = variant_params.runtime.target
                     )
 
-                ###################
-                ### ENVIRONMENT ###
-                ###################
+                ###############
+                ### RUNTIME ###
+                ###############
 
-                # # optional: override environment (ex: to test custom builds)
-                if 'build' in variant_params.environment and variant_params.environment.build:
-                    custom_docker = Docker(file=os.path.join(LIGHTGBM_BENCHMARK_ROOT, variant_params.environment.build))
+                # # optional: override docker (ex: to test custom builds)
+                if 'build' in variant_params.runtime and variant_params.runtime.build:
+                    custom_docker = Docker(file=os.path.join(LIGHTGBM_BENCHMARK_ROOT, variant_params.runtime.build))
                     lightgbm_train_step.runsettings.environment.configure(
                         docker=custom_docker
                     )
