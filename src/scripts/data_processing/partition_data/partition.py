@@ -8,6 +8,8 @@ import sys
 import argparse
 import logging
 from distutils.util import strtobool
+import ray
+from pyarrow import csv
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -18,7 +20,6 @@ if COMMON_ROOT not in sys.path:
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
-from common.io import PartitioningEngine
 from common.components import RunnableScript
 
 
@@ -50,7 +51,7 @@ class PartitionDataScript(RunnableScript):
         group = parser.add_argument_group('Partitioning arguments')
         group.add_argument("--input", dest="input", type=str, required=True, help="file/directory to split")
         group.add_argument("--output", dest="output", type=str, help="location to store partitioned files", required=True)
-        group.add_argument("--mode", type=str, choices=PartitioningEngine.PARTITION_MODES, required=True, help="Partitioning mode")
+        group.add_argument("--mode", type=str, choices=['partition','chunk'], required=True, help="Partitioning mode")
         group.add_argument("--number", type=int, required=True, help="If roundrobin number of partition, if chunk number of records per partition")
         group.add_argument("--header", type=strtobool, required=False, default=False, help="Should we preserve firstline into each partition?")
 
@@ -68,18 +69,30 @@ class PartitionDataScript(RunnableScript):
         # Create output folder
         os.makedirs(args.output, exist_ok=True)
 
-        # create instance of partitioner
-        partition_engine = PartitioningEngine(
-            mode = args.mode,
-            number = args.number,
-            header = args.header,
-            logger=logger
-        )
+        # Retrieve all input files
+        if os.path.isfile(args.input):
+            logger.info("Input is one unique file")
+            file_names = [os.path.basename(args.input)]
+            input_files = [args.input]
+        else:
+            logger.info("Input is a directory, listing all of them for processing")
+            file_names = os.listdir(args.input)
+            input_files = [os.path.join(args.input, file) for file in file_names]
+            logger.info("Found {} files in {}".format(len(input_files), args.input))
 
-        # simply run
         logger.info(f"Running partitioning...")
         with metrics_logger.log_time_block("time_partitioning"):
-            partition_engine.run(args.input, args.output)
+            if args.mode == "partition":
+                if args.header:
+                    csv_data = ray.data.read_csv(input_files)
+                    csv_data.repartition(args.number).write_csv(args.output)
+                else:
+                    csv_data = ray.data.read_text(input_files)
+                    csv_data.repartition(args.number).write_csv(args.output)
+            elif args.mode == "chunk":
+                raise NotImplementedError()
+            else:
+                raise NotImplementedError(f"Mode --mode {args.mode} is not implemented yet.")
 
 
 def get_arg_parser(parser=None):
