@@ -224,6 +224,8 @@ class LightGBMTraining(AMLPipelineHelper):
                         training_params.update(tunable_params)
                     else:
                         use_sweep = False
+                else:
+                    use_sweep = False
 
                 variant_custom_properties = {
                     'variant_index': variant_index,
