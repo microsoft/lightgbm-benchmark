@@ -177,7 +177,8 @@ class LightGBMTraining(AMLPipelineHelper):
                             input_data=train_dataset,
                             mode="roundrobin",
                             number=(variant_params.environment.nodes * variant_params.environment.processes),
-                            header=variant_params.data.header
+                            header=variant_params.data.header,
+                            verbose=variant_params.training.verbose
                         )
                         self.apply_smart_runsettings(partition_data_step)
                         partitioned_train_data = partition_data_step.outputs.output_data
@@ -193,8 +194,12 @@ class LightGBMTraining(AMLPipelineHelper):
                     convert_data2bin_step = lightgbm_data2bin_module(
                         train=partitioned_train_data,
                         test=test_dataset,
+                        header=variant_params.data.header,
+                        label_column=variant_params.data.label_column,
+                        group_column=variant_params.data.group_column,
                         max_bin=variant_params.training.max_bin,
-                        custom_params=json.dumps(dict(variant_params.training.custom_params or {}))
+                        custom_params=json.dumps(dict(variant_params.training.custom_params or {})),
+                        verbose=variant_params.training.verbose
                     )
                     self.apply_smart_runsettings(convert_data2bin_step)
 
@@ -210,6 +215,11 @@ class LightGBMTraining(AMLPipelineHelper):
 
                 # copy params into dict for flexibility
                 training_params = dict(variant_params.training)
+
+                # add all data-related params
+                training_params['header'] = variant_params.data.header
+                training_params['label_column'] = variant_params.data.label_column
+                training_params['group_column'] = variant_params.data.group_column
 
                 # extract and construct "sweepable" params
                 if variant_params.sweep:
@@ -227,6 +237,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 else:
                     use_sweep = False
 
+                # create custom properties and serialize to pass as argument
                 variant_custom_properties = {
                     'variant_index': variant_index,
                     'framework': "lightgbm",
@@ -234,6 +245,9 @@ class LightGBMTraining(AMLPipelineHelper):
                 }
                 variant_custom_properties.update(benchmark_custom_properties)
                 training_params['custom_properties'] = json.dumps(variant_custom_properties)
+
+                # serialize custom_params to pass as argument
+                training_params['custom_params'] = json.dumps(dict(variant_params.training.custom_params or {}))
 
                 # some debug outputs to expose variant parameters
                 print(f"*** lightgbm variant#{variant_index}: {training_params}")
