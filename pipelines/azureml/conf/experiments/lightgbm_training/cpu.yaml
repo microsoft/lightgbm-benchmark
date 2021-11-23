@@ -64,10 +64,9 @@ lightgbm_training:
 
       # you can add anything under custom_params, it will be sent as a dictionary
       # to the lightgbm training module to override its parameters (see lightgbm docs for list)
-      #custom_params:
-      #    deterministic: True
-      #    ndcg_eval_at: "1,3,5"
-      #    use_two_round_loading: True
+      custom_params:
+          deterministic: True
+          use_two_round_loading: True
 
     # compute parameters
     environment:
