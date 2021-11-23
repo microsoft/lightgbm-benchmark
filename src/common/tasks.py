@@ -88,13 +88,7 @@ class sweep_settings:
     limits: Optional[sweep_limits_settings] = None
 
 @dataclass
-class training_variant:
-    # input parametes
-    header: bool = False
-    label_column: Optional[str] = "0"
-    group_column: Optional[str] = None
-    construct: bool = True
-
+class lightgbm_training_variant_parameters:
     # fixed training parameters
     objective: str = MISSING
     metric: str = MISSING
@@ -114,21 +108,41 @@ class training_variant:
 
     # COMPUTE
     device_type: str = "cpu"
-    nodes: int = 1
-    processes: int = 1
-    target: Optional[str] = None
-    override_docker: Optional[str] = None
-    override_os: Optional[str] = None
     verbose: bool = False
 
+@dataclass
+class lightgbm_training_data_variant_parameters:
     # FILE OPTIONS
     auto_partitioning: bool = True
     pre_convert_to_binary: bool = False # doesn't work with partitioned data (yet)
 
-    # SWEEP
+    # input parameters
+    header: bool = False
+    label_column: Optional[str] = "0"
+    group_column: Optional[str] = None
+    construct: bool = True
 
+@dataclass
+class lightgbm_training_environment_variant_parameters:
+    # COMPUTE
+    nodes: int = 1
+    processes: int = 1
+    target: Optional[str] = None
+    build: Optional[str] = None
 
-    # OUTPUT REGISTRATION
+@dataclass
+class lightgbm_training_output_variant_parameters:
     register_model: bool = False # "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
     register_model_prefix: Optional[str] = None
     register_model_suffix: Optional[str] = None
+
+@dataclass
+class training_variant:
+    # three below are mandatory sections of the variant config
+    data: lightgbm_training_data_variant_parameters = MISSING
+    training: lightgbm_training_variant_parameters = MISSING
+    environment: lightgbm_training_environment_variant_parameters = MISSING
+
+    # two below are optional
+    sweep: Optional[sweep_settings] = None
+    output:Optional[lightgbm_training_output_variant_parameters] = None

@@ -66,8 +66,8 @@ def load_dataset_from_data_input_spec(workspace, data_input_spec):
 
     return loaded_dataset
 
-def apply_sweep_runsettings(step, sweep_settings_config):
-    """Applies the runsettings to a sweep step based on a config dataclass.
+def apply_sweep_settings(step, sweep_settings_config):
+    """Applies the settings to a sweep step based on a config dataclass.
 
     Args:
         step (PipelineStep): the instance of the step

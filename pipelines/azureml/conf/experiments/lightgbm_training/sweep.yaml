@@ -29,51 +29,72 @@ module_loader: # module loading params
 lightgbm_training:
   benchmark_name: "benchmark-dev"
 
-  # name of the train/test dataset pairs to train on (can provide multiple as a list)
+  # list all the train/test pairs to train on
   tasks:
     - train_dataset: "data-synthetic-regression-100cols-100000samples-train"
       test_dataset: "data-synthetic-regression-100cols-10000samples-test"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
 
-  # set of parameters to train on all tasks
-  reference_training:
-    # input parameters
-    header: false
-    label_column: "0"
-    group_column: null
+  # NOTE: this example uses only 1 training (reference)
+  # see other config files for creating training variants
+  reference:
+    data:
+      auto_partitioning: True # inserts partitioning to match expected number of partitions (if nodes*processes > 1)
+      pre_convert_to_binary: True # inserts convertion of train/test data into binary to speed up training (not compatible with auto_partitioning yet)
+      header: false
+      label_column: "0"
+      group_column: null
 
-    # fixedlightgbm training parameters
-    objective: "regression"
-    metric: "rmse"
-    boosting: "gbdt"
-    tree_learner: "data"
-    #custom_params:
-    #    deterministic: True
+    # lightgbm training parameters
+    training:
+      # fixed values
+      objective: "regression"
+      metric: "rmse"
+      boosting: "gbdt"
+      tree_learner: "data"
 
-    # "sweepable" training parameters
-    num_iterations: "choice(100, 200)"
-    num_leaves: "choice(10,20,30)"
-    min_data_in_leaf: 20
-    learning_rate: 0.1
-    max_bin: 255
-    feature_fraction: 1.0
+      # "sweepable" training parameters
+      num_iterations: "choice(100, 200)"
+      num_leaves: "choice(10,20,30)"
+      min_data_in_leaf: 20
+      learning_rate: 0.1
+      max_bin: 255
+      feature_fraction: 1.0
+
+      # compute parameters (fixed)
+      device_type: "cpu"
+
+      # you can add anything under custom_params, it will be sent as a dictionary
+      # to the lightgbm training module to override its parameters (see lightgbm docs for list)
+      #custom_params:
+      #    deterministic: True
+      #    ndcg_eval_at: "1,3,5"
+      #    use_two_round_loading: True
+
+    # compute parameters
+    environment:
+      #target: null # optional: force target for this training job
+      nodes: 1
+      processes: 1
 
     # model registration
     # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
-    register_model: True
-    register_model_prefix: "model"
-    register_model_suffix: "cpu-sweep"
-
-    # compute parameters
-    #target: null # optional: force target for this training job
-    device_type: "cpu"
-    nodes: 1
-    processes: 1
-    #override_docker: "docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile" # relative to lightgbm_python folder
+    output:
+      register_model: True
+      register_model_prefix: "model"
+      register_model_suffix: "cpu-sweep"
 
     # SWEEP
-    sweep_algorithm: "random"
-    sweep_goal: "minimize"
-    sweep_max_total_trials: 10
-    sweep_max_concurrent_trials: 10
-    sweep_timeout_minutes: 60
+    sweep:
+        #primary_metric: "rmse"
+        goal: "minimize"
+        algorithm: "random"
+        early_termination:
+          policy_type: "median_stopping"
+          evaluation_interval: 1
+          delay_evaluation: 5
+          truncation_percentage: 20
+        limits:
+          max_total_trials: 100
+          max_concurrent_trials: 10
+          timeout_minutes: 60
