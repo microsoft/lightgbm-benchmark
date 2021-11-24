@@ -34,14 +34,15 @@ def test_bootstrap_ci_fixed_seed():
 
 def test_bootstrap_ci_no_seed():
     """Testing the bootstrap_ci method, but we can't have a non-deterministic test here. """
-    sample_data = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 5.0])
+    np.random.seed(None) # not const
+
+    sample_data = np.random.rand(100)
     operators={
         'mean':np.mean,
         'p90': (lambda x : np.percentile(x, 90)),
         'p99': (lambda x : np.percentile(x, 99)),
     }
 
-    np.random.seed(None) # not const
 
     returned_values = bootstrap_ci(
         sample_data,
