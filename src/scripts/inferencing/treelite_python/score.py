@@ -78,7 +78,8 @@ class TreeLightInferencingScript(RunnableScript):
         """
         # record relevant parameters
         metrics_logger.log_parameters(
-            num_threads=args.num_threads
+            num_threads=args.num_threads,
+            batch_size=args.batch_size,
         )
 
         # make sure the output argument exists
