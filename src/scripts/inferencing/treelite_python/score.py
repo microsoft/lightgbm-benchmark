@@ -134,12 +134,12 @@ class TreeLightInferencingScript(RunnableScript):
             batch_start_time = time.monotonic()
             predictions.extend(predictor.predict(batch_dmat))
             print(time.monotonic(), batch_start_time)
-            time_inferencing_per_batch.append((time.monotonic() - batch_start_time) * 1000000) # usecs
+            time_inferencing_per_batch.append((time.monotonic() - batch_start_time)) # usecs
         
         # compute metrics
-        if len(time_inferencing_per_batch) > 1:
-            batch_run_times = np.array(time_inferencing_per_batch) / np.array(batch_lengths)
-            print(time_inferencing_per_batch)
+        if len(time_inferencing_per_batch) > 0:
+            batch_run_times = np.array(time_inferencing_per_batch) * 1000000 / np.array(batch_lengths)
+            metrics_logger.log_metric("time_inferencing", np.sum(batch_run_times))
             metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
             metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
             metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
@@ -147,15 +147,15 @@ class TreeLightInferencingScript(RunnableScript):
             metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
 
             # show the distribution prediction latencies
-            # fig, ax = plt.subplots(1)
-            # ax.hist(batch_run_times, bins=100)
-            # ax.set_title("Latency-per-query histogram (log scale)")
-            # plt.xlabel("usecs")
-            # plt.ylabel("occurence")
-            # plt.yscale('log')
+            fig, ax = plt.subplots(1)
+            ax.hist(batch_run_times, bins=100)
+            ax.set_title("Latency-per-query histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
 
-            # # record in mlflow
-            # metrics_logger.log_figure(fig, "latency_log_histogram.png")
+            # record in mlflow
+            metrics_logger.log_figure(fig, "latency_log_histogram.png")
 
         if args.output:
             np.savetxt(
