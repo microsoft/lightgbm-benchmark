@@ -263,5 +263,5 @@ class CustomLightGBMDataBatchIterator():
                 # any remaining batch, or whole file
                 if len(batch) >= 0:
                     yield batch
-        elif:
+        else:
             raise NotImplementedError("file_format={self.file_format} is not implemented yet.")
