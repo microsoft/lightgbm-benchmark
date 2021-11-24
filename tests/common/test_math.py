@@ -44,7 +44,6 @@ def test_bootstrap_ci_no_seed():
         'p99': (lambda x : np.percentile(x, 99)),
     }
 
-
     returned_values = bootstrap_ci(
         sample_data,
         iterations=1000,
@@ -58,7 +57,7 @@ def test_bootstrap_ci_no_seed():
         assert isinstance(returned_values[key], tuple)
         assert len(returned_values[key]) == 3
 
-        # basic interval over
+        # basic interval ordering
         ci_left, ci_mean, ci_right = returned_values[key]
         assert ci_left <= ci_mean
         assert ci_mean <= ci_right
