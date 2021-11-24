@@ -110,8 +110,8 @@ class MetricsLogger():
             system=platform.system(),
             system_version=platform.version(),
             cpu_count=os.cpu_count(),
-            cpu_frequency=psutil.cpu_freq().current,
-            system_memory=(psutil.virtual_memory().total) / (1024*1024*1024)
+            cpu_frequency=round(psutil.cpu_freq().current),
+            system_memory=round((psutil.virtual_memory().total) / (1024*1024*1024))
         )
 
     def set_properties_from_json(self, json_string):
