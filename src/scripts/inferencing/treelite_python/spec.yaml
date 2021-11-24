@@ -17,7 +17,10 @@ inputs:
     optional: false
   n_threads:
     type: Integer
-    optional: true
+    default: 1
+  batch_size:
+    type: Integer
+    default: 1
   verbose:
     type: Boolean
     default: False
@@ -31,7 +34,8 @@ command: >-
   python score.py
   --data {inputs.data}
   --so_path {inputs.compiled_model}
-  [--num_threads {inputs.n_threads}]
+  --num_threads {inputs.n_threads}
+  --batch_size {inputs.batch_size}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
 

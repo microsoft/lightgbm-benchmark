@@ -8,9 +8,11 @@ import os
 import sys
 import argparse
 import logging
-import numpy
+import numpy as np
+import matplotlib.pyplot as plt
+import time
 from distutils.util import strtobool
-import pandas as pd
+import csv
 import treelite, treelite_runtime
 
 # Add the right path to PYTHONPATH
@@ -61,6 +63,8 @@ class TreeLightInferencingScript(RunnableScript):
         group_params = parser.add_argument_group("Scoring parameters")
         group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
+        group_params.add_argument("--batch_size",
+            required=False, default=1, type=int, help="size of batches for predict call")
 
         return parser
 
@@ -87,20 +91,80 @@ class TreeLightInferencingScript(RunnableScript):
             args.output = os.path.join(args.output, "predictions.txt")
 
 
-        logger.info(f"Loading data for inferencing")
-        with metrics_logger.log_time_block("time_data_loading"):
-            my_data = pd.read_csv(args.data).to_numpy()
-            
-            predictor = treelite_runtime.Predictor(
-                args.so_path,
-                verbose=True,
-                nthread=args.num_threads
-            )
-            dmat = treelite_runtime.DMatrix(my_data)
+        def batch_iterate(csv_data_file, batch_size):
+            with open(csv_data_file, "r") as i_file:
+                reader = csv.reader(i_file)
+                
+                batch = []
+                for row in reader:
+                    batch.append(row)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+                if len(batch) >= batch_size:
+                    yield batch
 
-        logger.info(f"Running .predict()")
-        with metrics_logger.log_time_block("time_inferencing"):
-            predictor.predict(dmat)
+        # loading model
+        predictor = treelite_runtime.Predictor(
+            args.so_path,
+            verbose=True,
+            nthread=args.num_threads
+        )
+
+        # accumulate predictions and latencies
+        predictions = []
+        time_inferencing_per_batch = []
+        batch_lengths = []
+
+        # loop through batches
+        for batch in batch_iterate(args.data, batch_size=args.batch_size):
+            if len(batch) == 0:
+                break
+            batch_lengths.append(len(batch))
+
+            # transform into dense matrix
+            batch_data = np.array(batch)
+            batch_dmat = treelite_runtime.DMatrix(batch_data)
+
+            # run prediction on batch
+            batch_start_time = time.time()
+            predictions.extend(predictor.predict(batch_dmat))
+            time_inferencing_per_batch.append((time.time() - batch_start_time) * 1000000) # usecs
+        
+        if len(time_inferencing_per_batch) > 1:
+            batch_run_times = np.array(time_inferencing_per_batch) / np.array(batch_lengths)
+            metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
+            metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
+            metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
+            metrics_logger.log_metric("batch_time_inferencing_p95_usecs", np.percentile(batch_run_times, 95))
+            metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(batch_run_times, bins=100)
+            ax.set_title("Latency-per-query histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            metrics_logger.log_figure(fig, "latency_log_histogram.png")
+
+        if args.output:
+            np.savetxt(
+                args.output,
+                predictions,
+                fmt='%f',
+                delimiter=',',
+                newline='\n',
+                header='',
+                footer='',
+                comments='# ',
+                encoding=None
+            )
+
+
+
 
 
 def get_arg_parser(parser=None):
