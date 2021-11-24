@@ -139,7 +139,7 @@ class TreeLightInferencingScript(RunnableScript):
         # compute metrics
         if len(time_inferencing_per_batch) > 0:
             batch_run_times = np.array(time_inferencing_per_batch) * 1000000 / np.array(batch_lengths)
-            metrics_logger.log_metric("time_inferencing", np.sum(batch_run_times))
+            metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_batch))
             metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
             metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
             metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
