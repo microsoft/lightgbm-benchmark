@@ -88,7 +88,7 @@ class TreeLightInferencingScript(RunnableScript):
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
-        logger.info(f"Loading model from {args.model}")
+        logger.info(f"Loading model from {args.so_path}")
         predictor = treelite_runtime.Predictor(
             args.so_path,
             verbose=True,
