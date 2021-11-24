@@ -160,6 +160,72 @@ class MetricsLogger():
         # see class below with proper __enter__ and __exit__
         return LogTimeBlock(metric_name)
 
+    def log_inferencing_latencies(self, time_per_batch, batch_length=1, factor_to_usecs=1000000.0):
+        """Logs prediction latencies (for inferencing) with lots of fancy metrics and plots.
+
+        Args:
+            time_per_batch_list (List[float]): time per inferencing batch
+            batch_lengths (Union[List[int],int]): length of each batch (List or constant)
+            factor_to_usecs (float): factor to apply to time_per_batch to convert to microseconds
+        """
+        if isinstance(batch_length, list):
+            sum_batch_lengths = sum(batch_length)
+        else:
+            sum_batch_lengths = batch_length*len(time_per_batch)
+
+        # log metadata
+        self.log_metric("prediction_batches", len(time_per_batch))
+        self.log_metric("prediction_queries", sum_batch_lengths)
+
+        if len(time_per_batch) > 0:
+            self.log_metric("prediction_latency_avg", (sum(time_per_batch) * factor_to_usecs)/sum_batch_lengths) # usecs
+
+        # if there's more than 1 batch, compute percentiles
+        if len(time_per_batch) > 1:
+            import numpy as np
+            import matplotlib.pyplot as plt
+
+            # latency per batch
+            batch_run_times = np.array(time_per_batch) * factor_to_usecs
+            self.log_metric("batch_latency_p50_usecs", np.percentile(batch_run_times, 50))
+            self.log_metric("batch_latency_p75_usecs", np.percentile(batch_run_times, 75))
+            self.log_metric("batch_latency_p90_usecs", np.percentile(batch_run_times, 90))
+            self.log_metric("batch_latency_p95_usecs", np.percentile(batch_run_times, 95))
+            self.log_metric("batch_latency_p99_usecs", np.percentile(batch_run_times, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(batch_run_times, bins=100)
+            ax.set_title("Latency-per-batch histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            self.log_figure(fig, "batch_latency_log_histogram.png")
+
+            # latency per query
+            if isinstance(batch_length, list):
+                prediction_latencies = np.array(time_per_batch) * factor_to_usecs / np.array(batch_length)
+            else:
+                prediction_latencies = np.array(time_per_batch) * factor_to_usecs / batch_length
+
+            self.log_metric("prediction_latency_p50_usecs", np.percentile(prediction_latencies, 50))
+            self.log_metric("prediction_latency_p75_usecs", np.percentile(prediction_latencies, 75))
+            self.log_metric("prediction_latency_p90_usecs", np.percentile(prediction_latencies, 90))
+            self.log_metric("prediction_latency_p95_usecs", np.percentile(prediction_latencies, 95))
+            self.log_metric("prediction_latency_p99_usecs", np.percentile(prediction_latencies, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(prediction_latencies, bins=100)
+            ax.set_title("Latency-per-prediction histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            self.log_figure(fig, "prediction_latency_log_histogram.png")
 
 
 ########################

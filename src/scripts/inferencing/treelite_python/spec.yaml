@@ -20,7 +20,7 @@ inputs:
     default: 1
   batch_size:
     type: Integer
-    default: 2
+    default: 0 # default: whole file as a batch
   verbose:
     type: Boolean
     default: False

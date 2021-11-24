@@ -8,11 +8,9 @@ import os
 import sys
 import argparse
 import logging
-import numpy as np
-import matplotlib.pyplot as plt
 import time
+import numpy as np
 from distutils.util import strtobool
-import csv
 import treelite, treelite_runtime
 
 # Add the right path to PYTHONPATH
@@ -20,20 +18,20 @@ import treelite, treelite_runtime
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    logging.info(f"Adding {COMMON_ROOT} to PYTHONPATH")
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
 from common.components import RunnableScript
-from common.io import input_file_path
+from common.io import input_file_path, CustomLightGBMDataBatchIterator
 
 
 class TreeLightInferencingScript(RunnableScript):
     def __init__(self):
         super().__init__(
-            task = 'score',
+            task = "score",
             framework = 'treelite_python',
-            framework_version = treelite.__version__
+            framework_version = "PYTHON_API."+str(treelite.__version__)
         )
 
     @classmethod
@@ -64,7 +62,7 @@ class TreeLightInferencingScript(RunnableScript):
         group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
         group_params.add_argument("--batch_size",
-            required=False, default=1, type=int, help="size of batches for predict call")
+            required=False, default=0, type=int, help="size of batches for predict call")
 
         return parser
 
@@ -83,31 +81,14 @@ class TreeLightInferencingScript(RunnableScript):
             num_threads=args.num_threads
         )
 
+        # make sure the output argument exists
         if args.output:
-            # make sure the output argument exists
             os.makedirs(args.output, exist_ok=True)
             
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
-
-        def batch_iterate(csv_data_file, batch_size):
-            with open(csv_data_file, "r") as i_file:
-                reader = csv.reader(i_file)
-                
-                batch = []
-                for row in reader:
-                    cast_row = [
-                        float(col) for col in row
-                    ]
-                    batch.append(cast_row)
-                    if len(batch) >= batch_size:
-                        yield batch
-                        batch = []
-                if len(batch) >= 0:
-                    yield batch
-
-        # loading model
+        logger.info(f"Loading model from {args.model}")
         predictor = treelite_runtime.Predictor(
             args.so_path,
             verbose=True,
@@ -120,42 +101,29 @@ class TreeLightInferencingScript(RunnableScript):
         batch_lengths = []
 
         # loop through batches
-        for batch in batch_iterate(args.data, batch_size=args.batch_size):
+        for batch in CustomLightGBMDataBatchIterator(args.data, batch_size=args.batch_size, file_format="csv"):
             if len(batch) == 0:
                 break
             batch_lengths.append(len(batch))
 
-            # transform into dense matrix
+            # transform into dense matrix for treelite
             batch_data = np.array(batch)
-
             batch_dmat = treelite_runtime.DMatrix(batch_data)
 
             # run prediction on batch
             batch_start_time = time.monotonic()
             predictions.extend(predictor.predict(batch_dmat))
-            print(time.monotonic(), batch_start_time)
             time_inferencing_per_batch.append((time.monotonic() - batch_start_time)) # usecs
-        
-        # compute metrics
-        if len(time_inferencing_per_batch) > 0:
-            batch_run_times = np.array(time_inferencing_per_batch) * 1000000 / np.array(batch_lengths)
-            metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_batch))
-            metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
-            metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
-            metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
-            metrics_logger.log_metric("batch_time_inferencing_p95_usecs", np.percentile(batch_run_times, 95))
-            metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
 
-            # show the distribution prediction latencies
-            fig, ax = plt.subplots(1)
-            ax.hist(batch_run_times, bins=100)
-            ax.set_title("Latency-per-query histogram (log scale)")
-            plt.xlabel("usecs")
-            plt.ylabel("occurence")
-            plt.yscale('log')
+        # log overall time
+        metrics_logger.log_metrics("time_inferencing", sum(time_inferencing_per_batch))
 
-            # record in mlflow
-            metrics_logger.log_figure(fig, "latency_log_histogram.png")
+        # use helper to log latency with the right metric names
+        metrics_logger.log_inferencing_latencies(
+            time_inferencing_per_batch,
+            batch_length=batch_lengths,
+            factor_to_usecs=1000000.0 # values are in seconds
+        )
 
         if args.output:
             np.savetxt(
@@ -169,9 +137,6 @@ class TreeLightInferencingScript(RunnableScript):
                 comments='# ',
                 encoding=None
             )
-
-
-
 
 
 def get_arg_parser(parser=None):

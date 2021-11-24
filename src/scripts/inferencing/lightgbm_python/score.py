@@ -8,9 +8,10 @@ import os
 import sys
 import argparse
 import logging
+import time
+import numpy as np
 from distutils.util import strtobool
 import lightgbm
-import numpy
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -104,15 +105,24 @@ class LightGBMPythonInferecingScript(RunnableScript):
         )
 
         logger.info(f"Running .predict()")
-        with metrics_logger.log_time_block("time_inferencing"):
-            predictions_array = booster.predict(
-                data=inference_raw_data,
-                num_threads=args.num_threads,
-                predict_disable_shape_check=bool(args.predict_disable_shape_check)
-            )
-        
+        batch_start_time = time.monotonic()
+        predictions_array = booster.predict(
+            data=inference_raw_data,
+            num_threads=args.num_threads,
+            predict_disable_shape_check=bool(args.predict_disable_shape_check)
+        )
+        prediction_time = (time.monotonic() - batch_start_time)
+        metrics_logger.log_metric("time_inferencing", prediction_time)
+
+        # use helper to log latency with the right metric names
+        metrics_logger.log_inferencing_latencies(
+            [prediction_time], # only one big batch
+            batch_length=inference_data.num_data(),
+            factor_to_usecs=1000000.0 # values are in seconds
+        )
+
         if args.output:
-            numpy.savetxt(
+            np.savetxt(
                 args.output,
                 predictions_array,
                 fmt='%f',
@@ -135,4 +145,3 @@ def main(cli_args=None):
 
 if __name__ == "__main__":
     main()
-
