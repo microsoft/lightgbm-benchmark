@@ -97,11 +97,14 @@ class TreeLightInferencingScript(RunnableScript):
                 
                 batch = []
                 for row in reader:
-                    batch.append(row)
+                    cast_row = [
+                        float(col) for col in row
+                    ]
+                    batch.append(cast_row)
                     if len(batch) >= batch_size:
                         yield batch
                         batch = []
-                if len(batch) >= batch_size:
+                if len(batch) >= 0:
                     yield batch
 
         # loading model
@@ -124,15 +127,19 @@ class TreeLightInferencingScript(RunnableScript):
 
             # transform into dense matrix
             batch_data = np.array(batch)
+
             batch_dmat = treelite_runtime.DMatrix(batch_data)
 
             # run prediction on batch
-            batch_start_time = time.time()
+            batch_start_time = time.monotonic()
             predictions.extend(predictor.predict(batch_dmat))
-            time_inferencing_per_batch.append((time.time() - batch_start_time) * 1000000) # usecs
+            print(time.monotonic(), batch_start_time)
+            time_inferencing_per_batch.append((time.monotonic() - batch_start_time) * 1000000) # usecs
         
+        # compute metrics
         if len(time_inferencing_per_batch) > 1:
             batch_run_times = np.array(time_inferencing_per_batch) / np.array(batch_lengths)
+            print(time_inferencing_per_batch)
             metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
             metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
             metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
@@ -140,15 +147,15 @@ class TreeLightInferencingScript(RunnableScript):
             metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
 
             # show the distribution prediction latencies
-            fig, ax = plt.subplots(1)
-            ax.hist(batch_run_times, bins=100)
-            ax.set_title("Latency-per-query histogram (log scale)")
-            plt.xlabel("usecs")
-            plt.ylabel("occurence")
-            plt.yscale('log')
+            # fig, ax = plt.subplots(1)
+            # ax.hist(batch_run_times, bins=100)
+            # ax.set_title("Latency-per-query histogram (log scale)")
+            # plt.xlabel("usecs")
+            # plt.ylabel("occurence")
+            # plt.yscale('log')
 
-            # record in mlflow
-            metrics_logger.log_figure(fig, "latency_log_histogram.png")
+            # # record in mlflow
+            # metrics_logger.log_figure(fig, "latency_log_histogram.png")
 
         if args.output:
             np.savetxt(

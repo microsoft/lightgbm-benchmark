@@ -20,7 +20,7 @@ inputs:
     default: 1
   batch_size:
     type: Integer
-    default: 1
+    default: 2
   verbose:
     type: Boolean
     default: False
