@@ -26,7 +26,8 @@ def test_bootstrap_ci_fixed_seed():
     returned_values = bootstrap_ci(
         sample_data,
         iterations=1000,
-        operators=operators
+        operators=operators,
+        confidence_level=0.95
     )
 
     assert returned_values == expected_values
@@ -47,7 +48,8 @@ def test_bootstrap_ci_no_seed():
     returned_values = bootstrap_ci(
         sample_data,
         iterations=1000,
-        operators=operators
+        operators=operators,
+        confidence_level=0.95
     )
 
     for key in operators:
