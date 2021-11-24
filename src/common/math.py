@@ -6,15 +6,16 @@ import argparse
 import logging
 import numpy as np
 
-def bootstrap_ci(data, iterations=1000, operators={'mean':np.mean}, alpha=0.05):
+def bootstrap_ci(data, iterations=1000, operators={'mean':np.mean}, confidence_level=0.95):
     """
     Args:
         data (np.array) : input data
         iterations (int) : how many bootstrapped samples to generate
         operators (Dict[str->func]) : map of functions to produce CI for
+        confidence_level (float) : confidence_level = 1-alpha
     
     Returns:
-        bootstrap_cis: Dict[str->tuple]
+        operators_ci: Dict[str->tuple]
     """
     # values will be stored in a dict
     bootstrap_runs = {}
@@ -30,8 +31,8 @@ def bootstrap_ci(data, iterations=1000, operators={'mean':np.mean}, alpha=0.05):
     operators_ci = {}
     for operator_key in operators.keys():
         values = np.array(bootstrap_runs[operator_key])
-        ci_left = np.percentile(values, round(alpha/2*100))
-        ci_right = np.percentile(values, round(100-alpha/2*100))
+        ci_left = np.percentile(values, ((1-confidence_level)/2*100))
+        ci_right = np.percentile(values, (100-(1-confidence_level)/2*100))
         ci_mean = np.mean(values) # just for fun
         operators_ci[operator_key] = (ci_left, ci_mean, ci_right)
 
