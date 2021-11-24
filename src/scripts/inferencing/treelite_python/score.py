@@ -101,7 +101,7 @@ class TreeLightInferencingScript(RunnableScript):
         batch_lengths = []
 
         # loop through batches
-        for batch in CustomLightGBMDataBatchIterator(args.data, batch_size=args.batch_size, file_format="csv"):
+        for batch in CustomLightGBMDataBatchIterator(args.data, batch_size=args.batch_size, file_format="csv").iter():
             if len(batch) == 0:
                 break
             batch_lengths.append(len(batch))

@@ -235,10 +235,7 @@ class CustomLightGBMDataBatchIterator():
         self.file_format = file_format
         self.reader_options = kwargs
     
-    def __iter__(self):
-        return self
-    
-    def __next__(self):
+    def iter(self):
         if self.file_format == "csv":
             with open(self.file_path, "r") as i_file:
                 reader = csv.reader(i_file, **self.reader_options)
@@ -266,3 +263,5 @@ class CustomLightGBMDataBatchIterator():
                 # any remaining batch, or whole file
                 if len(batch) >= 0:
                     yield batch
+        elif:
+            raise NotImplementedError("file_format={self.file_format} is not implemented yet.")
