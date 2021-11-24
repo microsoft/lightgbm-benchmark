@@ -6,7 +6,7 @@ import argparse
 import logging
 import numpy as np
 
-def bootstrap_ci(data, iterations=1000, operators={'mean':np.mean}, confidence_level=0.95):
+def bootstrap_ci(data, iterations=1000, operators={'mean':np.mean}, confidence_level=0.95, seed=None):
     """
     Args:
         data (np.array) : input data
@@ -37,15 +37,3 @@ def bootstrap_ci(data, iterations=1000, operators={'mean':np.mean}, confidence_l
         operators_ci[operator_key] = (ci_left, ci_mean, ci_right)
 
     return(operators_ci)
-
-if __name__ == "__main__":
-    sample_data = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 5.0])
-    print(bootstrap_ci(
-        sample_data,
-        iterations=1000,
-        operators={
-            'mean':np.mean,
-            'p90': (lambda x : np.percentile(x, 90)),
-            'p99': (lambda x : np.percentile(x, 99)),
-        }
-    ))
