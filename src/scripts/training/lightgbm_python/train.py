@@ -183,17 +183,17 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                 if len(file_paths) == mpi_config.world_size:
                     dist_data = file_paths[mpi_config.world_rank]
                 else:
-                    raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
+                    raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input {category} data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
             elif args.tree_learner == "feature":
                 if len(file_paths) == 1:
                     dist_data = file_paths[0]
                 else:
-                    raise Exception(f"To use MPI with tree_learner=parallel you need to provide only 1 input file, but {len(train_file_paths)} were found")
+                    raise Exception(f"To use MPI with tree_learner=parallel you need to provide only 1 input {category} file, but {len(file_paths)} were found")
             elif args.tree_learner == "serial":
                 if len(file_paths) == 1:
                     dist_data = file_paths[0]
                 else:
-                    raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(file_paths)} were found")
+                    raise Exception(f"To use single node training, you need to provide only 1 input {category} file, but {len(file_paths)} were found")
             else:
                 NotImplementedError(f"tree_learner mode {args.tree_learner} does not exist or is not implemented.")
 
@@ -206,7 +206,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
             if len(file_paths) == 1:
                 dist_data = file_paths[0]
             else:
-                raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(file_paths)} were found")
+                raise Exception(f"To use single node training, you need to provide only 1 input {category} file, but {len(file_paths)} were found")
         return dist_data
 
 
