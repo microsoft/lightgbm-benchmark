@@ -168,6 +168,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         """ Identifies which train/test file to load on this node.
         Checks for consistency between number of files and mpi config.
         Args:
+            args (argparse.Namespace)
             path (str): where to find the files
             mpi_config (namedtuple): as returned from detect_mpi_config()
             category (str): name of that data (for logging)
