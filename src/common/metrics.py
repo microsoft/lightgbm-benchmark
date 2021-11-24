@@ -10,6 +10,7 @@ import re
 from functools import wraps
 import mlflow
 import platform
+import psutil
 import json
 import traceback
 import logging
@@ -104,9 +105,13 @@ class MetricsLogger():
         self.set_properties(
             machine=platform.machine(),
             processor=platform.processor(),
+            architecture="-".join(platform.architecture()),
+            platform=platform.platform(),
             system=platform.system(),
             system_version=platform.version(),
-            cpu_count=os.cpu_count()
+            cpu_count=os.cpu_count(),
+            cpu_frequency=psutil.cpu_freq().current,
+            system_memory=(psutil.virtual_memory().total) / (1024*1024*1024)
         )
 
     def set_properties_from_json(self, json_string):
