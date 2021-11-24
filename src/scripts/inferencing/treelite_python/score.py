@@ -117,7 +117,7 @@ class TreeLightInferencingScript(RunnableScript):
             time_inferencing_per_batch.append((time.monotonic() - batch_start_time)) # usecs
 
         # log overall time
-        metrics_logger.log_metrics("time_inferencing", sum(time_inferencing_per_batch))
+        metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_batch))
 
         # use helper to log latency with the right metric names
         metrics_logger.log_inferencing_latencies(
