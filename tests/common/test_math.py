@@ -64,3 +64,8 @@ def test_bootstrap_ci_no_seed():
         # because it's a bootstrap, these are supposed to be true
         assert min(sample_data) <= ci_left
         assert ci_right <= max(sample_data)
+
+    # tests that are specific to the operators
+    assert returned_values['p90'][0] <= returned_values['p99'][0] # p90 < p99 so left CI also
+    assert returned_values['p90'][1] <= returned_values['p99'][1] # p90 < p99 so mean also
+    assert returned_values['p90'][2] <= returned_values['p99'][2] # p90 < p99 so right CI also
