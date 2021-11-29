@@ -4,6 +4,7 @@ import pytest
 from unittest.mock import call, Mock, patch
 import time
 import platform
+import psutil
 
 from common.metrics import MetricsLogger
 
@@ -136,7 +137,11 @@ def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
         "processor":platform.processor(),
         "system":platform.system(),
         "system_version":platform.version(),
-        "cpu_count":os.cpu_count()
+        "cpu_count":os.cpu_count(),
+        "architecture":"-".join(platform.architecture()),
+        "platform":platform.platform(),
+        "cpu_frequency":round(psutil.cpu_freq().current),
+        "system_memory":round((psutil.virtual_memory().total) / (1024*1024*1024))
     }
     metrics_logger.set_platform_properties()
 
