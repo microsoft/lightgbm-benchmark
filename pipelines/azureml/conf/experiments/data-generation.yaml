@@ -2,12 +2,11 @@
 # with varying number of features
 #
 # to execute, run from /pipelines/azureml/
-# > python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True
+# > python pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml
 
 defaults:
   - aml: sample
   - compute: sample
-  - modules: benchmark
 
 # run parameters are command line arguments for running your experiment
 run: # params for running pipeline

@@ -31,7 +31,7 @@ def pipeline_cli_main(pipeline_config_dataclass, pipeline_func, cli_args = None)
     """
     # create an argument parser just to catch --exp-conf
     arg_parser = argparse.ArgumentParser(add_help=False)
-    arg_parser.add_argument("--exp-conf", required=False, default=None)
+    arg_parser.add_argument("--exp-config", dest="exp_conf", required=False, default=None)
     # all remaining arguments will be passed to hydra
     args, unknown_args = arg_parser.parse_known_args()
 

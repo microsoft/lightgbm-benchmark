@@ -2,7 +2,7 @@
 Runs LightGBM using distributed (mpi) training.
 
 to execute:
-> python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True
+> python pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
