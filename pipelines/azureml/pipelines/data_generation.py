@@ -14,17 +14,12 @@ import argparse
 
 # config management
 from dataclasses import dataclass
-#import hydra
-#from hydra.core.config_store import ConfigStore
-#from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, OmegaConf, MISSING
 from typing import Optional, List
 
 # AzureML
 from azure.ml.component import Component
 from azure.ml.component import dsl
-#from shrike.pipeline.pipeline_config import default_config_dict
-#from shrike.pipeline.aml_connect import azureml_connect
 
 # when running this script directly, needed to import common
 LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
