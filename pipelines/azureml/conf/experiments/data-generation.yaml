@@ -29,7 +29,7 @@ module_loader: # module loading params
 
 ### CUSTOM PARAMETERS ###
 
-data_generation:
+data_generation_config:
   benchmark_name: "benchmark-dev"
 
   # DATA
