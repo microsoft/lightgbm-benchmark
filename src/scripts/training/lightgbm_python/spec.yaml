@@ -34,6 +34,13 @@ inputs:
     type: String
     optional: true
     description: "specify group/query column, default '', see https://lightgbm.readthedocs.io/en/latest/Parameters.html#group_column"
+  test_data_dist_mode:
+    type: Enum
+    default: "n_train_1_test"
+    enum:
+      - n_train_n_test
+      - n_train_1_test
+    description: "either share all test files accross all nodes (n_train_1_test) or split test files per node (n_train_n_test)"
 
   # Learning Parameters
   objective:
@@ -148,6 +155,7 @@ launcher:
     --header {inputs.header}
     [--label_column {inputs.label_column}]
     [--group_column {inputs.group_column}]
+    --test_data_dist_mode {inputs.test_data_dist_mode}
     --device_type {inputs.device_type}
     --objective {inputs.objective}
     --metric {inputs.metric}

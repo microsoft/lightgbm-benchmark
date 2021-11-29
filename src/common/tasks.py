@@ -120,6 +120,7 @@ class lightgbm_training_data_variant_parameters:
     header: bool = False
     label_column: Optional[str] = "0"
     group_column: Optional[str] = None
+    test_data_dist_mode: str = "n_train_1_test"
     construct: bool = True
 
 @dataclass

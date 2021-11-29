@@ -96,6 +96,14 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         group_i.add_argument("--header", required=False, default=False, type=strtobool)
         group_i.add_argument("--label_column", required=False, default="0", type=str)
         group_i.add_argument("--group_column", required=False, default=None, type=str)
+        group_i.add_argument(
+            "--test_data_dist_mode",
+            required=False,
+            choices=['n_train_n_test', 'n_train_1_test'],
+            default='n_train_1_test',
+            type=str,
+            help="either share all test files accross all nodes (n_train_1_test) or split test files per node (n_train_n_test)"
+        )
 
         group_o = parser.add_argument_group("Outputs")
         group_o.add_argument("--export_model",
@@ -156,35 +164,37 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         return lgbm_params
 
 
-    def assign_train_data(self, args, mpi_config):
-        """ Identifies which training file to load on this node.
+    def assign_distributed_data(self, args, path, mpi_config, category):
+        """ Identifies which train/test file to load on this node.
         Checks for consistency between number of files and mpi config.
         Args:
             args (argparse.Namespace)
+            path (str): where to find the files
             mpi_config (namedtuple): as returned from detect_mpi_config()
+            category (str): name of that data (for logging)
         
         Returns:
             str: path to the data file for this node
         """
-        train_file_paths = get_all_files(args.train)
+        file_paths = get_all_files(path)
 
         if mpi_config.mpi_available:    
             # depending on mode, we'll require different number of training files
             if args.tree_learner == "data" or args.tree_learner == "voting":
-                if len(train_file_paths) == mpi_config.world_size:
-                    train_data = train_file_paths[mpi_config.world_rank]
+                if len(file_paths) == mpi_config.world_size:
+                    dist_data = file_paths[mpi_config.world_rank]
                 else:
-                    raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
+                    raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input {category} data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
             elif args.tree_learner == "feature":
-                if len(train_file_paths) == 1:
-                    train_data = train_file_paths[0]
+                if len(file_paths) == 1:
+                    dist_data = file_paths[0]
                 else:
-                    raise Exception(f"To use MPI with tree_learner=parallel you need to provide only 1 input file, but {len(train_file_paths)} were found")
+                    raise Exception(f"To use MPI with tree_learner=parallel you need to provide only 1 input {category} file, but {len(file_paths)} were found")
             elif args.tree_learner == "serial":
-                if len(train_file_paths) == 1:
-                    train_data = train_file_paths[0]
+                if len(file_paths) == 1:
+                    dist_data = file_paths[0]
                 else:
-                    raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(train_file_paths)} were found")
+                    raise Exception(f"To use single node training, you need to provide only 1 input {category} file, but {len(file_paths)} were found")
             else:
                 NotImplementedError(f"tree_learner mode {args.tree_learner} does not exist or is not implemented.")
 
@@ -194,11 +204,11 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                 logging.getLogger().warning(f"Using tree_learner={args.tree_learner} on single node does not make sense, switching back to tree_learner=serial")
                 args.tree_learner = "serial"
 
-            if len(train_file_paths) == 1:
-                train_data = train_file_paths[0]
+            if len(file_paths) == 1:
+                dist_data = file_paths[0]
             else:
-                raise Exception(f"To use single node training, you need to provide only 1 input file, but {len(train_file_paths)} were found")
-        return train_data
+                raise Exception(f"To use single node training, you need to provide only 1 input {category} file, but {len(file_paths)} were found")
+        return dist_data
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -232,10 +242,17 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         logger.info(f"Loading data for training")
         with metrics_logger.log_time_block("time_data_loading"):
             # obtain the path to the train data for this node
-            train_data_path = self.assign_train_data(args, self.mpi_config)
-            test_data_paths = get_all_files(args.test)
-
-            logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
+            train_data_path = self.assign_distributed_data(args, args.train, self.mpi_config, "train")
+            if args.test_data_dist_mode == 'n_train_n_test':
+                # in this mode, test data is split accross nodes (for bin test files)
+                test_data_paths = self.assign_distributed_data(args, args.test, self.mpi_config, "test")
+                logger.info(f"Running with 1 train file and 1 test files on node {self.mpi_config.world_rank}.")
+            elif args.test_data_dist_mode == 'n_train_1_test':
+                # in this mode, test data is shared accross nodes
+                test_data_paths = get_all_files(args.test)
+                logger.info(f"Running with 1 train file and {len(test_data_paths)} test files on node {self.mpi_config.world_rank}.")
+            else:
+                raise NotImplementedError(f"--test_data_dist_mode {args.test_data_dist_mode} is not implemented yet")
 
             # construct datasets
             if args.construct:

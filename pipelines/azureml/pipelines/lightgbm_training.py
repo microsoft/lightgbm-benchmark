@@ -220,6 +220,7 @@ class LightGBMTraining(AMLPipelineHelper):
                 training_params['header'] = variant_params.data.header
                 training_params['label_column'] = variant_params.data.label_column
                 training_params['group_column'] = variant_params.data.group_column
+                training_params['test_data_dist_mode'] = variant_params.data.test_data_dist_mode
 
                 # extract and construct "sweepable" params
                 if variant_params.sweep:
