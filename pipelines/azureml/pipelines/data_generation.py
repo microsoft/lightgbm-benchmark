@@ -23,8 +23,8 @@ from typing import Optional, List
 # AzureML
 from azure.ml.component import Component
 from azure.ml.component import dsl
-from shrike.pipeline.pipeline_config import default_config_dict
-from shrike.pipeline.aml_connect import azureml_connect, current_workspace
+#from shrike.pipeline.pipeline_config import default_config_dict
+from shrike.pipeline.aml_connect import azureml_connect
 
 # when running this script directly, needed to import common
 LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -37,6 +37,7 @@ if SCRIPTS_SOURCES_ROOT not in sys.path:
     sys.path.append(str(SCRIPTS_SOURCES_ROOT))
 
 from common.tasks import data_generation_task
+#from common.pipelines import pipeline_cli_main, COMPONENTS_ROOT
 
 ### CONFIG DATACLASS ###
 
@@ -111,53 +112,59 @@ def all_inferencing_tasks_pipeline_function(config):
                 create_new_version=True
             )  
 
-def run(pipeline_config):
-    pipeline_instance = all_inferencing_tasks_pipeline_function(pipeline_config)
+def pipeline_cli_main(pipeline_func, cli_args = None):
+    """ (soon to be) Standard main function
+    
+    Args:
+        pipeline_func (function): pipeline building function to call with config object
+        cli_args (List): command line arguments (if None, use sys.argv)
+    """
+    # create an argument parser just to catch --exp-conf
+    arg_parser = argparse.ArgumentParser(add_help=False)
+    arg_parser.add_argument("--exp-conf", required=False, default=None)
+    # all remaining arguments will be passed to hydra
+    args, unknown_args = arg_parser.parse_known_args()
 
-    # Connect to AzureML
-    workspace = azureml_connect(
-        aml_subscription_id=pipeline_config.aml.subscription_id,
-        aml_resource_group=pipeline_config.aml.resource_group,
-        aml_workspace_name=pipeline_config.aml.workspace_name,
-        aml_auth=pipeline_config.aml.auth,
-        aml_tenant=pipeline_config.aml.tenant,
-        #aml_force=pipeline_config.aml.force,
-    )  # NOTE: this also stores aml workspace in internal global variable
-
-    # Submit or Validate ?
-    pipeline_instance.validate(workspace=workspace)
-
-
-def cli_main():
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("--exp-conf", required=True)
-    args, hydra_args = arg_parser.parse_known_args()
-
-    #config_dict = default_config()
-    # resolve config_dir and config_name
-    config_abspath = os.path.abspath(args.exp_conf)
-    print(f"CONFIG_PATH={CONFIG_PATH}")
-    print(f"config_path={args.exp_conf}")
-    print(f"config_abspath={config_abspath}")
-    print(f"unknown_args={hydra_args}")
-
+    # resolve config_dir and config_name from --exp-conf
     # hacky, need a better solution
-    config_name = os.path.relpath(config_abspath, start=CONFIG_PATH).replace("\\","/").rstrip(".yaml")
-    print(f"config_name={config_name}")
+    if args.exp_conf:
+        config_abspath = os.path.abspath(args.exp_conf)
+        config_relpath = os.path.relpath(config_abspath, start=CONFIG_PATH) # relative path from config folder to specified config yaml
+        config_name = os.path.dirname(config_relpath).replace("\\", "/") + "/" + os.path.basename(config_relpath)
+        print(f"Using config_name={config_name} and config_dir={CONFIG_PATH}")
+    else:
+        config_name = None
+
+    def _run(pipeline_config):
+        pipeline_instance = pipeline_func(pipeline_config)
+
+        # Connect to AzureML
+        workspace = azureml_connect(
+            aml_subscription_id=pipeline_config.aml.subscription_id,
+            aml_resource_group=pipeline_config.aml.resource_group,
+            aml_workspace_name=pipeline_config.aml.workspace_name,
+            aml_auth=pipeline_config.aml.auth,
+            aml_tenant=pipeline_config.aml.tenant,
+            #aml_force=pipeline_config.aml.force,
+        )  # NOTE: this also stores aml workspace in internal global variable
+
+        # Submit or Validate ?
+        pipeline_instance.validate(workspace=workspace)
 
     @hydra.main(config_path=CONFIG_PATH, config_name=config_name)
     def hydra_main(cfg : DictConfig) -> None:
         #cfg = OmegaConf.merge(config_dict, cfg)
         print(OmegaConf.to_yaml(cfg))
 
-        run(cfg)
-
+        _run(cfg)
 
     # override argv with only unknown args
-    sys.argv = [sys.argv[0]] + hydra_args
+    sys.argv = [sys.argv[0]] + unknown_args
     hydra_main()
 
 
 # NOTE: main block is necessary only if script is intended to be run from command line
 if __name__ == "__main__":
-    cli_main()
+    # use standard cli main to get arguments from CLI
+    # then create the pipeline with config, and submit/validate
+    pipeline_cli_main(all_inferencing_tasks_pipeline_function)
