@@ -199,10 +199,13 @@ class DistributedMetricCollectionThread(threading.Thread):
 
     def aggregate_and_report_task(self, key: str, iteration: int, eval_name: str, results: List[float]):
         # TODO: devise aggregation method per eval_name
-        self.metrics_logger.log_metric(
-            key=key,
-            value=np.mean(results),
-            step=iteration # provide iteration as step in mlflow
+        self.metrics_logger.log_metrics(
+            {
+                f"{key}": np.mean(results),
+                f"{key}_min": np.min(results),
+                f"{key}_max": np.max(results)
+            },
+            step=iteration
         )
 
     def aggregate_and_report_loop(self):
