@@ -10,3 +10,4 @@ treelite==2.1.0
 treelite_runtime==2.1.0
 mpi4py==3.1.1
 matplotlib==3.4.3
+psutil==5.8.0
