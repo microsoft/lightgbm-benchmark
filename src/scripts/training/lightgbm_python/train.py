@@ -114,7 +114,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         group_lgbm.add_argument("--learning_rate", required=True, type=float)
         group_lgbm.add_argument("--max_bin", required=True, type=int)
         group_lgbm.add_argument("--feature_fraction", required=True, type=float)
-        group_lgbm.add_argument("--device_type", required=True, type=str)
+        group_lgbm.add_argument("--device_type", required=False, type=str, default="cpu")
         group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 
         return parser
