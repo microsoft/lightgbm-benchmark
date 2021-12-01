@@ -10,6 +10,7 @@ import logging
 from typing import List
 import threading
 import time
+import traceback
 
 class LightGBMCallbackHandler():
     """ This class handles LightGBM callbacks for recording metrics. """
@@ -121,12 +122,15 @@ class DistributedMetricCollectionThread(threading.Thread):
             for i in range(1, self.world_size):
                 self.logger.info(f"Probing metric from node {i}")
 
-                if self.mpi_comm.iprobe(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC): # non-blocking
-                    self.logger.info(f"Collecting metric from node {i}")
-                    remote_node_metrics = self.mpi_comm.recv(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC) # blocking
-                else:
-                    self.logger.info(f"NO metric from node {i}")
-                    continue
+                try:
+                    if self.mpi_comm.iprobe(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC): # non-blocking
+                        self.logger.info(f"Collecting metric from node {i}")
+                        remote_node_metrics = self.mpi_comm.recv(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC) # blocking
+                    else:
+                        self.logger.info(f"NO metric from node {i}")
+                        continue
+                except BaseException:
+                    self.logger.warning(f"Exception while listening to other nodes:\n{traceback.format_exc()}")
 
                 self.record_distributed_metric(i, remote_node_metrics)
 
