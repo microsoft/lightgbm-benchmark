@@ -11,6 +11,8 @@ import argparse
 
 # config management
 from dataclasses import dataclass
+from omegaconf import MISSING
+from typing import Any, Optional
 import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
@@ -21,7 +23,49 @@ from shrike.pipeline.aml_connect import azureml_connect
 # when running this script directly, needed to import common
 from .paths import COMPONENTS_ROOT, CONFIG_PATH
 
-def pipeline_cli_main(pipeline_config_dataclass, pipeline_func, cli_args = None):
+
+@dataclass
+class aml_connection_config:  # pylint: disable=invalid-name
+    """AML connection configuration"""
+    subscription_id: str = MISSING
+    resource_group: str = MISSING
+    workspace_name: str = MISSING
+    tenant: Optional[str] = None
+    auth: str = "interactive"
+    force: bool = False
+
+@dataclass
+class compute_config:  # pylint: disable=invalid-name
+    """AML workspace compute targets and I/O modes"""
+    default_compute_target: str = "cpu-cluster"
+    linux_cpu: str = MISSING
+    linux_gpu: str = MISSING
+    windows_cpu: str = MISSING
+
+@dataclass
+class run_config:  # pylint: disable=invalid-name
+    """Pipeline config for command line parameters"""
+    regenerate_outputs: bool = False
+    continue_on_failure: bool = False
+    submit: bool = False
+    validate: bool = True
+
+@dataclass
+class experiment_config:  # pylint: disable=invalid-name
+    """Pipeline config for command line parameters"""
+    name: str = MISSING
+    description: Optional[str] = None
+    display_name: Optional[str] = None
+    tags: Optional[Any] = None
+
+
+def pipeline_cli_main(pipeline_config_dataclass,
+                      pipeline_func,
+                      experiment_name=None,
+                      experiment_description=None,
+                      display_name=None,
+                      tags=None,
+                      cli_args=None):
     """ (soon to be) Standard main function
     
     Args:
@@ -33,7 +77,7 @@ def pipeline_cli_main(pipeline_config_dataclass, pipeline_func, cli_args = None)
     arg_parser = argparse.ArgumentParser(add_help=False)
     arg_parser.add_argument("--exp-config", dest="exp_conf", required=False, default=None)
     # all remaining arguments will be passed to hydra
-    args, unknown_args = arg_parser.parse_known_args()
+    args, unknown_args = arg_parser.parse_known_args(cli_args)
 
     # resolve config_dir and config_name from --exp-conf
     # hacky, need a better solution
@@ -58,7 +102,13 @@ def pipeline_cli_main(pipeline_config_dataclass, pipeline_func, cli_args = None)
     # create config with pipeline dataclass
     # store it in hydra default
     config_store = ConfigStore.instance()
-    config_dict = default_config_dict()
+    config_dict = {
+        "aml": aml_connection_config,
+        "compute": compute_config,
+        "run": run_config,
+        "experiment": experiment_config
+    }
+
     config_dict[pipeline_config_dataclass.__name__] = pipeline_config_dataclass
     config_store.store(name="default", node=config_dict)
 
@@ -78,15 +128,26 @@ def pipeline_cli_main(pipeline_config_dataclass, pipeline_func, cli_args = None)
         pipeline_instance = pipeline_func(pipeline_config)
 
         # Submit or Validate ?
-        pipeline_instance.validate(workspace=workspace)
-
+        if pipeline_config.run.validate:
+            pipeline_instance.validate(workspace=workspace)
+        
+        if pipeline_config.run.submit:
+            pipeline_run = pipeline_instance.submit(
+                workspace=workspace,
+                experiment_name=(experiment_name or pipeline_config.experiment.name),
+                description=(experiment_description or pipeline_config.experiment.description),
+                display_name=(display_name or pipeline_config.experiment.display_name),
+                tags=(tags or pipeline_config.experiment.tags),
+                default_compute_target=pipeline_config.compute.default_compute_target,
+                regenerate_outputs=pipeline_config.run.regenerate_outputs,
+                continue_on_step_failure=pipeline_config.run.continue_on_failure,
+            )
 
     @hydra.main(config_name="default")
     def hydra_main(cfg : DictConfig) -> None:
-        #cfg = OmegaConf.merge(config_dict, cfg)
+        cfg = OmegaConf.merge(config_dict, cfg)
         print(OmegaConf.to_yaml(cfg))
 
         _run(cfg)
 
     hydra_main()
-

@@ -108,6 +108,7 @@ def data_generation_main_pipeline_function(config):
             verbose = False,
             custom_properties = benchmark_custom_properties
         )
+        generate_data_step.runsettings.configure(target=config.compute.linux_cpu)
 
         if config.data_generation_config.register_outputs:
             dataset_prefix = "{prefix}-{task}-{cols}cols".format(

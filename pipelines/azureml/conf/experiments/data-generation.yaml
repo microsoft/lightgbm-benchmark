@@ -6,27 +6,16 @@
 
 defaults:
   - aml: sample
-  - compute: sample
 
-# run parameters are command line arguments for running your experiment
-run: # params for running pipeline
-  experiment_name: "data-generation" # IMPORTANT
-  regenerate_outputs: false
-  continue_on_failure: false
-  verbose: false
-  submit: false
-  resume: false
-  canary: false
-  silent: false
-  wait: false
-
-module_loader: # module loading params
-  use_local: "*"
-  force_default_module_version: null
-  force_all_module_version: null
-  local_steps_folder: "../../../../../src/scripts/"
+compute:
+  linux_cpu: "cpu-cluster"
+  linux_gpu: "linux-gpu-nv6"
+  windows_cpu: "win-cpu"
 
 ### CUSTOM PARAMETERS ###
+experiment:
+  name: "data_generation_dev"
+  description: "something interesting to say about this"
 
 data_generation_config:
   benchmark_name: "benchmark-dev"
