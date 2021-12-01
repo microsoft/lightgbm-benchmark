@@ -208,3 +208,48 @@ def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
         time.sleep(0.01)
 
     mlflow_log_metric_mock.assert_called_once()
+
+
+@patch('mlflow.log_figure')
+@patch('mlflow.log_metric')
+def test_log_inferencing_larencies(mlflow_log_metric_mock, mlflow_log_figure_mock):
+    """ Tests MetricsLogger().log_inferencing_larencies() """
+    metrics_logger = MetricsLogger()
+    metrics_logger.close()
+
+    test_latencies = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 5.0]
+    test_batch_sizes = [1, 1, 1, 1, 1, 1, 1, 5]
+
+    metrics_logger.log_inferencing_latencies(test_latencies, batch_length=test_batch_sizes, factor_to_usecs=1000000.0)
+
+    #assert mlflow_log_metric_mock.call_args_list == []
+
+    mlflow_log_metric_mock.assert_has_calls(
+        [
+            call("prediction_batches", 8, step=None), # len(test_latencies)
+            call("prediction_queries", 12, step=None), # sum(test_batch_sizes)
+
+            # reference values based on test_latencies above
+            call('prediction_latency_avg', 650000.0, step=None),
+            call('batch_latency_p50_usecs', 450000.0, step=None),
+            call('batch_latency_p75_usecs', 625000.0, step=None),
+            call('batch_latency_p90_usecs', 1989999.9999999993, step=None),
+            call('batch_latency_p95_usecs', 3494999.9999999977, step=None),
+            call('batch_latency_p99_usecs', 4698999.999999999, step=None),
+            call('prediction_latency_p50_usecs', 450000.0, step=None),
+            call('prediction_latency_p75_usecs', 625000.0, step=None),
+            call('prediction_latency_p90_usecs', 790000.0, step=None),
+            call('prediction_latency_p95_usecs', 894999.9999999999, step=None),
+            call('prediction_latency_p99_usecs', 978999.9999999999, step=None),
+        ],
+        any_order=True
+    )
+
+    # testing logging figures
+    figure_calls = mlflow_log_figure_mock.call_args_list
+    assert mlflow_log_figure_mock.call_count == 2
+    assert len(figure_calls) == 2
+
+    # second argument of each call is file name
+    assert (figure_calls[0].args[1] == "batch_latency_log_histogram.png")
+    assert (figure_calls[1].args[1] == "prediction_latency_log_histogram.png")
