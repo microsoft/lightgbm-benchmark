@@ -204,10 +204,17 @@ def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
     metrics_logger = MetricsLogger()
     metrics_logger.close()
 
-    with metrics_logger.log_time_block("foo_metric"):
+    with metrics_logger.log_time_block("foo_metric", step=2):
         time.sleep(0.01)
 
-    mlflow_log_metric_mock.assert_called_once()
+    # there should be only one call in this case
+    metric_calls = mlflow_log_metric_mock.call_args_list
+    assert mlflow_log_metric_mock.call_count == 1
+    assert len(metric_calls) == 1
+
+    # test metric key argument
+    assert (metric_calls[0].args[0] == "foo_metric")
+    assert (metric_calls[0].kwargs["step"] == 2)
 
 
 @patch('mlflow.log_figure')

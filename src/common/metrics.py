@@ -80,7 +80,11 @@ class MetricsLogger():
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
-        mlflow.log_metric(key, value, step=step)
+
+        try:
+            mlflow.log_metric(key, value, step=step)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def log_figure(self, figure, artifact_file):
         """Logs a figure using mlflow
@@ -89,7 +93,10 @@ class MetricsLogger():
             figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
             artifact_file (str): name of file to record
         """
-        mlflow.log_figure(figure, artifact_file)
+        try:
+            mlflow.log_figure(figure, artifact_file)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def set_properties(self, **kwargs):
         """Set properties/tags for the session.
@@ -150,7 +157,7 @@ class MetricsLogger():
             else:
                 mlflow.log_param(key,value)
 
-    def log_time_block(self, metric_name):
+    def log_time_block(self, metric_name, step=None):
         """ [Proxy] Use in a `with` statement to measure execution time of a code block.
         Uses LogTimeBlock.
         
@@ -163,7 +170,7 @@ class MetricsLogger():
         ```
         """
         # see class below with proper __enter__ and __exit__
-        return LogTimeBlock(metric_name)
+        return LogTimeBlock(metric_name, step=step)
 
     def log_inferencing_latencies(self, time_per_batch, batch_length=1, factor_to_usecs=1000000.0):
         """Logs prediction latencies (for inferencing) with lots of fancy metrics and plots.
@@ -260,6 +267,7 @@ class LogTimeBlock(object):
         """
         # kwargs
         self.tags = kwargs.get('tags', None)
+        self.step = kwargs.get('step', None)
 
         # internal variables
         self.name = name
@@ -280,7 +288,7 @@ class LogTimeBlock(object):
         run_time = time.time() - self.start_time # stops "timer"
 
         self._logger.info(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
-        MetricsLogger().log_metric(self.name, run_time)
+        MetricsLogger().log_metric(self.name, run_time, step=self.step)
 
 
 ####################
