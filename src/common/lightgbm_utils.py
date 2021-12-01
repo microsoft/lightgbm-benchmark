@@ -28,6 +28,8 @@ class LightGBMCallbackHandler():
             key = self.metrics_prefix + key
         if self.metrics_suffix:
             key = key + self.metrics_suffix
+        
+        return key
 
     def callback(self, env: lightgbm.callback.CallbackEnv) -> None:
         """Callback method to collect metrics produced by LightGBM.
