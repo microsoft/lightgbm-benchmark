@@ -1,8 +1,8 @@
 # This experiment generates multiple synthetic datasets for regression
 # with varying number of features
 #
-# to execute, run from /pipelines/azureml/
-# > python pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml
+# to execute:
+# > python pipelines/azureml/pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml
 
 defaults:
   - aml: sample
@@ -13,6 +13,7 @@ compute:
   windows_cpu: "win-cpu"
 
 ### CUSTOM PARAMETERS ###
+
 experiment:
   name: "data_generation_dev"
   description: "something interesting to say about this"

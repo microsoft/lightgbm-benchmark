@@ -1,8 +1,10 @@
 """
-Runs LightGBM using distributed (mpi) training.
+Generates synthetic data with multiple parameters.
+
+See config file /pipelines/azureml/conf/experiments/data-generation.yaml
 
 to execute:
-> python pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml
+> python pipelines/azureml/pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml +run.submit=True
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
@@ -30,7 +32,7 @@ if SCRIPTS_SOURCES_ROOT not in sys.path:
     sys.path.append(str(SCRIPTS_SOURCES_ROOT))
 
 from common.tasks import data_generation_task
-from common.pipelines import pipeline_cli_main, COMPONENTS_ROOT
+from common.pipelines import pipeline_submit_main, COMPONENTS_ROOT
 
 ### CONFIG DATACLASS ###
 
@@ -130,9 +132,15 @@ def data_generation_main_pipeline_function(config):
                 create_new_version=True
             )  
 
+# Step 4: use main function
+# the main block below will:
+# 1 - parse command line arguments
+# 2 - pass them to the pipeline function as argument
+# 3 - build the pipeline and submit
+
 if __name__ == "__main__":
     # use standard cli main to get arguments from CLI
-    pipeline_cli_main(
+    pipeline_submit_main(
         # pipeline configuration class
         data_generation_config,
 
