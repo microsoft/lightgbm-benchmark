@@ -163,7 +163,7 @@ class MetricsLogger():
         ```
         """
         # see class below with proper __enter__ and __exit__
-        return LogTimeBlock(metric_name, step=None)
+        return LogTimeBlock(metric_name, step=step)
 
 
 
