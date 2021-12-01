@@ -11,9 +11,19 @@ import logging
 import traceback
 import json
 from distutils.util import strtobool
-import lightgbm
-from mpi4py import MPI
 from collections import namedtuple
+
+import lightgbm
+
+# NOTE: we're doing our own MPI initialization
+# to allow for multiple threads (see LightGBMDistributedCallbackHandler)
+import mpi4py
+mpi4py.rc.initialize = False
+mpi4py.rc.finalize = False
+from mpi4py import MPI
+#MPI.Init()
+MPI.Init_thread(required=MPI.THREAD_MULTIPLE)
+
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*

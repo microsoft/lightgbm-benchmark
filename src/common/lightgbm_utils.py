@@ -5,6 +5,7 @@
 This classes provide help to integrate lightgbm
 """
 import lightgbm
+import numpy as np
 import logging
 from typing import List
 
@@ -36,6 +37,7 @@ class LightGBMCallbackHandler():
                 step=env.iteration # provide iteration as step in mlflow
             )
 
+
 class LightGBMDistributedCallbackHandler():
     COMM_TAG_METRIC = 209834 # "random id"
 
@@ -55,15 +57,24 @@ class LightGBMDistributedCallbackHandler():
 
     def report_distributed_metric(self, env: lightgbm.callback.CallbackEnv):
         """Sends metrics to node 0"""
-        self.mpi_comm.send(env, 0, tag=LightGBMDistributedCallbackHandler.COMM_TAG_METRIC) # blocking
+        self.logger.info(f"Reporting metric back to node 0: {env}")
+        self.mpi_comm.isend(env, 0, tag=LightGBMDistributedCallbackHandler.COMM_TAG_METRIC) # non-blocking
 
     def collect_distributed_metrics(self, iteration: int):
         """Collect metrics from all nodes other than 0"""
         for i in range(1, self.world_size):
-            remote_node_metrics = self.mpi_comm.recv(source=i, tag=LightGBMDistributedCallbackHandler.COMM_TAG_METRIC) # blocking
+            self.logger.info(f"Probing metric from node {i}")
+
+            if self.mpi_comm.probe(source=i, tag=LightGBMDistributedCallbackHandler.COMM_TAG_METRIC):
+                self.logger.info(f"Collecting metric from node {i}")
+                remote_node_metrics = self.mpi_comm.recv(source=i, tag=LightGBMDistributedCallbackHandler.COMM_TAG_METRIC) # blocking
+            else:
+                self.logger.info(f"NO metric from node {i}")
+                continue
+
             if remote_node_metrics.iteration != iteration:
-                self.logger.warning(f"Remove node {i} sent metric for iteration {remote_node_metrics.iteration} while node 0 is at iteration {iteration}")
-            self.store_metric(i, remote_node_metrics)
+                self.logger.warning(f"Remote node {i} sent metric for iteration {remote_node_metrics.iteration} while node 0 is at iteration {iteration}")
+            self.store_distributed_metric(i, remote_node_metrics)
 
     def store_distributed_metric(self, node: int, env: lightgbm.callback.CallbackEnv):
         """Stores a metric in the internal storage
@@ -77,7 +88,7 @@ class LightGBMDistributedCallbackHandler():
         # TODO: devise aggregation method per eval_name
         self.metrics_logger.log_metric(
             key=key,
-            value=sum(results),
+            value=np.mean(results),
             step=iteration # provide iteration as step in mlflow
         )
 
@@ -136,3 +147,5 @@ class LightGBMDistributedCallbackHandler():
         else:
             # all the other just report back to node 0
             self.report_distributed_metric(env)
+
+        self.logger.info("End of callback")
