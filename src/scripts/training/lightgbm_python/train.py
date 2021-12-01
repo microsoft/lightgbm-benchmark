@@ -26,7 +26,7 @@ if COMMON_ROOT not in sys.path:
 # useful imports from common
 from common.components import RunnableScript
 from common.io import get_all_files
-from common.lightgbm_utils import LightGBMCallbackHandler
+from common.lightgbm_utils import LightGBMDistributedCallbackHandler
 
 def detect_mpi_config():
     """ Detects if we're running in MPI.
@@ -66,7 +66,6 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
             task = "train",
             framework = "lightgbm",
             framework_version = lightgbm.__version__,
-            metrics_prefix=f"node_{self.mpi_config.world_rank}/",
             do_not_log_properties=not(self.mpi_config.main_node)
         )
 
@@ -213,7 +212,12 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         # figure out the lgbm params from cli args + mpi config
         lgbm_params = self.load_lgbm_params_from_cli(args, self.mpi_config)
 
-        callbacks_handler = LightGBMCallbackHandler(metrics_logger = metrics_logger)
+        callbacks_handler = LightGBMDistributedCallbackHandler(
+            metrics_logger=metrics_logger,
+            mpi_comm = MPI.COMM_WORLD,
+            world_rank=self.mpi_config.world_rank,
+            world_size=self.mpi_config.world_size
+        )
 
         # make sure the output argument exists
         if args.export_model and self.mpi_config.main_node:

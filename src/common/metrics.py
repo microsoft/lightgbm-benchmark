@@ -76,7 +76,7 @@ class MetricsLogger():
 
         key = self._remove_non_allowed_chars(key)
 
-        self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
+        self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value},step={step})")
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
