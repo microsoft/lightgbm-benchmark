@@ -80,7 +80,11 @@ class MetricsLogger():
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
-        mlflow.log_metric(key, value, step=step)
+
+        try:
+            mlflow.log_metric(key, value, step=step)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def log_figure(self, figure, artifact_file):
         """Logs a figure using mlflow
@@ -89,7 +93,10 @@ class MetricsLogger():
             figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
             artifact_file (str): name of file to record
         """
-        mlflow.log_figure(figure, artifact_file)
+        try:
+            mlflow.log_figure(figure, artifact_file)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def set_properties(self, **kwargs):
         """Set properties/tags for the session.
