@@ -121,7 +121,7 @@ class DistributedMetricCollectionThread(threading.Thread):
             for i in range(1, self.world_size):
                 self.logger.info(f"Probing metric from node {i}")
 
-                if self.mpi_comm.probe(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC):
+                if self.mpi_comm.iprobe(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC): # non-blocking
                     self.logger.info(f"Collecting metric from node {i}")
                     remote_node_metrics = self.mpi_comm.recv(source=i, tag=DistributedMetricCollectionThread.COMM_TAG_METRIC) # blocking
                 else:
