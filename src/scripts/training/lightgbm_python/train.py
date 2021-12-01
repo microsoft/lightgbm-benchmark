@@ -222,6 +222,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         # figure out the lgbm params from cli args + mpi config
         lgbm_params = self.load_lgbm_params_from_cli(args, self.mpi_config)
 
+        # create a handler
         callbacks_handler = LightGBMDistributedCallbackHandler(
             metrics_logger=metrics_logger,
             mpi_comm = MPI.COMM_WORLD,
@@ -282,6 +283,9 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         if args.export_model and self.mpi_config.main_node:
             logger.info(f"Writing model in {args.export_model}")
             booster.save_model(args.export_model)
+
+        # finalize all remaining metrics
+        callbacks_handler.finalize()
 
         # clean exit from mpi
         if MPI.Is_initialized():
