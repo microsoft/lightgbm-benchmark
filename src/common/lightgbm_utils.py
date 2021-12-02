@@ -181,16 +181,21 @@ class DistributedMetricCollectionThread(threading.Thread):
 
         self.logger.info(f"Queueing metric to send to node_0: iteration={env.iteration}")
         with self.send_lock:
-            self.send_queue.append(env)
+            # filtering out what we don't need to send
+            # in particular, we don't want to send the model!
+            self.send_queue.append({
+                "iteration":env.iteration,
+                "evaluation_result_list":env.evaluation_result_list
+            })
 
-    def record_distributed_metric(self, node, env: lightgbm.callback.CallbackEnv):
+    def record_distributed_metric(self, node, report):
         """Records a metric report internally to node 0"""
-        self.logger.info(f"Recorded metric from node {node}: {env}")
+        self.logger.info(f"Recorded metric from node {node}: {report}")
         with self.record_lock:
-            iteration = env.iteration
+            iteration = report['iteration']
             if iteration not in self.distributed_metrics:
                 self.distributed_metrics[iteration] = {}
-            self.distributed_metrics[iteration][node] = env
+            self.distributed_metrics[iteration][node] = report
 
 
     ##################
@@ -199,13 +204,20 @@ class DistributedMetricCollectionThread(threading.Thread):
 
     def aggregate_and_report_task(self, key: str, iteration: int, eval_name: str, results: List[float]):
         # TODO: devise aggregation method per eval_name
-        self.metrics_logger.log_metrics(
-            {
-                f"{key}": np.mean(results),
-                f"{key}_min": np.min(results),
-                f"{key}_max": np.max(results)
-            },
-            step=iteration
+        self.metrics_logger.log_metric(
+            key=key,
+            value=np.mean(results),
+            step=iteration # provide iteration as step in mlflow
+        )
+        self.metrics_logger.log_metric(
+            key=key+"_min",
+            value=np.min(results),
+            step=iteration # provide iteration as step in mlflow
+        )
+        self.metrics_logger.log_metric(
+            key=key+"_max",
+            value=np.max(results),
+            step=iteration # provide iteration as step in mlflow
         )
 
     def aggregate_and_report_loop(self):
@@ -218,7 +230,7 @@ class DistributedMetricCollectionThread(threading.Thread):
 
                 # loop on all the evaluation results tuples
                 for node_id, node_metrics in self.distributed_metrics[iteration].items():
-                    for data_name, eval_name, result, _ in node_metrics.evaluation_result_list:
+                    for data_name, eval_name, result, _ in node_metrics['evaluation_result_list']:
                         key = f"{data_name}.{eval_name}"
                         if key not in aggregation_tasks:
                             # record name of metric for aggregation method
