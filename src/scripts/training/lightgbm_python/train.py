@@ -123,7 +123,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         group_lgbm.add_argument("--learning_rate", required=True, type=float)
         group_lgbm.add_argument("--max_bin", required=True, type=int)
         group_lgbm.add_argument("--feature_fraction", required=True, type=float)
-        group_lgbm.add_argument("--device_type", required=True, type=str)
+        group_lgbm.add_argument("--device_type", required=False, type=str, default="cpu")
         group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 
         return parser
@@ -245,7 +245,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         lightgbm.register_logger(logger)
 
         logger.info(f"Loading data for training")
-        with metrics_logger.log_time_block("time_data_loading"):
+        with metrics_logger.log_time_block("time_data_loading", step=self.mpi_config.world_rank):
             # obtain the path to the train data for this node
             train_data_path = self.assign_train_data(args, self.mpi_config)
             test_data_paths = get_all_files(args.test)
@@ -259,8 +259,8 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                     train_data.create_valid(test_data_path).construct() for test_data_path in test_data_paths
                 ]
                 # capture data shape in metrics
-                metrics_logger.log_metric(key="train_data.length", value=train_data.num_data())
-                metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature())
+                metrics_logger.log_metric(key="train_data.length", value=train_data.num_data(), step=self.mpi_config.world_rank)
+                metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature(), step=self.mpi_config.world_rank)
             else:
                 train_data = lightgbm.Dataset(train_data_path, params=lgbm_params)
                 val_datasets = [
@@ -272,7 +272,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                 # metrics_logger.log_metric(key="train_data.width", value="n/a")
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
-        with metrics_logger.log_time_block("time_training"):
+        with metrics_logger.log_time_block("time_training", step=self.mpi_config.world_rank):
             booster = lightgbm.train(
                 lgbm_params,
                 train_data,

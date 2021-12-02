@@ -210,25 +210,12 @@ class LightGBMCAPIInferecingScript(RunnableScript):
                 else:
                     logger.warning(f"log metric {line} does not match expected pattern {row_pattern}")
 
-
-        if len(time_inferencing_per_query) > 1:
-            batch_run_times = np.array(time_inferencing_per_query)
-            metrics_logger.log_metric("batch_time_inferencing_p50_usecs", np.percentile(batch_run_times, 50))
-            metrics_logger.log_metric("batch_time_inferencing_p75_usecs", np.percentile(batch_run_times, 75))
-            metrics_logger.log_metric("batch_time_inferencing_p90_usecs", np.percentile(batch_run_times, 90))
-            metrics_logger.log_metric("batch_time_inferencing_p95_usecs", np.percentile(batch_run_times, 95))
-            metrics_logger.log_metric("batch_time_inferencing_p99_usecs", np.percentile(batch_run_times, 99))
-
-            # show the distribution prediction latencies
-            fig, ax = plt.subplots(1)
-            ax.hist(batch_run_times, bins=100)
-            ax.set_title("Latency-per-query histogram (log scale)")
-            plt.xlabel("usecs")
-            plt.ylabel("occurence")
-            plt.yscale('log')
-
-            # record in mlflow
-            metrics_logger.log_figure(fig, "latency_log_histogram.png")
+        # use helper to log latency with the right metric names
+        metrics_logger.log_inferencing_latencies(
+            time_inferencing_per_query,
+            batch_length=1, # in this exec, each row is just 1 prediction call
+            factor_to_usecs=1.0 # values are already in usecs
+        )
 
         if args.output:
             np.savetxt(
