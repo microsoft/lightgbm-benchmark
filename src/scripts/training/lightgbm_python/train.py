@@ -14,16 +14,7 @@ from distutils.util import strtobool
 from collections import namedtuple
 
 import lightgbm
-
-# NOTE: we're doing our own MPI initialization
-# to allow for multiple threads (see LightGBMDistributedCallbackHandler)
 import mpi4py
-mpi4py.rc.initialize = False
-mpi4py.rc.finalize = False
-from mpi4py import MPI
-#MPI.Init()
-MPI.Init_thread(required=MPI.THREAD_MULTIPLE)
-
 
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
@@ -46,8 +37,16 @@ def detect_mpi_config():
     Returns:
         mpi_config (namedtuple)
     """
+    # NOTE: we're doing our own MPI initialization
+    # to allow for multiple threads (see LightGBMDistributedCallbackHandler)
+    mpi4py.rc.initialize = False
+    mpi4py.rc.finalize = False
+    from mpi4py import MPI
+    #MPI.Init()
+    MPI.Init_thread(required=MPI.THREAD_MULTIPLE)
+
     # check if we're running multi or single node
-    mpi_config_tuple = namedtuple("mpi_config", ['world_size', 'world_rank', 'mpi_available', 'main_node'])
+    mpi_config_tuple = namedtuple("mpi_config", ['world_size', 'world_rank', 'mpi_available', 'main_node', 'mpi_comm'])
 
     try:
         comm = MPI.COMM_WORLD
@@ -56,6 +55,7 @@ def detect_mpi_config():
             comm.Get_rank(), # world_rank
             (comm.Get_size() > 1), # mpi_available
             (comm.Get_rank() == 0), # main_node
+            MPI.COMM_WORLD
         )
         logging.getLogger().info(f"MPI detection results: {mpi_config}")
     except:
@@ -225,7 +225,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         # create a handler
         callbacks_handler = LightGBMDistributedCallbackHandler(
             metrics_logger=metrics_logger,
-            mpi_comm = MPI.COMM_WORLD,
+            mpi_comm = self.mpi_config.mpi_comm,
             world_rank=self.mpi_config.world_rank,
             world_size=self.mpi_config.world_size
         )
@@ -288,9 +288,9 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         callbacks_handler.finalize()
 
         # clean exit from mpi
-        if MPI.Is_initialized():
+        if mpi4py.MPI.Is_initialized():
             logger.info("MPI was initialized, calling MPI.finalize()")
-            MPI.Finalize()
+            mpi4py.MPI.Finalize()
 
 
 def get_arg_parser(parser=None):
