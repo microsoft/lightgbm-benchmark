@@ -80,7 +80,11 @@ class MetricsLogger():
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
-        mlflow.log_metric(key, value, step=step)
+
+        try:
+            mlflow.log_metric(key, value, step=step)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def log_figure(self, figure, artifact_file):
         """Logs a figure using mlflow
@@ -89,7 +93,10 @@ class MetricsLogger():
             figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
             artifact_file (str): name of file to record
         """
-        mlflow.log_figure(figure, artifact_file)
+        try:
+            mlflow.log_figure(figure, artifact_file)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def set_properties(self, **kwargs):
         """Set properties/tags for the session.
@@ -150,7 +157,7 @@ class MetricsLogger():
             else:
                 mlflow.log_param(key,value)
 
-    def log_time_block(self, metric_name):
+    def log_time_block(self, metric_name, step=None):
         """ [Proxy] Use in a `with` statement to measure execution time of a code block.
         Uses LogTimeBlock.
         
@@ -163,7 +170,71 @@ class MetricsLogger():
         ```
         """
         # see class below with proper __enter__ and __exit__
-        return LogTimeBlock(metric_name)
+        return LogTimeBlock(metric_name, step=step)
+
+    def log_inferencing_latencies(self, time_per_batch, batch_length=1, factor_to_usecs=1000000.0):
+        """Logs prediction latencies (for inferencing) with lots of fancy metrics and plots.
+
+        Args:
+            time_per_batch_list (List[float]): time per inferencing batch
+            batch_lengths (Union[List[int],int]): length of each batch (List or constant)
+            factor_to_usecs (float): factor to apply to time_per_batch to convert to microseconds
+        """
+        if isinstance(batch_length, list):
+            sum_batch_lengths = sum(batch_length)
+        else:
+            sum_batch_lengths = batch_length*len(time_per_batch)
+
+        # log metadata
+        self.log_metric("prediction_batches", len(time_per_batch))
+        self.log_metric("prediction_queries", sum_batch_lengths)
+
+        if len(time_per_batch) > 0:
+            self.log_metric("prediction_latency_avg", (sum(time_per_batch) * factor_to_usecs)/sum_batch_lengths) # usecs
+
+        # if there's more than 1 batch, compute percentiles
+        if len(time_per_batch) > 1:
+            import numpy as np
+            import matplotlib.pyplot as plt
+
+            # latency per batch
+            batch_run_times = np.array(time_per_batch) * factor_to_usecs
+            self.log_metric("batch_latency_p50_usecs", np.percentile(batch_run_times, 50))
+            self.log_metric("batch_latency_p75_usecs", np.percentile(batch_run_times, 75))
+            self.log_metric("batch_latency_p90_usecs", np.percentile(batch_run_times, 90))
+            self.log_metric("batch_latency_p95_usecs", np.percentile(batch_run_times, 95))
+            self.log_metric("batch_latency_p99_usecs", np.percentile(batch_run_times, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(batch_run_times, bins=100)
+            ax.set_title("Latency-per-batch histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            self.log_figure(fig, "batch_latency_log_histogram.png")
+
+            # latency per query
+            if isinstance(batch_length, list):
+                prediction_latencies = np.array(time_per_batch) * factor_to_usecs / np.array(batch_length)
+            else:
+                prediction_latencies = np.array(time_per_batch) * factor_to_usecs / batch_length
+
+            self.log_metric("prediction_latency_p50_usecs", np.percentile(prediction_latencies, 50))
+            self.log_metric("prediction_latency_p75_usecs", np.percentile(prediction_latencies, 75))
+            self.log_metric("prediction_latency_p90_usecs", np.percentile(prediction_latencies, 90))
+            self.log_metric("prediction_latency_p95_usecs", np.percentile(prediction_latencies, 95))
+            self.log_metric("prediction_latency_p99_usecs", np.percentile(prediction_latencies, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(prediction_latencies, bins=100)
+            ax.set_title("Latency-per-prediction histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
 
     def log_inferencing_latencies(self, time_per_batch, batch_length=1, factor_to_usecs=1000000.0):
         """Logs prediction latencies (for inferencing) with lots of fancy metrics and plots.
@@ -260,6 +331,7 @@ class LogTimeBlock(object):
         """
         # kwargs
         self.tags = kwargs.get('tags', None)
+        self.step = kwargs.get('step', None)
 
         # internal variables
         self.name = name
@@ -280,7 +352,7 @@ class LogTimeBlock(object):
         run_time = time.time() - self.start_time # stops "timer"
 
         self._logger.info(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
-        MetricsLogger().log_metric(self.name, run_time)
+        MetricsLogger().log_metric(self.name, run_time, step=self.step)
 
 
 ####################
