@@ -44,16 +44,17 @@ tasks:
 !!! hint
     `tasks` is actually a list, if you provide multiple entries, the pipeline will train one model per train/test pair.
 
-4\. If you want the pipeline to save your model as a dataset, uncomment the line below and name the output accordingly:
+4\. If you want the pipeline to save your model as a dataset, turn `register_model` to True and uncomment the lines below to name the output according to the naming convention:
 
 ```yaml
 lightgbm_training:
-  reference_training:
+  reference:
     # model registration
     # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
-    register_model: True
-    register_model_prefix: "model"
-    register_model_suffix: null
+    output:
+      register_model: False
+      #register_model_prefix: "model"
+      #register_model_suffix: null
 ```
 
 !!! hint
@@ -76,12 +77,13 @@ The benchmark training pipeline is entirely configurable. There are a few key pa
 !!! hint
     Check out example config file `conf/experiments/lightgbm_training/cpu.yaml`.
 
-To enable multi-node training, simple modify the number of nodes under:
+To enable multi-node training, simple modify the number of nodes under `runtime`:
 
 ```yaml
 lightgbm_training:
-  reference_training:
-    nodes: 1
+  reference:
+    runtime:
+      nodes: 1
 ```
 
 When running the pipeline, it will automatically partition the data to match with the number of nodes, and create multi-node training provisioning the required number of nodes.
@@ -95,12 +97,15 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 !!! hint
     Check out example config file `conf/experiments/lightgbm_training/gpu.yaml`.
 
-To enable gpu training, modify the options below:
+To enable gpu training, modify the options below to build a GPU-ready docker image and turn on gpu in LightGBM training:
 
 ```yaml
 lightgbm_training:
-  reference_training:
-    device_type: "gpu"
+  reference:
+    training:
+      device_type: "gpu"
+    runtime:
+      build: "docker/lightgbm-v3.3.0/linux_gpu_pip.dockerfile"
 ```
 
 When running the pipeline, it will automatically run on the gpu cluster you've named in your `compute/myaml.yaml` file.
@@ -114,12 +119,13 @@ python pipelines/lightgbm_training.py --config-dir ./conf --config-name experime
 !!! hint
     Check out example config file `conf/experiments/lightgbm_training/cpu-custom.yaml`.
 
-To enable gpu training, modify the options below:
+To enable training on a custom build, modify the options below:
 
 ```yaml
 lightgbm_training:
-  reference_training:
-    override_docker: "dockers/lightgbm_cpu_mpi_custom.dockerfile" # relative to lightgbm_python folder
+  reference:
+    runtime:
+      build: "dockers/lightgbm_cpu_mpi_custom.dockerfile" # relative to lightgbm_python folder
 ```
 
 When running the pipeline, it will build the container from this custom dockerfile and use it to run your job.
@@ -139,14 +145,15 @@ To enable parameter sweep, just change the "sweepable" parameters (see below) to
 
 ```yaml
 lightgbm_training:
-  reference_training:
-    # "sweepable" training parameters
-    num_iterations: "choice(100, 200)"
-    num_leaves: "choice(10,20,30)"
-    min_data_in_leaf: 20
-    learning_rate: 0.1
-    max_bin: 255
-    feature_fraction: 1.0
+  reference:
+    training:
+      # "sweepable" training parameters
+      num_iterations: "choice(100, 200)"
+      num_leaves: "choice(10,20,30)"
+      min_data_in_leaf: 20
+      learning_rate: 0.1
+      max_bin: 255
+      feature_fraction: 1.0
 ```
 
 Running the pipeline with this config will automatically try multiple values for the parameters and return the best model.
@@ -159,13 +166,20 @@ You can also modify the parameters of Sweep itself, see [documentation on the ro
 
 ```yaml
 lightgbm_training:
-  reference_training:
-    # SWEEP
-    sweep_algorithm: "random"
-    sweep_goal: "minimize"
-    sweep_max_total_trials: 10
-    sweep_max_concurrent_trials: 10
-    sweep_timeout_minutes: 60
+  reference:
+    sweep:
+        #primary_metric: "node_0/valid_0.rmse" # if you comment it out, will use "node_0/valid_0.METRIC"
+        goal: "minimize"
+        algorithm: "random"
+        early_termination:
+          policy_type: "median_stopping"
+          evaluation_interval: 1
+          delay_evaluation: 5
+          truncation_percentage: 20
+        limits:
+          max_total_trials: 100
+          max_concurrent_trials: 10
+          timeout_minutes: 60
 ```
 
 ## Running multiple variants of training parameters
@@ -199,13 +213,17 @@ lightgbm_training:
 
   # reference settings for the benchmark
   # all variants will be based on this
-  reference_training:
+  reference:
     # lots of other params here
-    num_iterations: 100
+    training:
+      num_iterations: 100
 
   # variant settings override what is in reference_training
   variants:
-    - num_iterations: 10
-    - num_iterations: 1000
-    - num_iterations: 5000
+    - training:
+        num_iterations: 10
+    - training:
+        num_iterations: 1000
+    - training:
+        num_iterations: 5000
 ```
