@@ -15,6 +15,7 @@ import traceback
 from distutils.util import strtobool
 
 from .metrics import MetricsLogger
+from .perf import PerformanceReportingThread
 
 class RunnableScript():
     """
@@ -120,6 +121,15 @@ class RunnableScript():
         # create script instance, initialize mlflow
         script_instance = cls()
 
+        # start perf measurement
+        perf_report_thread = PerformanceReportingThread(
+            metrics_logger=script_instance.metrics_logger,
+            store_max_length=1000,
+            initial_time_increment=1,
+            report_each_step=True,
+            report_at_finalize=True
+        )
+
         if not script_instance.do_not_log_properties:
             script_instance.metrics_logger.set_properties(
                 task = script_instance.task,
@@ -140,6 +150,9 @@ class RunnableScript():
 
         # run the actual thing
         script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
+
+        # close perf reporting
+        perf_report_thread.finalize()
 
         # close mlflow
         script_instance.metrics_logger.close()

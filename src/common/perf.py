@@ -10,6 +10,7 @@ import time
 import psutil
 import matplotlib.pyplot as plt
 
+
 class PerformanceReportingThread(threading.Thread):
     """Thread to report performance (cpu/mem/net)"""
     def __init__(self, metrics_logger=None, store_max_length=10000, initial_time_increment=1.0, report_each_step=False, report_at_finalize=True, world_rank=0):
@@ -33,6 +34,7 @@ class PerformanceReportingThread(threading.Thread):
 
         self.world_rank = 0 # for mpi
 
+        # NOTE: do not use matplotlib gui backeng in a thread
         plt.switch_backend('agg')
 
 
@@ -131,7 +133,7 @@ class PerformanceReportingThread(threading.Thread):
             self.plot_all_reports()
 
     def plot_all_reports(self):
-        custom_fig_size=(8,2)
+        custom_fig_size=(16,4)
 
         report_plots_specs = [
             {
@@ -219,6 +221,7 @@ class PerformanceReportingThread(threading.Thread):
 
 
 if __name__ == "__main__":
+    # just for testing locally
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
     console_handler = logging.StreamHandler()
