@@ -24,9 +24,14 @@ class inferencing_task:
 
 @dataclass
 class inferencing_variants:
+    # framework
     framework: str = MISSING
     build: Optional[str] = None
     os: str = "Linux" # linux or windows, linux by default
+
+    # parameters
+    batch_size: int = 0 # use whole file as batch
+    num_threads: int = 1 # use only one thread
 
 @dataclass
 class data_generation_task:

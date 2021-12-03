@@ -130,6 +130,8 @@ class LightGBMInferencing(AMLPipelineHelper):
                     inferencing_step = treelite_score_module(
                         data = data,
                         compiled_model = treelite_compile_step.outputs.compiled_model,
+                        num_threads = variant.num_threads,
+                        batch_size = variant.batch_size,
                         verbose = False,
                         custom_properties = custom_properties
                     )
@@ -140,6 +142,8 @@ class LightGBMInferencing(AMLPipelineHelper):
                     inferencing_step = lightgbm_c_api_score_module(
                         data = data,
                         model = model,
+                        num_threads = variant.num_threads,
+                        # batch_size = variant.batch_size, # not supported yet
                         predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
                         custom_properties = custom_properties
@@ -151,6 +155,8 @@ class LightGBMInferencing(AMLPipelineHelper):
                     inferencing_step = lightgbm_cli_score_module(
                         data = data,
                         model = model,
+                        num_threads = variant.num_threads,
+                        # batch_size = variant.batch_size, # not supported yet
                         predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
                         custom_properties = custom_properties
@@ -162,6 +168,8 @@ class LightGBMInferencing(AMLPipelineHelper):
                     inferencing_step = lightgbm_python_score_module(
                         data = data,
                         model = model,
+                        num_threads = variant.num_threads,
+                        # batch_size = variant.batch_size, # not supported yet
                         predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
                         custom_properties = custom_properties

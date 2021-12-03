@@ -8,9 +8,9 @@ import os
 import sys
 import argparse
 import logging
-import numpy
+import time
+import numpy as np
 from distutils.util import strtobool
-import pandas as pd
 import treelite, treelite_runtime
 
 # Add the right path to PYTHONPATH
@@ -18,20 +18,20 @@ import treelite, treelite_runtime
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 if COMMON_ROOT not in sys.path:
-    print(f"Adding {COMMON_ROOT} to PYTHONPATH")
+    logging.info(f"Adding {COMMON_ROOT} to PYTHONPATH")
     sys.path.append(str(COMMON_ROOT))
 
 # useful imports from common
 from common.components import RunnableScript
-from common.io import input_file_path
+from common.io import input_file_path, CustomLightGBMDataBatchIterator
 
 
 class TreeLightInferencingScript(RunnableScript):
     def __init__(self):
         super().__init__(
-            task = 'score',
+            task = "score",
             framework = 'treelite_python',
-            framework_version = treelite.__version__
+            framework_version = "PYTHON_API."+str(treelite.__version__)
         )
 
     @classmethod
@@ -61,6 +61,8 @@ class TreeLightInferencingScript(RunnableScript):
         group_params = parser.add_argument_group("Scoring parameters")
         group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
+        group_params.add_argument("--batch_size",
+            required=False, default=0, type=int, help="size of batches for predict call")
 
         return parser
 
@@ -76,31 +78,66 @@ class TreeLightInferencingScript(RunnableScript):
         """
         # record relevant parameters
         metrics_logger.log_parameters(
-            num_threads=args.num_threads
+            num_threads=args.num_threads,
+            batch_size=args.batch_size,
         )
 
+        # make sure the output argument exists
         if args.output:
-            # make sure the output argument exists
             os.makedirs(args.output, exist_ok=True)
             
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
+        logger.info(f"Loading model from {args.so_path}")
+        predictor = treelite_runtime.Predictor(
+            args.so_path,
+            verbose=True,
+            nthread=args.num_threads
+        )
 
-        logger.info(f"Loading data for inferencing")
-        with metrics_logger.log_time_block("time_data_loading"):
-            my_data = pd.read_csv(args.data).to_numpy()
-            
-            predictor = treelite_runtime.Predictor(
-                args.so_path,
-                verbose=True,
-                nthread=args.num_threads
+        # accumulate predictions and latencies
+        predictions = []
+        time_inferencing_per_batch = []
+        batch_lengths = []
+
+        # loop through batches
+        for batch in CustomLightGBMDataBatchIterator(args.data, batch_size=args.batch_size, file_format="csv").iter():
+            if len(batch) == 0:
+                break
+            batch_lengths.append(len(batch))
+
+            # transform into dense matrix for treelite
+            batch_data = np.array(batch)
+            batch_dmat = treelite_runtime.DMatrix(batch_data)
+
+            # run prediction on batch
+            batch_start_time = time.monotonic()
+            predictions.extend(predictor.predict(batch_dmat))
+            time_inferencing_per_batch.append((time.monotonic() - batch_start_time)) # usecs
+
+        # log overall time
+        metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_batch))
+
+        # use helper to log latency with the right metric names
+        metrics_logger.log_inferencing_latencies(
+            time_inferencing_per_batch,
+            batch_length=batch_lengths,
+            factor_to_usecs=1000000.0 # values are in seconds
+        )
+
+        if args.output:
+            np.savetxt(
+                args.output,
+                predictions,
+                fmt='%f',
+                delimiter=',',
+                newline='\n',
+                header='',
+                footer='',
+                comments='# ',
+                encoding=None
             )
-            dmat = treelite_runtime.DMatrix(my_data)
-
-        logger.info(f"Running .predict()")
-        with metrics_logger.log_time_block("time_inferencing"):
-            predictor.predict(dmat)
 
 
 def get_arg_parser(parser=None):

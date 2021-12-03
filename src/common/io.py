@@ -8,6 +8,7 @@ in the benchmark scripts. It also provides some automation routine to handle dat
 import os
 import argparse
 import logging
+import csv
 
 def input_file_path(path):
     """ Argparse type to resolve input path as single file from directory.
@@ -225,3 +226,42 @@ class PartitioningEngine():
             self.split_by_append(input_files, output_path, self.number)
         else:
             raise NotImplementedError(f"Mode {self.mode} not implemented.")
+
+
+class CustomLightGBMDataBatchIterator():
+    def __init__(self, file_path, batch_size=0, file_format="csv", **kwargs):
+        self.file_path = file_path
+        self.batch_size = batch_size
+        self.file_format = file_format
+        self.reader_options = kwargs
+    
+    def iter(self):
+        if self.file_format == "csv":
+            with open(self.file_path, "r") as i_file:
+                reader = csv.reader(i_file, **self.reader_options)
+                
+                batch = []
+                if self.batch_size == 0:
+                    # use the entire file as a batch
+                    batch = [
+                        [
+                            float(col) for col in row # convert all values to float for lightgbm
+                        ] for row in reader
+                    ]
+                elif self.batch_size > 1:
+                    # create batches
+                    for row in reader:
+                        batch.append(
+                            [ float(col) for col in row ] # convert all values to float for lightgbm
+                        )
+                        if len(batch) >= self.batch_size:
+                            yield batch
+                            batch = [] # reset batch
+                else:
+                    raise ValueError("batch_size must be >= 0")
+
+                # any remaining batch, or whole file
+                if len(batch) >= 0:
+                    yield batch
+        else:
+            raise NotImplementedError("file_format={self.file_format} is not implemented yet.")

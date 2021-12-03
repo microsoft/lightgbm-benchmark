@@ -15,9 +15,12 @@ inputs:
     type: AnyDirectory
     description: directory to the model
     optional: false
-  n_threads:
+  num_threads:
     type: Integer
-    optional: true
+    default: 1
+  batch_size:
+    type: Integer
+    default: 0 # default: use whole file as a batch
   verbose:
     type: Boolean
     default: False
@@ -31,7 +34,8 @@ command: >-
   python score.py
   --data {inputs.data}
   --so_path {inputs.compiled_model}
-  [--num_threads {inputs.n_threads}]
+  --num_threads {inputs.num_threads}
+  --batch_size {inputs.batch_size}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
 
