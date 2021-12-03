@@ -76,7 +76,7 @@ class LightGBMInferencing(AMLPipelineHelper):
         # Inferencing modules
         lightgbm_python_score_module = self.module_load("lightgbm_python_score")
         lightgbm_c_api_score_module = self.module_load("lightgbm_c_api_score")
-        lightgbm_cli_score_module = self.module_load("lightgbm_cli_score")
+        custom_win_cli_score_module = self.module_load("custom_win_cli_score")
         treelite_compile_module = self.module_load("treelite_compile")
         treelite_score_module = self.module_load("treelite_score")
 
@@ -105,9 +105,8 @@ class LightGBMInferencing(AMLPipelineHelper):
                 # add last minute custom proeprties
                 custom_properties = benchmark_custom_properties.copy()
                 custom_properties.update({
-                    # adding build settings (docker+os)
+                    # adding build settings (docker)
                     'framework_build' : variant.build or "default",
-                    'framework_build_os' : variant.os or "default",
                     # adding variant_index to spot which variant is the reference
                     'variant_index' : variant_index
                 })
@@ -146,14 +145,13 @@ class LightGBMInferencing(AMLPipelineHelper):
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
-                elif variant.framework == "lightgbm_cli":
+                elif variant.framework == "custom_win_cli":
                     # call module with all the right arguments
-                    inferencing_step = lightgbm_cli_score_module(
+                    inferencing_step = custom_win_cli_score_module(
                         data = data,
                         model = model,
-                        predict_disable_shape_check = predict_disable_shape_check,
                         verbose = False,
-                        custom_properties = custom_properties
+                        custom_properties = custom_properties.replace("\"","\\\"")
                     )
                     self.apply_smart_runsettings(inferencing_step)
 
@@ -174,8 +172,7 @@ class LightGBMInferencing(AMLPipelineHelper):
                 if variant.build:
                     custom_docker = Docker(file=os.path.join(LIGHTGBM_BENCHMARK_ROOT, variant.build))
                     inferencing_step.runsettings.environment.configure(
-                        docker=custom_docker,
-                        os=variant.os or "Linux" # linux by default
+                        docker=custom_docker
                     )
                     variant_comment.append(f"build {variant.build}")
                 else:
