@@ -18,6 +18,11 @@ class PerformanceReportingThread(threading.Thread):
 
         Args:
             metrics_logger (common.metrics.MetricsLogger): class to log metrics using MLFlow
+            store_max_length (int): the maximum number of perf reports we want to keep for final plots
+            initial_time_increment (float): how long to wait between two perf measurements
+            report_each_step (bool): print perf measurement each step (lots!)
+            report_at_finalize (bool): plot perf measurements at the end
+            world_rank (int): in distributed, id of the node
         """
         threading.Thread.__init__(self)
         self.killed = False # flag, set to True to kill from the inside
@@ -25,14 +30,18 @@ class PerformanceReportingThread(threading.Thread):
         self.logger = logging.getLogger(__name__)
         self.metrics_logger = metrics_logger
 
+        # store all perf reports to push plots during finalization stage
         self.report_store = []
         self.report_store_max_length = (store_max_length//2 + store_max_length%2) * 2 # needs to be dividable by 2
+
+        # time between perf reports
         self.time_increment = initial_time_increment
 
-        self.report_each_step = report_each_step
-        self.report_at_finalize = report_at_finalize
+        # flags to change behavior
+        self.report_each_step = report_each_step # will log perf at each step (lots of metrics!)
+        self.report_at_finalize = report_at_finalize # will log perf during finalization
 
-        self.world_rank = 0 # for mpi
+        self.world_rank = 0 # for mpi/distributed
 
         # NOTE: do not use matplotlib gui backeng in a thread
         plt.switch_backend('agg')
@@ -43,6 +52,8 @@ class PerformanceReportingThread(threading.Thread):
     #####################
 
     def store_report(self, report):
+        """Stores a perf report in internal structure.
+        Will limit the number of reports to store_max_length"""
         self.report_store.append((time.time(), report))
 
         if len(self.report_store) >= self.report_store_max_length:
@@ -55,7 +66,7 @@ class PerformanceReportingThread(threading.Thread):
             self.logger.warning(f"Perf report store reached max, increasing time_increment to {self.time_increment}")
 
     def run(self):
-        """Run function"""
+        """Run function of the thread, while(True)"""
         while not(self.killed):
             if self.time_increment >= 1.0: # cpu_percent.interval already consumes 1sec
                 time.sleep(self.time_increment - 1.0) # will double every time report_store_max_length is reached
@@ -133,8 +144,11 @@ class PerformanceReportingThread(threading.Thread):
             self.plot_all_reports()
 
     def plot_all_reports(self):
+        """Use matplotlib to plot all performance reports
+        during finalization of thread"""
         custom_fig_size=(16,4)
 
+        # define what/how to plot
         report_plots_specs = [
             {
                 "file_key":"cpu_pct",
@@ -179,6 +193,7 @@ class PerformanceReportingThread(threading.Thread):
             }
         ]
 
+        # loop on all plot specs and plot
         for entry in report_plots_specs:
             fig = plt.figure(figsize=custom_fig_size)
             ax = fig.add_subplot(111)
@@ -206,6 +221,7 @@ class PerformanceReportingThread(threading.Thread):
                 ax.plot(values)
                 # no legend needed here
 
+            # fancy plotting params
             ax.set_ylim(bottom=entry.get("bottom", None), top=entry.get("top", None))
             ax.set_title(entry.get("title", None))
             plt.xlabel(entry.get("xlabel", "step"))
@@ -216,6 +232,7 @@ class PerformanceReportingThread(threading.Thread):
                 self.metrics_logger.log_figure(fig, f"perf_node_{self.world_rank}_{entry['file_key']}.png")
 
     def finalize(self):
+        """Ask the thread to finalize (clean)"""
         self.killed = True
         self.join()
 
