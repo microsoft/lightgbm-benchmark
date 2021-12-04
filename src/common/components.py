@@ -22,7 +22,7 @@ class RunnableScript():
     of every script in the lightgbm-benchmark repo: logging init, MLFlow init,
     system properties logging, etc.
     """
-    def __init__(self, task, framework, framework_version, metrics_prefix=None, do_not_log_properties=False):
+    def __init__(self, task, framework, framework_version, metrics_prefix=None):
         """ Generic initialization for all script classes.
 
         Args:
@@ -30,14 +30,11 @@ class RunnableScript():
             framework (str): name of ML framework
             framework_version (str): a version of this framework
             metrics_prefix (str): any prefix to add to this scripts metrics
-            do_not_log_properties (bool): block all calls to log_properties()
-                ex: in mpi, we want to report those only on node 0
         """
         self.task = task
         self.framework = framework
         self.framework_version = framework_version
         self.metrics_prefix = metrics_prefix
-        self.do_not_log_properties = do_not_log_properties
 
         self.logger = logging.getLogger(f"{framework}.{task}")
 
@@ -95,6 +92,27 @@ class RunnableScript():
         """
         raise NotImplementedError(f"run() method from class {self.__class__.__name__} hasn't actually been implemented.")
 
+    def initialize_run(self, args):
+        """Initialize the component run, opens/setups what needs to be"""
+        # record properties of the run
+        self.metrics_logger.set_properties(
+            task = self.task,
+            framework = self.framework,
+            framework_version = self.framework_version
+        )
+
+        # if provided some custom_properties by the outside orchestrator
+        if args.custom_properties:
+            self.metrics_logger.set_properties_from_json(args.custom_properties)
+
+        # add properties about environment of this script
+        self.metrics_logger.set_platform_properties()
+
+    def finalize_run(self, args):
+        """Finalize the run, close what needs to be"""
+        # close mlflow
+        self.metrics_logger.close()
+
     @classmethod
     def main(cls, cli_args=None):
         """ Component main function, it is not recommended to override this method.
@@ -116,30 +134,14 @@ class RunnableScript():
     
         # if argument parsing fails, or if unknown arguments, will except
         args, unknown_args = parser.parse_known_args(cli_args)
+        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
         # create script instance, initialize mlflow
         script_instance = cls()
-
-        if not script_instance.do_not_log_properties:
-            script_instance.metrics_logger.set_properties(
-                task = script_instance.task,
-                framework = script_instance.framework,
-                framework_version = script_instance.framework_version
-            )
-
-        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
-
-        # if provided some custom_properties by the outside orchestrator
-        if not script_instance.do_not_log_properties:
-            if args.custom_properties:
-                script_instance.metrics_logger.set_properties_from_json(args.custom_properties)
-
-        # add properties about environment of this script
-        if not script_instance.do_not_log_properties:
-            script_instance.metrics_logger.set_platform_properties()
+        script_instance.initialize_run(args)
 
         # run the actual thing
         script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
 
         # close mlflow
-        script_instance.metrics_logger.close()
+        script_instance.finalize_run()
