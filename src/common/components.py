@@ -80,18 +80,6 @@ class RunnableScript():
 
         return parser
 
-    def run(self, args, logger, metrics_logger, unknown_args):
-        """The run function of your script. You are required to override this method
-        with your own implementation.
-
-        Args:
-            args (argparse.namespace): command line arguments provided to script
-            logger (logging.logger): a logger initialized for this script
-            metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow
-            unknown_args (list[str]): list of arguments not recognized during argparse
-        """
-        raise NotImplementedError(f"run() method from class {self.__class__.__name__} hasn't actually been implemented.")
-
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing script run...")
@@ -109,6 +97,18 @@ class RunnableScript():
 
         # add properties about environment of this script
         self.metrics_logger.set_platform_properties()
+
+    def run(self, args, logger, metrics_logger, unknown_args):
+        """The run function of your script. You are required to override this method
+        with your own implementation.
+
+        Args:
+            args (argparse.namespace): command line arguments provided to script
+            logger (logging.logger): a logger initialized for this script
+            metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow
+            unknown_args (list[str]): list of arguments not recognized during argparse
+        """
+        raise NotImplementedError(f"run() method from class {self.__class__.__name__} hasn't actually been implemented.")
 
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
@@ -149,3 +149,6 @@ class RunnableScript():
 
         # close mlflow
         script_instance.finalize_run(args)
+
+class SingleNodeScript(RunnableScript):
+    pass
