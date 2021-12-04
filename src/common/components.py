@@ -94,6 +94,8 @@ class RunnableScript():
 
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
+        self.logger.info("Initializing script run...")
+
         # record properties of the run
         self.metrics_logger.set_properties(
             task = self.task,
@@ -110,6 +112,8 @@ class RunnableScript():
 
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
+        self.logger.info("Finalizing script run...")
+
         # close mlflow
         self.metrics_logger.close()
 
@@ -144,4 +148,4 @@ class RunnableScript():
         script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
 
         # close mlflow
-        script_instance.finalize_run()
+        script_instance.finalize_run(args)

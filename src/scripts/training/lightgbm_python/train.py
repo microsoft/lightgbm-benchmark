@@ -26,7 +26,7 @@ if COMMON_ROOT not in sys.path:
 from common.components import RunnableScript
 from common.io import get_all_files
 from common.lightgbm_utils import LightGBMCallbackHandler
-from common.mpi import MultiNodeScript
+from common.distributed import MultiNodeScript
 
 class LightGBMPythonMpiTrainingScript(MultiNodeScript):
     def __init__(self):
