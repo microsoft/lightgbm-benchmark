@@ -186,3 +186,80 @@ class PerformanceMetricsCollector():
             ]
             self.perf_reports_freqs *= 2 # we'll start accepting reports only 1 out of 2
             self.logger.warning(f"Perf report store reached max, increasing freq to {self.perf_reports_freqs}")
+
+
+class PerfReportPlotter():
+    """Once collected all perf reports from all nodes"""
+    def __init__(self, metrics_logger):
+        self.all_reports = {}
+        self.metrics_logger = metrics_logger
+
+    def add_perf_reports(self, perf_reports, node):
+        """Add a set of reports from a given node"""
+        self.all_reports[node] = perf_reports
+
+    def report_nodes_perf(self):
+        # Currently reporting one metric per node
+        for node in self.all_reports:
+            # CPU UTILIZATION
+            self.metrics_logger.log_metric(
+                "max_t_(cpu_pct_per_cpu_avg)",
+                max([ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t_(cpu_pct_per_cpu_min)",
+                max([ report["cpu_pct_per_cpu_min"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t_(cpu_pct_per_cpu_max)",
+                max([ report["cpu_pct_per_cpu_max"] for report in self.all_reports[node] ]),
+                step=node
+            )
+
+            # MEM
+            self.metrics_logger.log_metric(
+                "max_t_(mem_percent)",
+                max([ report["mem_percent"] for report in self.all_reports[node] ]),
+                step=node
+            )
+
+            # DISK
+            self.metrics_logger.log_metric(
+                "max_t_(disk_usage_percent)",
+                max([ report["disk_usage_percent"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t_(disk_io_read_mb)",
+                max([ report["disk_io_read_mb"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t(disk_io_write_mb)",
+                max([ report["disk_io_write_mb"] for report in self.all_reports[node] ]),
+                step=node
+            )
+
+            # NET I/O
+            self.metrics_logger.log_metric(
+                "max_t_(net_io_lo_sent_mb)",
+                max([ report["net_io_lo_sent_mb"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t_(net_io_ext_sent_mb)",
+                max([ report["net_io_ext_sent_mb"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t_(net_io_lo_recv_mb)",
+                max([ report["net_io_lo_recv_mb"] for report in self.all_reports[node] ]),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "max_t_(net_io_ext_recv_mb)",
+                max([ report["net_io_ext_recv_mb"] for report in self.all_reports[node] ]),
+                step=node
+            )

@@ -196,6 +196,7 @@ class MetricsLogger():
         if len(time_per_batch) > 1:
             import numpy as np
             import matplotlib.pyplot as plt
+            plt.switch_backend('agg')
 
             # latency per batch
             batch_run_times = np.array(time_per_batch) * factor_to_usecs

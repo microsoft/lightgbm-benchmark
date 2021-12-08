@@ -96,5 +96,7 @@ class MultiNodeScript(RunnableScript):
             self.logger.info("MPI was initialized, calling MPI.finalize()")
             MPI.Finalize()
         
-        # then use the super finalization method
-        super().finalize_run(args)
+        # TODO: integrate perf reports for multi node here
+
+        # close mlflow
+        self.metrics_logger.close()

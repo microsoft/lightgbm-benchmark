@@ -15,7 +15,7 @@ import traceback
 from distutils.util import strtobool
 
 from .metrics import MetricsLogger
-from .perf import PerformanceMetricsCollector
+from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 class RunnableScript():
     """
@@ -81,11 +81,11 @@ class RunnableScript():
             help="provide custom properties as json dict",
         )
         group_general.add_argument(
-            "--enable_perf_metrics",
+            "--disable_perf_metrics",
             required=False,
-            default=True,
+            default=False,
             type=strtobool,
-            help="disable/enable performance metrics (default: enabled)",
+            help="disable performance metrics (default: False)",
         )
 
         return parser
@@ -109,8 +109,9 @@ class RunnableScript():
         self.metrics_logger.set_platform_properties()
 
         # enable perf reporting
-        if args.enable_perf_metrics:
+        if not args.disable_perf_metrics:
             self.perf_report_collector = PerformanceMetricsCollector()
+            self.perf_report_collector.start()
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -130,8 +131,10 @@ class RunnableScript():
         self.logger.info("Finalizing script run...")
 
         if self.perf_report_collector:
-            # plot?
-            pass
+            self.perf_report_collector.finalize()
+            plotter = PerfReportPlotter(self.metrics_logger)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=0)
+            plotter.report_nodes_perf()
 
         # close mlflow
         self.metrics_logger.close()
