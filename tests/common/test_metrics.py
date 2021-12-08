@@ -119,8 +119,6 @@ def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
 
 def test_metrics_logger_log_metric_non_allowed_chars():
     """ Tests MetricsLogger().log_metric() """
-    metrics_logger = MetricsLogger()
-
     test_cases = [
         {
             'input':   "a!@$b%^&c_-/d",
@@ -137,7 +135,7 @@ def test_metrics_logger_log_metric_non_allowed_chars():
     ]
 
     for test_case in test_cases:
-        assert metrics_logger._remove_non_allowed_chars(test_case['input']) == test_case['expected']
+        assert MetricsLogger._remove_non_allowed_chars(test_case['input']) == test_case['expected']
 
 
 @patch('mlflow.set_tags')
