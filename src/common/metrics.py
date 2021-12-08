@@ -77,10 +77,13 @@ class MetricsLogger():
         if len(key) > 50:
             key = key[:50]
 
-        try:
-            mlflow.log_metric(key, value, step=step)
-        except mlflow.exceptions.MlflowException:
-            self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
+        if type == MetricType.PERF_INTERVAL_METRIC:
+            pass # for now, do not process those
+        else:
+            try:
+                mlflow.log_metric(key, value, step=step)
+            except mlflow.exceptions.MlflowException:
+                self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def log_figure(self, figure, artifact_file):
         """Logs a figure using mlflow
