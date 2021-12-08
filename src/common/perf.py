@@ -237,7 +237,7 @@ class PerfReportPlotter():
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t(disk_io_write_mb)",
+                "max_t_(disk_io_write_mb)",
                 max([ report["disk_io_write_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
