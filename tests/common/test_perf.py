@@ -4,7 +4,7 @@ import pytest
 from unittest.mock import call, Mock, patch
 import time
 
-from common.perf import PerformanceReportingThread
+from common.perf import PerformanceReportingThread, PerformanceMetricsCollector
 
 def verify_all_perf_report_keys(perf_report):
     """Helper test function, tests all keys in perf report"""
@@ -56,3 +56,38 @@ def test_perf_report_run_as_thread():
     
     perf_report = callback_call_args[0].args[0]
     verify_all_perf_report_keys(perf_report)
+
+
+def test_perf_report_collector_run_as_thread():
+    """ Tests PerformanceMetricsCollector() """
+    # creating a mock to provide as callback
+    test_max_length = 10
+
+    perf_collector = PerformanceMetricsCollector(max_length=test_max_length)
+
+    # hack internal values to make the test faster
+    perf_collector.report_thread.cpu_interval = 0.01
+    perf_collector.report_thread.time_increment = 0.02
+
+    # fake the loop in the internal thread
+
+    # if we run the exact times we can hold
+    for i in range(test_max_length):
+        perf_collector.report_thread._run_loop()
+    # we expect to have internal list full
+    assert len(perf_collector.perf_reports) > 0
+    assert len(perf_collector.perf_reports) == test_max_length
+
+    # 1 more time...
+    perf_collector.report_thread._run_loop()
+    # and length should be half
+    assert len(perf_collector.perf_reports) == (test_max_length // 2)
+    # and frequency increased
+    assert perf_collector.perf_reports_freqs == 2
+
+    # then every other report should be skipped
+    for i in range(4):
+        perf_collector.report_thread._run_loop()
+    # and length should be half + 2 new values
+    assert len(perf_collector.perf_reports) == (test_max_length // 2) + 2
+
