@@ -73,6 +73,10 @@ class MultiNodeScript(RunnableScript):
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing multi node component script...")
+
+        # open mlflow
+        self.metrics_logger.open()
+        
         if self._mpi_config.main_node:
             # record properties only from the main node
             self.metrics_logger.set_properties(
