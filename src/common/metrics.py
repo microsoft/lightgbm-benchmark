@@ -16,6 +16,17 @@ import traceback
 import logging
 
 
+class MetricType():
+    # a metric your script generates once (per node), example: training time
+    ONETIME_METRIC = 1
+
+    # a metric generated multiple times, once per "step" or iteration, example: rmse
+    ITERATION_METRIC = 2
+
+    # a perf metric generated at regular intervals
+    PERF_INTERVAL_METRIC = 2
+
+
 class MetricsLogger():
     """
     Class for handling metrics logging in MLFlow.
@@ -47,13 +58,14 @@ class MetricsLogger():
         """ Removes chars not allowed for metric keys in mlflow """
         return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
 
-    def log_metric(self, key, value, step=None):
+    def log_metric(self, key, value, step=None, type=MetricType.ONETIME_METRIC):
         """Logs a metric key/value pair.
-        
+
         Args:
             key (str): metric key
             value (str): metric value
             step (int): which step to log this metric? (see mlflow.log_metric())
+            type (int): type of the metric
         """
         if self._metrics_prefix:
             key = self._metrics_prefix + key
