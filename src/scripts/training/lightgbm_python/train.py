@@ -11,6 +11,7 @@ import logging
 import traceback
 import json
 from distutils.util import strtobool
+import lightgbm
 from collections import namedtuple
 
 import lightgbm
@@ -28,55 +29,14 @@ if COMMON_ROOT not in sys.path:
 from common.components import RunnableScript
 from common.io import get_all_files
 from common.lightgbm_utils import LightGBMDistributedCallbackHandler
+from common.distributed import MultiNodeScript
 
-def detect_mpi_config():
-    """ Detects if we're running in MPI.
-    Args:
-        None
-
-    Returns:
-        mpi_config (namedtuple)
-    """
-    # NOTE: we're doing our own MPI initialization
-    # to allow for multiple threads (see LightGBMDistributedCallbackHandler)
-    mpi4py.rc.initialize = False
-    mpi4py.rc.finalize = False
-    from mpi4py import MPI
-    #MPI.Init()
-    MPI.Init_thread(required=MPI.THREAD_MULTIPLE)
-
-    # check if we're running multi or single node
-    mpi_config_tuple = namedtuple("mpi_config", ['world_size', 'world_rank', 'mpi_available', 'main_node', 'mpi_comm'])
-
-    try:
-        comm = MPI.COMM_WORLD
-        mpi_config = mpi_config_tuple(
-            comm.Get_size(), # world_size
-            comm.Get_rank(), # world_rank
-            (comm.Get_size() > 1), # mpi_available
-            (comm.Get_rank() == 0), # main_node
-            MPI.COMM_WORLD
-        )
-        logging.getLogger().info(f"MPI detection results: {mpi_config}")
-    except:
-        mpi_config = mpi_config_tuple(
-            1, # world_size
-            0, # world_rank
-            False, # mpi_available
-            True, # main_node
-        )
-        logging.getLogger().critical(f"MPI detection failed, switching to single node: {mpi_config}, see traceback below:\n{traceback.format_exc()}")
-
-    return mpi_config
-
-class LightGBMPythonMpiTrainingScript(RunnableScript):
+class LightGBMPythonMpiTrainingScript(MultiNodeScript):
     def __init__(self):
-        self.mpi_config = detect_mpi_config()
         super().__init__(
             task = "train",
             framework = "lightgbm",
-            framework_version = lightgbm.__version__,
-            do_not_log_properties=not(self.mpi_config.main_node)
+            framework_version = lightgbm.__version__
         )
 
     @classmethod
@@ -219,8 +179,11 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
             metrics_logger (common.metrics.MetricLogger)
             unknown_args (list[str]): list of arguments not recognized during argparse
         """
+        # get mpi config as a namedtuple
+        mpi_config = self.mpi_config()
+
         # figure out the lgbm params from cli args + mpi config
-        lgbm_params = self.load_lgbm_params_from_cli(args, self.mpi_config)
+        lgbm_params = self.load_lgbm_params_from_cli(args, mpi_config)
 
         # create a handler
         callbacks_handler = LightGBMDistributedCallbackHandler(
@@ -231,12 +194,12 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         )
 
         # make sure the output argument exists
-        if args.export_model and self.mpi_config.main_node:
+        if args.export_model and mpi_config.main_node:
             os.makedirs(args.export_model, exist_ok=True)
             args.export_model = os.path.join(args.export_model, "model.txt")
 
         # log params only once by doing it only on main node (node 0)
-        if self.mpi_config.main_node:
+        if mpi_config.main_node:
             # log lgbm parameters
             logger.info(f"LGBM Params: {lgbm_params}")
             metrics_logger.log_parameters(**lgbm_params)
@@ -245,9 +208,9 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
         lightgbm.register_logger(logger)
 
         logger.info(f"Loading data for training")
-        with metrics_logger.log_time_block("time_data_loading", step=self.mpi_config.world_rank):
+        with metrics_logger.log_time_block("time_data_loading", step=mpi_config.world_rank):
             # obtain the path to the train data for this node
-            train_data_path = self.assign_train_data(args, self.mpi_config)
+            train_data_path = self.assign_train_data(args, mpi_config)
             test_data_paths = get_all_files(args.test)
 
             logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
@@ -259,8 +222,8 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                     train_data.create_valid(test_data_path).construct() for test_data_path in test_data_paths
                 ]
                 # capture data shape in metrics
-                metrics_logger.log_metric(key="train_data.length", value=train_data.num_data(), step=self.mpi_config.world_rank)
-                metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature(), step=self.mpi_config.world_rank)
+                metrics_logger.log_metric(key="train_data.length", value=train_data.num_data(), step=mpi_config.world_rank)
+                metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature(), step=mpi_config.world_rank)
             else:
                 train_data = lightgbm.Dataset(train_data_path, params=lgbm_params)
                 val_datasets = [
@@ -272,7 +235,7 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                 # metrics_logger.log_metric(key="train_data.width", value="n/a")
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
-        with metrics_logger.log_time_block("time_training", step=self.mpi_config.world_rank):
+        with metrics_logger.log_time_block("time_training", step=mpi_config.world_rank):
             booster = lightgbm.train(
                 lgbm_params,
                 train_data,
@@ -280,17 +243,12 @@ class LightGBMPythonMpiTrainingScript(RunnableScript):
                 callbacks=[callbacks_handler.callback]
             )
 
-        if args.export_model and self.mpi_config.main_node:
+        if args.export_model and mpi_config.main_node:
             logger.info(f"Writing model in {args.export_model}")
             booster.save_model(args.export_model)
 
         # finalize all remaining metrics
         callbacks_handler.finalize()
-
-        # clean exit from mpi
-        if mpi4py.MPI.Is_initialized():
-            logger.info("MPI was initialized, calling MPI.finalize()")
-            mpi4py.MPI.Finalize()
 
 
 def get_arg_parser(parser=None):
