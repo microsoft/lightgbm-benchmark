@@ -16,14 +16,6 @@ import traceback
 import logging
 
 
-class MetricType():
-    # a metric your script generates once (per node), example: training time
-    ONETIME_METRIC = 1
-
-    # a metric generated multiple times, once per "step" or iteration, example: rmse
-    ITERATION_METRIC = 2
-
-
 class MetricsLogger():
     """
     Class for handling metrics logging in MLFlow.
