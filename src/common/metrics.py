@@ -15,61 +15,57 @@ import json
 import traceback
 import logging
 
+
+class MetricType():
+    # a metric your script generates once (per node), example: training time
+    ONETIME_METRIC = 1
+
+    # a metric generated multiple times, once per "step" or iteration, example: rmse
+    ITERATION_METRIC = 2
+
+    # a perf metric generated at regular intervals
+    PERF_INTERVAL_METRIC = 2
+
+
 class MetricsLogger():
     """
-    Class for handling metrics logging in MLFlow. This class is a singleton.
+    Class for handling metrics logging in MLFlow.
     """
     _initialized = False
-    _instance = None
-    _session_name = None
-    _metrics_prefix = None
-    _logger = logging.getLogger(__name__)
 
-    def __new__(cls, session_name=None, metrics_prefix=None):
-        """ Create a new instance of the Singleton """
-        if not cls._initialized:
-            # if this is the first time we're initializing
-            cls._instance = super(MetricsLogger, cls).__new__(cls)
-            cls._metrics_prefix = metrics_prefix
-            if not cls._session_name:
-                # if no previously recorded session name
-                cls._session_name = session_name
-            elif session_name:
-                # if new session name specified, overwrite
-                cls._session_name = session_name
-            cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}', metrics_prefix={cls._metrics_prefix}]")
+    def __init__(self, session_name=None, metrics_prefix=None):
+        self._metrics_prefix = metrics_prefix
+        self._session_name = session_name
+        self._logger = logging.getLogger(__name__)
+    
+    def open(self):
+        """Opens the MLFlow session."""
+        if not MetricsLogger._initialized:
+            self._logger.info(f"Initializing MLFLOW [session='{self._session_name}', metrics_prefix={self._metrics_prefix}]")
             mlflow.start_run()
-            cls._initialized = True
-        else:
-            # if this is not the first time, and things are already initialized
-            if not cls._metrics_prefix:
-                cls._logger.warning(f"New creation of MetricsLogger() with a new prefix {metrics_prefix}")
-                cls._metrics_prefix = metrics_prefix
-            pass
+            MetricsLogger._initialized = True
 
-        return cls._instance
-
-    @classmethod
-    def close(cls):
+    def close(self):
         """Close the MLFlow session."""
-        if cls._initialized:
-            cls._logger.info(f"Finalizing MLFLOW [session='{cls._session_name}']")
+        if MetricsLogger._initialized:
+            self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
             mlflow.end_run()
-            cls._initialized = False
+            MetricsLogger._initialized = False
         else:
-            cls._logger.warning(f"Call to finalize MLFLOW [session='{cls._session_name}'] that was never initialized.")
+            self._logger.warning(f"Call to finalize MLFLOW [session='{self._session_name}'] that was never initialized.")
 
     def _remove_non_allowed_chars(self, name_string):
         """ Removes chars not allowed for metric keys in mlflow """
         return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
 
-    def log_metric(self, key, value, step=None):
+    def log_metric(self, key, value, step=None, type=MetricType.ONETIME_METRIC):
         """Logs a metric key/value pair.
-        
+
         Args:
             key (str): metric key
             value (str): metric value
             step (int): which step to log this metric? (see mlflow.log_metric())
+            type (int): type of the metric
         """
         if self._metrics_prefix:
             key = self._metrics_prefix + key
@@ -81,10 +77,13 @@ class MetricsLogger():
         if len(key) > 50:
             key = key[:50]
 
-        try:
-            mlflow.log_metric(key, value, step=step)
-        except mlflow.exceptions.MlflowException:
-            self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
+        if type == MetricType.PERF_INTERVAL_METRIC:
+            pass # for now, do not process those
+        else:
+            try:
+                mlflow.log_metric(key, value, step=step)
+            except mlflow.exceptions.MlflowException:
+                self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def log_figure(self, figure, artifact_file):
         """Logs a figure using mlflow
@@ -170,7 +169,7 @@ class MetricsLogger():
         ```
         """
         # see class below with proper __enter__ and __exit__
-        return LogTimeBlock(metric_name, step=step)
+        return LogTimeBlock(metric_name, step=step, metrics_logger=self)
 
     def log_inferencing_latencies(self, time_per_batch, batch_length=1, factor_to_usecs=1000000.0):
         """Logs prediction latencies (for inferencing) with lots of fancy metrics and plots.
@@ -269,6 +268,7 @@ class LogTimeBlock(object):
         # kwargs
         self.tags = kwargs.get('tags', None)
         self.step = kwargs.get('step', None)
+        self.metrics_logger = kwargs.get('metrics_logger', None)
 
         # internal variables
         self.name = name
@@ -289,24 +289,7 @@ class LogTimeBlock(object):
         run_time = time.time() - self.start_time # stops "timer"
 
         self._logger.info(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
-        MetricsLogger().log_metric(self.name, run_time, step=self.step)
-
-
-####################
-### METHOD TIMER ###
-####################
-
-def log_time_function(func):
-    """ decorator to log wall time of a function/method """
-    @wraps(func)
-    def perf_wrapper(*args, **kwargs):
-        log_name = "{}.time".format(func.__qualname__)
-        start_time = time.time()
-        output = func(*args, **kwargs)
-        run_time = time.time() - start_time
-
-        logging.getLogger(__name__).info("--- time elapsed: {} = {:2f} s".format(log_name, run_time))
-        MetricsLogger().log_metric(log_name, run_time)
-
-        return output
-    return perf_wrapper
+        if self.metrics_logger:
+            self.metrics_logger.log_metric(self.name, run_time, step=self.step)
+        else:
+            MetricsLogger().log_metric(self.name, run_time, step=self.step)
