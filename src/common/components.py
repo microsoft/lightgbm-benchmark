@@ -84,6 +84,9 @@ class RunnableScript():
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing script run...")
 
+        # open mlflow
+        self.metrics_logger.open()
+
         # record properties of the run
         self.metrics_logger.set_properties(
             task = self.task,
