@@ -238,7 +238,7 @@ def test_metrics_logger_log_parameters(mlflow_log_param_mock):
 @patch('mlflow.log_metric')
 def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
     """ Tests MetricsLogger().log_time_block() """
-    metrics_logger = MetricsLogger()
+    metrics_logger = MetricsLogger(metrics_prefix="foo_time_block/")
     metrics_logger.open()
 
     with metrics_logger.log_time_block("foo_metric", step=2):
@@ -252,7 +252,7 @@ def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
     assert len(metric_calls) == 1
 
     # test metric key argument
-    assert (metric_calls[0].args[0] == "foo_metric")
+    assert (metric_calls[0].args[0] == "foo_time_block/foo_metric")
     assert (metric_calls[0].kwargs["step"] == 2)
 
 
