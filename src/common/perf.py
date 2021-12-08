@@ -134,38 +134,49 @@ class PerformanceReportingThread(threading.Thread):
 
 
 class PerformanceMetricsCollector():
-    """Collects performance metrics from PerformanceReportingThread"""
+    """Collects performance metrics from PerformanceReportingThread
+    Limits all values to a maximum length"""
     def __init__(self, max_length=1000):
+        """Constructor
+        
+        Args:
+            max_length (int): maximum number of perf reports to keep
+        """
         self.logger = logging.getLogger(__name__)
 
-        self.perf_reports = []
-        self.perf_reports_freqs = 1
-        self.perf_reports_counter = 0
-
-        self.max_length = (max_length//2 + max_length%2) * 2 # has to be dividable by 2
-
+        # create a thread to generate reports regularly
         self.report_thread = PerformanceReportingThread(
             initial_time_increment=1.0,
             cpu_interval=1.0,
             callback_on_loop=self.append_perf_metrics
         )
-            
+
+        self.perf_reports = [] # internal storage
+        self.perf_reports_freqs = 1 # frequency to skip reports from thread
+        self.perf_reports_counter = 0 # how many reports we had so far
+
+        self.max_length = (max_length//2 + max_length%2) * 2 # has to be dividable by 2
+
+
     def start(self):
+        """Start collector perf metrics (start internal thread)"""
         self.logger.info(f"Starting perf metric collector (max_length={self.max_length})")
         self.report_thread.start()
-    
+
     def finalize(self):
+        """Stop collector perf metrics (stop internal thread)"""
         self.logger.info(f"Finalizing perf metric collector (length={len(self.perf_reports)})")
         self.report_thread.finalize()
 
     def append_perf_metrics(self, perf_metrics):
+        """Add a perf metric report to the internal storage"""
         self.perf_reports_counter += 1
 
         if (self.perf_reports_counter % self.perf_reports_freqs):
             # if we've decided to skip this one
             return
 
-        self.perf_reports.append((time.time(), perf_metrics))
+        self.perf_reports.append(perf_metrics)
 
         if len(self.perf_reports) > self.max_length:
             # trim the report by half

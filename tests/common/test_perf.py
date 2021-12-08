@@ -10,6 +10,8 @@ def verify_all_perf_report_keys(perf_report):
     """Helper test function, tests all keys in perf report"""
     assert isinstance(perf_report, dict)
 
+    assert "timestamp" in perf_report, "perf report should have a timestamp key"
+
     required_keys = [
         "cpu_pct_per_cpu_avg",
         "cpu_pct_per_cpu_min",
@@ -27,7 +29,7 @@ def verify_all_perf_report_keys(perf_report):
     for key in required_keys:
         assert key in perf_report, f"key {key} should be in the perf report, but instead we find: {list(perf_report.keys())}"
         assert isinstance(perf_report[key], float) # all metrics are float so far\
-    
+
     assert "not_in_perf_report" not in perf_report
 
 
@@ -91,3 +93,5 @@ def test_perf_report_collector_run_as_thread():
     # and length should be half + 2 new values
     assert len(perf_collector.perf_reports) == (test_max_length // 2) + 2
 
+    for report in perf_collector.perf_reports:
+        verify_all_perf_report_keys(report)
