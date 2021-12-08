@@ -15,6 +15,7 @@ import traceback
 from distutils.util import strtobool
 
 from .metrics import MetricsLogger
+from .perf import PerformanceMetricsCollector
 
 class RunnableScript():
     """
@@ -43,6 +44,8 @@ class RunnableScript():
             f"{framework}.{task}",
             metrics_prefix=metrics_prefix
         )
+
+        self.perf_report_collector = None
 
     @classmethod
     def get_arg_parser(cls, parser=None):
@@ -77,6 +80,13 @@ class RunnableScript():
             type=str,
             help="provide custom properties as json dict",
         )
+        group_general.add_argument(
+            "--enable_perf_metrics",
+            required=False,
+            default=True,
+            type=strtobool,
+            help="disable/enable performance metrics (default: enabled)",
+        )
 
         return parser
 
@@ -98,6 +108,11 @@ class RunnableScript():
         # add properties about environment of this script
         self.metrics_logger.set_platform_properties()
 
+        # enable perf reporting
+        if args.enable_perf_metrics:
+            self.perf_report_collector = PerformanceMetricsCollector()
+
+
     def run(self, args, logger, metrics_logger, unknown_args):
         """The run function of your script. You are required to override this method
         with your own implementation.
@@ -114,8 +129,13 @@ class RunnableScript():
         """Finalize the run, close what needs to be"""
         self.logger.info("Finalizing script run...")
 
+        if self.perf_report_collector:
+            # plot?
+            pass
+
         # close mlflow
         self.metrics_logger.close()
+
 
     @classmethod
     def main(cls, cli_args=None):
