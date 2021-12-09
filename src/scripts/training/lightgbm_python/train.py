@@ -99,7 +99,7 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         cli_params = dict(vars(args))
 
         # removing arguments that are purely CLI
-        for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params', 'construct']:
+        for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params', 'construct', 'disable_perf_metrics']:
             del cli_params[key]
 
         # doing some fixes and hardcoded values
