@@ -14,6 +14,8 @@ from mpi4py import MPI
 from .components import RunnableScript
 from collections import namedtuple
 
+from .perf import PerformanceMetricsCollector, PerfReportPlotter
+
 def detect_mpi_config():
     """ Detects if we're running in MPI.
     Args:
@@ -92,6 +94,12 @@ class MultiNodeScript(RunnableScript):
             # add properties about environment of this script
             self.metrics_logger.set_platform_properties()
 
+        # enable perf reporting
+        if not args.disable_perf_metrics:
+            self.perf_report_collector = PerformanceMetricsCollector()
+            self.perf_report_collector.start()
+
+
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
         self.logger.info("Finalizing multi node component script...")
@@ -100,5 +108,11 @@ class MultiNodeScript(RunnableScript):
             self.logger.info("MPI was initialized, calling MPI.finalize()")
             MPI.Finalize()
         
-        # then use the super finalization method
-        super().finalize_run(args)
+        if self.perf_report_collector:
+            self.perf_report_collector.finalize()
+            plotter = PerfReportPlotter(self.metrics_logger)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self._mpi_config.world_rank)
+            plotter.report_nodes_perf()
+
+        # close mlflow
+        self.metrics_logger.close()

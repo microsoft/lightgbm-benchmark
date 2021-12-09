@@ -6,6 +6,7 @@ import time
 import json
 
 from common.components import SingleNodeScript
+from common.metrics import MetricsLogger
 
 class FakeSingleNodeScript(SingleNodeScript):
     def __init__(self):
@@ -26,7 +27,7 @@ class FakeSingleNodeScript(SingleNodeScript):
 @patch('mlflow.start_run')
 def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_end_run_mock):
     # just run main
-    FakeSingleNodeScript.main(
+    test_component = FakeSingleNodeScript.main(
         [
             "foo.py",
             "--verbose", "True",
@@ -72,10 +73,31 @@ def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock,
 
     # now let's test all metrics
     metrics_calls = mlflow_log_metric_mock.call_args_list
-    assert len(metrics_calls) == 1
+
+    # 1 user metric, 11 performance metrics
+    assert len(metrics_calls) == 12
 
     # user metric (time block)
     assert metrics_calls[0].args[0] == "fake_time_block"
     assert isinstance(metrics_calls[0].args[1], float)
     assert "step" in metrics_calls[0].kwargs
     assert metrics_calls[0].kwargs["step"] == 1
+
+    # perf metrics
+    perf_metrics_call_args = [
+        "max_t_(cpu_pct_per_cpu_avg)",
+        "max_t_(cpu_pct_per_cpu_min)",
+        "max_t_(cpu_pct_per_cpu_max)",
+        "max_t_(mem_percent)",
+        "max_t_(disk_usage_percent)",
+        "max_t_(disk_io_read_mb)",
+        "max_t_(disk_io_write_mb)",
+        "max_t_(net_io_lo_sent_mb)",
+        "max_t_(net_io_ext_sent_mb)",
+        "max_t_(net_io_lo_recv_mb)",
+        "max_t_(net_io_ext_recv_mb)",
+    ]
+    for index, metric_key in enumerate(perf_metrics_call_args):
+        assert metrics_calls[index+1].args[0] == MetricsLogger._remove_non_allowed_chars(metric_key)
+        assert "step" in metrics_calls[index+1].kwargs
+        assert metrics_calls[index+1].kwargs["step"] == 0 # using node id as step

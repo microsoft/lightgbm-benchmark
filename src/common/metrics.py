@@ -54,7 +54,8 @@ class MetricsLogger():
         else:
             self._logger.warning(f"Call to finalize MLFLOW [session='{self._session_name}'] that was never initialized.")
 
-    def _remove_non_allowed_chars(self, name_string):
+    @classmethod
+    def _remove_non_allowed_chars(cls, name_string):
         """ Removes chars not allowed for metric keys in mlflow """
         return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
 
@@ -195,6 +196,7 @@ class MetricsLogger():
         if len(time_per_batch) > 1:
             import numpy as np
             import matplotlib.pyplot as plt
+            plt.switch_backend('agg')
 
             # latency per batch
             batch_run_times = np.array(time_per_batch) * factor_to_usecs
