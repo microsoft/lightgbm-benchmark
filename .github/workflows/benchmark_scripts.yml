@@ -63,6 +63,7 @@ jobs:
       with:
         filename: coverage.xml
         badge: true
+        hide_complexity: true
         format: 'markdown'
         output: 'both'
 
