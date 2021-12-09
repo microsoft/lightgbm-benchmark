@@ -111,7 +111,7 @@ class MultiNodeScript(RunnableScript):
         if self.perf_report_collector:
             self.perf_report_collector.finalize()
             plotter = PerfReportPlotter(self.metrics_logger)
-            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self.mpi_config.world_rank)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self._mpi_config.world_rank)
             plotter.report_nodes_perf()
 
         # close mlflow
