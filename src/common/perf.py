@@ -17,8 +17,7 @@ class PerformanceReportingThread(threading.Thread):
                  initial_time_increment=1.0,
                  cpu_interval=1.0,
                  callback_on_loop=None,
-                 callback_on_exit=None,
-                 callback_tags={}):
+                 callback_on_exit=None):
         """Constructor
         
         Args:
@@ -26,7 +25,6 @@ class PerformanceReportingThread(threading.Thread):
             cpu_interval (float): interval to capture cpu utilization
             callback_on_loop (func): function to call when a perf reading is issued
             callback_on_exit (func): function to call when thread is finalized
-            callback_tags (dict): keyword args to add to call to callback_on_loop
         """
         threading.Thread.__init__(self)
         self.killed = False # flag, set to True to kill from the inside

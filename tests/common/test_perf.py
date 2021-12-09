@@ -39,9 +39,11 @@ def test_perf_report_run_as_thread():
     call_on_loop_method = Mock()
     call_on_exit_method = Mock()
 
-    perf_report_thread = PerformanceReportingThread(initial_time_increment=2.0)
-    perf_report_thread.call_on_loop = call_on_loop_method
-    perf_report_thread.call_on_exit = call_on_exit_method
+    perf_report_thread = PerformanceReportingThread(
+        initial_time_increment=2.0,
+        callback_on_loop=call_on_loop_method,
+        callback_on_exit=call_on_exit_method
+    )
 
     perf_report_thread.start() # will engage in first loop and sleep 2.0
     time.sleep(0.5) # will wait to be in the middle of that loop
