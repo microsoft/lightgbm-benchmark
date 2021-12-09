@@ -48,7 +48,7 @@ jobs:
 
     - name: Test with pytest
       run: |
-        python -m pytest tests/ --junitxml=test-build-result.xml
+        python -m pytest tests/ --junitxml=test-build-result.xml --cov=src/ --cov-report xml:coverage.xml
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v1
@@ -56,3 +56,19 @@ jobs:
         check_name: Unit Test Results for Build
         github_token: ${{ secrets.GITHUB_TOKEN }}
         files: test-build-result.xml
+
+    - name: Code Coverage Summary Report
+      uses: irongut/CodeCoverageSummary@v1.0.2
+      # uses: joshjohanning/CodeCoverageSummary@v1.0.2
+      with:
+        filename: coverage.xml
+        badge: true
+        format: 'markdown'
+        output: 'both'
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md
