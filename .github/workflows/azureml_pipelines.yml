@@ -43,8 +43,7 @@ jobs:
     - name : Validate pipelines [data generation]
       run: >-
         python pipelines/data_generation.py
-        --config-dir ./conf
-        --config-name experiments/data-generation
+        --exp-config ./conf/experiments/data-generation.yaml
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
