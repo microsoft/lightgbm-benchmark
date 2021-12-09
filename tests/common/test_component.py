@@ -99,3 +99,5 @@ def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock,
     ]
     for index, metric_key in enumerate(perf_metrics_call_args):
         assert metrics_calls[index+1].args[0] == MetricsLogger._remove_non_allowed_chars(metric_key)
+        assert "step" in metrics_calls[index+1].kwargs
+        assert metrics_calls[index+1].kwargs["step"] == 0 # using node id as step
