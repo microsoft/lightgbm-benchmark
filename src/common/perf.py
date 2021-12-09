@@ -184,6 +184,7 @@ class PerformanceMetricsCollector():
             ]
             self.perf_reports_freqs *= 2 # we'll start accepting reports only 1 out of 2
             self.logger.warning(f"Perf report store reached max, increasing freq to {self.perf_reports_freqs}")
+<<<<<<< HEAD
 
 
 class PerfReportPlotter():
@@ -261,3 +262,5 @@ class PerfReportPlotter():
                 max([ report["net_io_ext_recv_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
+=======
+>>>>>>> main
