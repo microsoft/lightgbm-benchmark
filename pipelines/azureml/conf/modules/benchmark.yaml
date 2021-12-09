@@ -18,9 +18,9 @@ manifest:
   - name: "lightgbm_c_api_score"
     version: null
     yaml: "inferencing/lightgbm_c_api/spec.yaml"
-  - name: "lightgbm_cli_score"
+  - name: "custom_win_cli_score"
     version: null
-    yaml: "inferencing/lightgbm_cli/spec.yaml"
+    yaml: "inferencing/custom_win_cli/spec.yaml"
   - name: "lightgbm_python_score"
     version: null
     yaml: "inferencing/lightgbm_python/spec.yaml"

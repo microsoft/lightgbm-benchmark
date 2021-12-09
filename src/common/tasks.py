@@ -26,7 +26,6 @@ class inferencing_task:
 class inferencing_variants:
     framework: str = MISSING
     build: Optional[str] = None
-    os: str = "Linux" # linux or windows, linux by default
 
 @dataclass
 class data_generation_task:

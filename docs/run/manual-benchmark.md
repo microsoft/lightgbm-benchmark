@@ -44,7 +44,8 @@ To generate a synthetic dataset based on sklearn:
     ```
 
 
-Note: Running the synthetic data generation script with these parameter values requires at least 4 GB of RAM available and generates a 754 MB training, a 75 MB testing, and a 744 MB inferencing dataset.
+!!! note
+    Running the synthetic data generation script with these parameter values requires at least 4 GB of RAM available and generates a 754 MB training, a 75 MB testing, and a 744 MB inferencing dataset.
 
 ## Run training on synthetic data
 
@@ -64,7 +65,8 @@ Note: Running the synthetic data generation script with these parameter values r
         --min_data_in_leaf 400 \
         --learning_rate 0.3 \
         --max_bin 16 \
-        --feature_fraction 0.15
+        --feature_fraction 0.15 \
+        --device_type cpu
     ```
 
 === "Powershell"
@@ -83,8 +85,12 @@ Note: Running the synthetic data generation script with these parameter values r
         --min_data_in_leaf 400 `
         --learning_rate 0.3 `
         --max_bin 16 `
-        --feature_fraction 0.15
+        --feature_fraction 0.15 `
+        --device_type gpu
     ```
+
+!!! note
+    `--device_type cpu` is optional here, if you're running on gpu you can use `--device_type gpu` instead.
 
 ## Run inferencing on synthetic data (lightgbm python)
 
@@ -94,7 +100,8 @@ Note: Running the synthetic data generation script with these parameter values r
     python src/scripts/inferencing/lightgbm_python/score.py \
         --data ./data/synthetic/inference/ \
         --model ./data/models/synthetic-100trees-4000cols/ \
-        --output ./data/outputs/predictions/
+        --output ./data/outputs/predictions/ \
+        --num_threads 1
     ```
 
 === "Powershell"
@@ -103,29 +110,6 @@ Note: Running the synthetic data generation script with these parameter values r
     python src/scripts/inferencing/lightgbm_python/score.py `
         --data ./data/synthetic/inference/ `
         --model ./data/models/synthetic-100trees-4000cols/ `
-        --output ./data/outputs/predictions/
-    ```
-
-## Run inferencing on synthetic data (lightgbm cli)
-
-If you have a local installation of lightgbm cli, run the `lightgbm_cli` script by pointing to the lightgbm binaries (works for both linux and windows).
-
-=== "Bash"
-
-    ```bash
-    python src/scripts/inferencing/lightgbm_cli/score.py \
-        --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe \
-        --data ./data/synthetic/inference/ \
-        --model ./data/models/synthetic-100trees-4000cols/ \
-        --output ./data/outputs/predictions/
-    ```
-
-=== "Powershell"
-
-    ``` powershell
-    python src/scripts/inferencing/lightgbm_cli/score.py `
-        --lightgbm_exec ./build/windows/x64/Release/lightgbm.exe `
-        --data ./data/synthetic/inference/ `
-        --model ./data/models/synthetic-100trees-4000cols/ `
-        --output ./data/outputs/predictions/
+        --output ./data/outputs/predictions/ `
+        --num_threads 1
     ```

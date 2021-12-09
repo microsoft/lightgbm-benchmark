@@ -2,15 +2,13 @@
 # Licensed under the MIT license.
 
 """
-LightGBM/CLI inferencing script
+Custom Binaries inferencing script
 """
 import os
 import sys
 import argparse
 import logging
 from distutils.util import strtobool
-import lightgbm
-from lightgbm import Booster, Dataset
 from subprocess import PIPE
 from subprocess import run as subprocess_run
 from subprocess import TimeoutExpired
@@ -27,13 +25,19 @@ if COMMON_ROOT not in sys.path:
 from common.components import RunnableScript
 from common.io import input_file_path
 
+# STEP 1 : provide the name of your binary executable
+# (copy it inside the static_binaries subfolder)
+BINARY_FILE_NAME = "lightgbm.exe" # <<< rename to fit your binary
+BINARIES_FOLDER = os.path.join(os.path.dirname(__file__), "static_binaries")
+BINARY_FILE_PATH = os.path.join(os.path.dirname(__file__), "static_binaries", BINARY_FILE_NAME)
 
-class LightGBMCLIInferencingScript(RunnableScript):
+class CustomCLIInferencingScript(RunnableScript):
     def __init__(self):
+        # STEP 2 : feel free to update those to reflect your custom binary framework/version
         super().__init__(
             task="score",
-            framework="lightgbm",
-            framework_version=lightgbm.__version__
+            framework="custom_bin",
+            framework_version=BINARY_FILE_NAME
         )
 
     @classmethod
@@ -52,21 +56,21 @@ class LightGBMCLIInferencingScript(RunnableScript):
         # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
+        # STEP 3 : below are the arguments that will be passed
+        # by the inferencing benchmark pipeline, if you want to add more arguments
+        # you will have to modify the pipeline itself
+        # alternatively, you can hardcode values in the custom_cli_command list below (see STEP 4)
         group_i = parser.add_argument_group("Input Data")
-        group_i.add_argument("--lightgbm_exec_path",
-            required=False, type=str, default="lightgbm", help="Path to lightgbm.exe (file path)")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
         group_i.add_argument("--model",
-            required=False, type=input_file_path, help="Exported model location")
+            required=True, type=input_file_path, help="Exported model location")
         group_i.add_argument("--output",
             required=False, default=None, type=str, help="Inferencing output location (file path)")
 
         group_params = parser.add_argument_group("Scoring parameters")
         group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
-        group_params.add_argument("--predict_disable_shape_check",
-            required=False, default=False, type=strtobool, help="See LightGBM documentation")
 
         return parser
 
@@ -92,43 +96,48 @@ class LightGBMCLIInferencingScript(RunnableScript):
             # and create your own file inside the output
             args.output = os.path.join(args.output, "predictions.txt")
 
-        # assemble a command for lightgbm cli
-        lightgbm_cli_command = [
-            args.lightgbm_exec_path,
+        # STEP 4: write the command for your custom cli as a list
+        # the example below corresponds to commands for lightgbm_cli.exe
+        # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
+        custom_cli_command = [
+            BINARY_FILE_PATH,
             "task=prediction",
+            f"model={args.model}",
             f"data={args.data}",
-            f"input_model={args.model}",
             "verbosity=2",
             f"num_threads={args.num_threads}",
-            f"predict_disable_shape_check={bool(args.predict_disable_shape_check)}"
+            #f"predict_disable_shape_check=True"
         ]
 
+        # STEP 5 : if you need to add an output
+        # the example below corresponds to commands for lightgbm_cli.exe
         if args.output:
-            lightgbm_cli_command.append(f"output_result={args.output}")
+            custom_cli_command.append(f"output_result ={args.output}")
 
-
-        logger.info(f"Running .predict()")
+        logger.info(f"Running custom command: {custom_cli_command}")
         with metrics_logger.log_time_block(metric_name="time_inferencing"):
-            lightgbm_cli_call = subprocess_run(
-                lightgbm_cli_command,
+            custom_cli_call = subprocess_run(
+                custom_cli_command,
                 stdout=PIPE,
                 stderr=PIPE,
                 universal_newlines=True,
                 check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
                 timeout=None
             )
-            logger.info(f"LightGBM stdout: {lightgbm_cli_call.stdout}")
-            logger.info(f"LightGBM stderr: {lightgbm_cli_call.stderr}")
-            logger.info(f"LightGBM return code: {lightgbm_cli_call.returncode}")
+        logger.info(f"RETURN CODE: {custom_cli_call.returncode}")
+        logger.info(f"STDOUT: {custom_cli_call.stdout}")
+        logger.info(f"STDERR: {custom_cli_call.stderr}")
+
+        # OPTIONAL: apply any post processing on logs here (ex: extract metrics)
 
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """
-    return LightGBMCLIInferencingScript.get_arg_parser(parser)
+    return CustomCLIInferencingScript.get_arg_parser(parser)
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """
-    LightGBMCLIInferencingScript.main(cli_args)
+    CustomCLIInferencingScript.main(cli_args)
 
 if __name__ == "__main__":
     main()
