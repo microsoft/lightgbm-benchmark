@@ -10,14 +10,9 @@ import argparse
 import logging
 import traceback
 import json
+from mpi4py import MPI
 from .components import RunnableScript
 from collections import namedtuple
-
-# doing our own initialization of MPI to have fine-grain control
-import mpi4py
-mpi4py.rc.initialize = False
-mpi4py.rc.finalize = False
-from mpi4py import MPI
 
 def detect_mpi_config():
     """ Detects if we're running in MPI.
@@ -51,7 +46,7 @@ def detect_mpi_config():
     return mpi_config
 
 class MultiNodeScript(RunnableScript):
-    def __init__(self, task, framework, framework_version, metrics_prefix=None, mpi_init_mode=MPI.THREAD_MULTIPLE):
+    def __init__(self, task, framework, framework_version, metrics_prefix=None):
         """ Generic initialization for all script classes.
 
         Args:
@@ -59,7 +54,6 @@ class MultiNodeScript(RunnableScript):
             framework (str): name of ML framework
             framework_version (str): a version of this framework
             metrics_prefix (str): any prefix to add to this scripts metrics
-            mpi_init_mode (int): mode to initialize MPI
         """
         # just use the regular init
         super().__init__(
@@ -70,8 +64,7 @@ class MultiNodeScript(RunnableScript):
         )
 
         # but also add mpi_config
-        self._mpi_config = None
-        self._mpi_init_mode = mpi_init_mode
+        self._mpi_config = detect_mpi_config()
 
     def mpi_config(self):
         """Getter method"""
@@ -80,14 +73,6 @@ class MultiNodeScript(RunnableScript):
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing multi node component script...")
-
-        if MPI.Is_initialized():
-            self.logger.info("MPI is already initialized.")
-        else:
-            self.logger.info("Initializing MPI.")
-            MPI.Init_thread(required=self._mpi_init_mode)
-
-        self._mpi_config = detect_mpi_config()
 
         # open mlflow
         self.metrics_logger.open()
