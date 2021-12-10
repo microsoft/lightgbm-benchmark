@@ -29,6 +29,9 @@ jobs:
           - docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
           - docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
           - docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+          - src/scripts/training/lightbm_python/default.dockerfile
+          - src/scripts/inferencing/lightbm_python/default.dockerfile
+          - src/scripts/inferencing/lightgbm_c_api/default.dockerfile
 
     steps:
     - uses: actions/checkout@v2
@@ -50,7 +53,7 @@ jobs:
     - uses: marceloprado/has-changed-path@v1
       id: dockerfile-changed
       with:
-        paths: docker/${{ matrix.dockerfile}}
+        paths: ${{ matrix.dockerfile}}
 
     - name: Build the Docker image
       if: steps.dockerfile-changed.outputs.changed == 'true'
