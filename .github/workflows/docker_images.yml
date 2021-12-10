@@ -21,14 +21,14 @@ jobs:
     strategy:
       matrix:
         dockerfile:
-          - lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
-          - lightgbm-v3.2.1/linux_cpu_mpi_pip.dockerfile
-          - lightgbm-v3.2.1/linux_cuda_build.dockerfile
-          - lightgbm-v3.2.1/linux_gpu_build.dockerfile
-          - lightgbm-v3.2.1/linux_gpu_pip.dockerfile
-          - lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
-          - lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
-          - lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_cpu_mpi_pip.dockerfile
+          - docker/lightgbm-v3.2.1/linux_cuda_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_gpu_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_gpu_pip.dockerfile
+          - docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
+          - docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
+          - docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
 
     steps:
     - uses: actions/checkout@v2
@@ -55,7 +55,6 @@ jobs:
     - name: Build the Docker image
       if: steps.dockerfile-changed.outputs.changed == 'true'
       run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s) --build-arg lightgbm_benchmark_branch=$GIT_BRANCH_NAME
-      working-directory: docker/
 
   windows_container_build:
 
@@ -64,8 +63,8 @@ jobs:
     strategy:
       matrix:
         dockerfile:
-          - lightgbm-v3.2.1/windows_cpu_pip.dockerfile
-          - lightgbm-v3.3.0/windows_cpu_pip.dockerfile
+          - docker/lightgbm-v3.2.1/windows_cpu_pip.dockerfile
+          - docker/lightgbm-v3.3.0/windows_cpu_pip.dockerfile
 
     steps:
     - uses: actions/checkout@v2
@@ -80,4 +79,3 @@ jobs:
     - name: Build the Docker image
       if: steps.dockerfile-changed.outputs.changed == 'true'
       run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s)
-      working-directory: docker/
