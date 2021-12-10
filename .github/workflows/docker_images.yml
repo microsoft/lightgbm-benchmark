@@ -29,8 +29,8 @@ jobs:
           - docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
           - docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
           - docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
-          - src/scripts/training/lightbm_python/default.dockerfile
-          - src/scripts/inferencing/lightbm_python/default.dockerfile
+          - src/scripts/training/lightgbm_python/default.dockerfile
+          - src/scripts/inferencing/lightgbm_python/default.dockerfile
           - src/scripts/inferencing/lightgbm_c_api/default.dockerfile
 
     steps:
