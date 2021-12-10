@@ -119,11 +119,7 @@ class FailingSingleNodeScript(SingleNodeScript):
             raise Exception("Some fake issue occured during code!")
 
 
-@patch('mlflow.end_run')
-@patch('mlflow.log_metric')
-@patch('mlflow.set_tags')
-@patch('mlflow.start_run')
-def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_end_run_mock):
+def test_failure_single_node_script_metrics():
     # just run main
     with pytest.raises(Exception) as e_test:
         test_component = FailingSingleNodeScript.main(
