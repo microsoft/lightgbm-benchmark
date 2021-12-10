@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20211111.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20211210.1"
 
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
