@@ -19,7 +19,7 @@ from scripts.inferencing.lightgbm_c_api import score
 def test_lightgbm_c_api_score(locate_binaries_mock, subprocess_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, temporary_dir, regression_model_sample, regression_inference_sample):
     """Tests src/scripts/inferencing/lightgbm_c_api/score.py"""
     predictions_dir = os.path.join(temporary_dir, "predictions")
-    locate_binaries_mock.return_value = "foo"
+    locate_binaries_mock.return_value = "fake_cli.exe"
 
     # create a first mock for the return of subprocess
     subprocess_call_handle_mock = Mock()
@@ -47,6 +47,10 @@ PROPRETY foo2=bar2
     # replaces sys.argv with test arguments and run main
     with patch.object(sys, "argv", script_args):
         score.main()
+
+    # test arguments
+    assert isinstance(subprocess_run_mock.call_args.args[0], list), "first argument of subprocess.run() should be a list"
+    assert "fake_cli.exe" in subprocess_run_mock.call_args.args[0][0], "first element in subprocess.run() command should contain return value of locate_lightgbm_benchmark_binaries()"
 
     # test expected outputs
     assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))

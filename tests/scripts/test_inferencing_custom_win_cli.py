@@ -39,6 +39,10 @@ def test_lightgbm_c_api_score(subprocess_run_mock, mlflow_log_metric_mock, tempo
     with patch.object(sys, "argv", script_args):
         score.main()
 
+    # test arguments
+    assert isinstance(subprocess_run_mock.call_args.args[0], list), "first argument of subprocess.run() should be a list"
+    assert "lightgbm.exe" in subprocess_run_mock.call_args.args[0][0], "first element in subprocess.run() command should contain lightgbm.exe"
+
     # no outputs (yet?)
     # assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))
 
