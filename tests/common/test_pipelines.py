@@ -18,8 +18,15 @@ from common.pipelines import (
 
 @patch('common.pipelines.azureml_connect')
 def test_pipeline_submit_main(aml_connect_mock):
+    # need a mock pipeline function (dsl.pipeline)
     pipeline_func_mock = Mock()
-    aml_connect_mock.return_value = None
+
+    # need a mock pipeline instance (returned by pipeline func)
+    pipeline_instance_mock = Mock()
+    pipeline_func_mock.return_value = pipeline_instance_mock
+
+    # no need for a workspace, but we can test call to pipeline instance
+    aml_connect_mock.return_value = "fake_workspace"
 
     @dataclass
     class test_config:
@@ -36,14 +43,23 @@ def test_pipeline_submit_main(aml_connect_mock):
         "+compute.linux_cpu=test-cluster",
         "+compute.linux_gpu=test-gpu-cluster",
         "+compute.windows_cpu=test-win-cpu",
-        "test_config.test_param=foo"
+        "test_config.test_param=foo",
+        "run.submit=True"
     ]
 
     # replaces sys.argv with test arguments and run main
     with patch.object(sys, "argv", script_args):
         ret_value = pipeline_submit_main(
+            # config class
             test_config,
-            pipeline_func_mock
+
+            # dsl.pipeline func
+            pipeline_func_mock,
+
+            # test hardcoded overrides
+            experiment_description="test_description",
+            display_name="test_display_name",
+            tags={'foo':'bar'}
         )
 
     # checking call to pipeline_func
@@ -66,8 +82,22 @@ def test_pipeline_submit_main(aml_connect_mock):
     assert pipeline_config.compute.linux_gpu == "test-gpu-cluster"
     assert pipeline_config.compute.windows_cpu == "test-win-cpu"
 
-    # experiment
-    assert pipeline_config.experiment.name == "test_experiment_name"
-
     # custom params
     assert pipeline_config.test_config.test_param == "foo"
+
+    pipeline_instance_mock.validate.assert_called_once()
+    pipeline_instance_mock.validate.assert_called_with(
+        workspace="fake_workspace" # what's returned by aml_connect mock
+    )
+
+    pipeline_instance_mock.submit.assert_called_once()
+    pipeline_instance_mock.submit.assert_called_with(
+        workspace="fake_workspace", # what's returned by aml_connect mock
+        experiment_name="test_experiment_name",
+        description="test_description",
+        display_name="test_display_name",
+        tags={'foo':'bar'},
+        default_compute_target="cpu-cluster",
+        regenerate_outputs=False, # default
+        continue_on_step_failure=False # default
+    )
