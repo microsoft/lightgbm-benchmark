@@ -17,7 +17,6 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 
-from shrike.pipeline.pipeline_config import default_config_dict
 from shrike.pipeline.aml_connect import azureml_connect
 
 # when running this script directly, needed to import common
