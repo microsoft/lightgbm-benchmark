@@ -16,7 +16,7 @@ import argparse
 
 # config management
 from dataclasses import dataclass
-from omegaconf import DictConfig, OmegaConf, MISSING
+from omegaconf import OmegaConf, MISSING
 from typing import Optional, List
 
 # AzureML
@@ -32,7 +32,12 @@ if SCRIPTS_SOURCES_ROOT not in sys.path:
     sys.path.append(str(SCRIPTS_SOURCES_ROOT))
 
 from common.tasks import data_generation_task
-from common.pipelines import pipeline_submit_main, COMPONENTS_ROOT
+from common.pipelines import (
+    parse_pipeline_config,
+    azureml_connect,
+    pipeline_submit,
+    COMPONENTS_ROOT
+)
 
 ### CONFIG DATACLASS ###
 
@@ -63,7 +68,7 @@ class data_generation_config: # pylint: disable=invalid-name
 
 generate_data_component = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
 
-### DATA GENERATION TASKS ###
+### DATA GENERATION PIPELINE ###
 
 # Step 3: your pipeline consists in creating a python function
 # decorated with @dsl.pipeline.
@@ -132,18 +137,34 @@ def data_generation_main_pipeline_function(config):
                 create_new_version=True
             )  
 
-# Step 4: use main function
-# the main block below will:
-# 1 - parse command line arguments
-# 2 - pass them to the pipeline function as argument
-# 3 - build the pipeline and submit
+
+### MAIN BLOCK ###
+
+# Step 4: implement main block using helper functions
 
 if __name__ == "__main__":
-    # use standard cli main to get arguments from CLI
-    pipeline_submit_main(
-        # pipeline configuration class
-        data_generation_config,
+    # use parse helper function to get arguments from CLI
+    config = parse_pipeline_config(data_generation_config)
+    
+    # you'll need a workspace object to connect
+    workspace = azureml_connect(config)
 
-        # main pipeline function
-        data_generation_main_pipeline_function
+    # run the pipeline function with the given arguments
+    pipeline_instance = data_generation_main_pipeline_function(config)
+
+    # generate a nice markdown description
+    experiment_description="\n".join([
+        "Generating synthetic datasets (see yaml below).",
+        "```yaml""",
+        "data_generation_config:",
+        OmegaConf.to_yaml(config.data_generation_config),
+        "```"
+    ])
+
+    # validate/submit the pipeline (if run.submit=True)
+    pipeline_submit(
+        workspace,
+        config,
+        pipeline_instance,
+        experiment_description=experiment_description
     )

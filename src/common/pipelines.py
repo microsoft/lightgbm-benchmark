@@ -17,7 +17,7 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 
-from shrike.pipeline.aml_connect import azureml_connect
+from shrike.pipeline.aml_connect import azureml_connect as shrike_azureml_connect
 
 # when running this script directly, needed to import common
 from .paths import COMPONENTS_ROOT, CONFIG_PATH
@@ -58,24 +58,15 @@ class experiment_config:  # pylint: disable=invalid-name
     tags: Optional[Any] = None
 
 
-def pipeline_submit_main(pipeline_config_dataclass,
-                      pipeline_func,
-                      experiment_name=None,
-                      experiment_description=None,
-                      display_name=None,
-                      tags=None,
-                      cli_args=None):
+_GLOBAL_CONFIG = None
+
+def parse_pipeline_config(pipeline_config_dataclass, cli_args=None):
     """Standard helper function to submit a pipeline to AzureML.
 
     This is a lightweight version of what Shrike does (https://github.com/Azure/shrike).
     
     Args:
         pipeline_config_dataclass (dataclass): class for hosting the config of pipeline_func
-        pipeline_func (function): pipeline building function to call with config object
-        experiment_name (str): override config.experiment.name at runtime
-        experiment_description (str): override config.experiment.description at runtime
-        display_name (str): override config.experiment.display_name at runtime
-        tags (dict): override config.experiment.tags at runtime
         cli_args (List): command line arguments (if None, use sys.argv)
     """
     # create an argument parser just to catch --exp-conf
@@ -92,42 +83,6 @@ def pipeline_submit_main(pipeline_config_dataclass,
         logging.getLogger(__name__).info(f"Using config_name={config_name} and config_dir={CONFIG_PATH}")
     else:
         config_name = None
-
-    # below we create a transient function to build
-    # and submit the pipeline function
-    # this will be called from hydra main function
-    def _pipeline_build_and_submit(pipeline_config):
-        """ transient run function to call from hydra main"""
-        # Connect to AzureML
-        workspace = azureml_connect(
-            aml_subscription_id=pipeline_config.aml.subscription_id,
-            aml_resource_group=pipeline_config.aml.resource_group,
-            aml_workspace_name=pipeline_config.aml.workspace_name,
-            aml_auth=pipeline_config.aml.auth,
-            aml_tenant=pipeline_config.aml.tenant
-        )
-
-        # run the pipeline function with the given config
-        pipeline_instance = pipeline_func(pipeline_config)
-
-        # Submit or Validate
-        if pipeline_config.run.validate:
-            pipeline_instance.validate(workspace=workspace)
-        
-        if pipeline_config.run.submit:
-            pipeline_run = pipeline_instance.submit(
-                workspace=workspace,
-                experiment_name=(experiment_name or pipeline_config.experiment.name),
-                description=(experiment_description or pipeline_config.experiment.description),
-                display_name=(display_name or pipeline_config.experiment.display_name),
-                tags=(tags or pipeline_config.experiment.tags),
-                default_compute_target=pipeline_config.compute.default_compute_target,
-                regenerate_outputs=pipeline_config.run.regenerate_outputs,
-                continue_on_step_failure=pipeline_config.run.continue_on_failure,
-            )
-
-    # now that we have a function, let's get command line arguments
-    # to call it with all the right config options
 
     # create config with pipeline dataclass
     # store it in hydra default
@@ -155,11 +110,72 @@ def pipeline_submit_main(pipeline_config_dataclass,
     # create a hydra main function to get overrides
     @hydra.main(config_name="default")
     def hydra_main(cfg : DictConfig) -> None:
+        global _GLOBAL_CONFIG
         cfg = OmegaConf.merge(config_dict, cfg)
-        logging.getLogger(__name__).info(OmegaConf.to_yaml(cfg))
+        #logging.getLogger(__name__).info(OmegaConf.to_yaml(cfg))
 
-        # call the run fonction
-        _pipeline_build_and_submit(cfg)
+        _GLOBAL_CONFIG = cfg
+
 
     # call the hydra main function
     hydra_main()
+
+    return _GLOBAL_CONFIG.copy()
+
+
+def azureml_connect(config):
+    """Connects to AzureML.
+    
+    Args:
+        config (DictConfig): containing aml_config dataclass
+
+    Returns:
+        workspace (azure.ml.core.Workspace)
+    """
+    return shrike_azureml_connect(
+        aml_subscription_id=config.aml.subscription_id,
+        aml_resource_group=config.aml.resource_group,
+        aml_workspace_name=config.aml.workspace_name,
+        aml_auth=config.aml.auth,
+        aml_tenant=config.aml.tenant
+    )
+
+def pipeline_submit(workspace,
+                    pipeline_config,
+                    pipeline_instance,
+                    experiment_name=None,
+                    experiment_description=None,
+                    display_name=None,
+                    tags=None):
+    """Standard helper function to submit a pipeline to AzureML.
+   
+    Args:
+        workspace (azure.ml.core.Workspace): AzureML workspace (see azureml_connect())
+        pipeline_config (DictConfig): class for hosting the config of pipeline_func
+        pipeline_instance (Pipeline): pipeline object
+        experiment_name (str): override config.experiment.name at runtime
+        experiment_description (str): override config.experiment.description at runtime
+        display_name (str): override config.experiment.display_name at runtime
+        tags (dict): override config.experiment.tags at runtime
+
+    Returns:
+        pipeline (azure.ml.core.PipelineRun)
+    """
+    if pipeline_config.run.validate:
+        pipeline_instance.validate(workspace=workspace)
+
+    experiment_description = (experiment_description or pipeline_config.experiment.description)
+    if experiment_description and len(experiment_description) > 5000:
+        experiment_description = experiment_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
+
+    if pipeline_config.run.submit:
+        return pipeline_instance.submit(
+            workspace=workspace,
+            experiment_name=(experiment_name or pipeline_config.experiment.name),
+            description=experiment_description,
+            display_name=(display_name or pipeline_config.experiment.display_name),
+            tags=(tags or pipeline_config.experiment.tags),
+            default_compute_target=pipeline_config.compute.default_compute_target,
+            regenerate_outputs=pipeline_config.run.regenerate_outputs,
+            continue_on_step_failure=pipeline_config.run.continue_on_failure,
+        )
