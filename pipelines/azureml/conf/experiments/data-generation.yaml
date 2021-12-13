@@ -1,36 +1,26 @@
 # This experiment generates multiple synthetic datasets for regression
 # with varying number of features
 #
-# to execute, run from /pipelines/azureml/
-# > python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True
+# to execute:
+# > python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml
 
 defaults:
   - aml: sample
-  - compute: sample
-  - modules: benchmark
 
-# run parameters are command line arguments for running your experiment
-run: # params for running pipeline
-  experiment_name: "data-generation" # IMPORTANT
-  regenerate_outputs: false
-  continue_on_failure: false
-  verbose: false
-  submit: false
-  resume: false
-  canary: false
-  silent: false
-  wait: false
-
-module_loader: # module loading params
-  use_local: "*"
-  force_default_module_version: null
-  force_all_module_version: null
-  local_steps_folder: "../../../../../src/scripts/"
+compute:
+  linux_cpu: "cpu-cluster"
+  linux_gpu: "linux-gpu-nv6"
+  windows_cpu: "win-cpu"
 
 ### CUSTOM PARAMETERS ###
 
-data_generation:
-  benchmark_name: "benchmark-dev"
+experiment:
+  name: "data_generation_dev"
+  description: "something interesting to say about this"
+
+data_generation_config:
+  # name of your particular benchmark
+  benchmark_name: "benchmark-dev" # override this with a unique name
 
   # DATA
   tasks:
