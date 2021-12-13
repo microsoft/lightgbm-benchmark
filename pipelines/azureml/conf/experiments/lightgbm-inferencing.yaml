@@ -2,7 +2,7 @@
 # on a given user-defined dataset and model
 #
 # to execute, run from /pipelines/azureml/
-# > python pipelines/azureml/pipelines/lightgbm_inferencing.py --exp-config ./pipelines/azureml/conf/experiments/lightgbm-inferencing.yaml
+# > python pipelines/azureml/pipelines/lightgbm_inferencing.py --exp-config pipelines/azureml/conf/experiments/lightgbm-inferencing.yaml
 
 defaults:
   - aml: sample
@@ -15,12 +15,12 @@ compute:
 ### CUSTOM PARAMETERS ###
 
 experiment:
-  name: "benchmark-lightgbm-inferencing-dev"
+  name: "lightgbm_inferencing_dev"
   description: "something interesting to say about this"
 
 lightgbm_inferencing_config:
   # name of your particular benchmark
-  benchmark_name: "lightgbm-inferencing-dev" # override this with a unique name
+  benchmark_name: "benchmark-dev" # override this with a unique name
 
   # list all the data/model pairs to run inferencing with
   tasks:

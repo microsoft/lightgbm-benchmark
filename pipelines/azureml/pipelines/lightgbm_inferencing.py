@@ -81,7 +81,11 @@ treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_RO
 @dsl.pipeline(name=f"lightgbm_inferencing", # pythonic name
                 description=f"LightGBM inferencing on user defined dataset/model",
                 non_pipeline_parameters=['benchmark_custom_properties', 'config'])
-def inferencing_task_pipeline_function(benchmark_custom_properties, config, data, model, predict_disable_shape_check):
+def inferencing_task_pipeline_function(benchmark_custom_properties,
+                                       config,
+                                       data,
+                                       model,
+                                       predict_disable_shape_check):
     """This pipeline consists in running multiple inferencing
     frameworks in parallel on a given input data/model pair.
 
@@ -190,9 +194,9 @@ def inferencing_all_tasks(workspace, config):
     """Pipeline's main building function.
 
     Args:
-        workspace (azure.ml.core.Workspace): the AzureML workspace
+        workspace (azureml.core.Workspace): the AzureML workspace
             This is not an actual pipeline parameter
-        config (DictObject): the pipeline configuration object containing pipeline config dataclass
+        config (DictConfig): the pipeline configuration object containing pipeline config dataclass
             This is not an actual pipeline parameter
 
     Returns:
@@ -239,7 +243,7 @@ if __name__ == "__main__":
 
     experiment_description="\n".join([
         "Inferencing on all specified tasks (see yaml below).",
-        "```yaml""",
+        "```yaml",
         "lightgbm_inferencing_config:",
         OmegaConf.to_yaml(config.lightgbm_inferencing_config),
         "```"
