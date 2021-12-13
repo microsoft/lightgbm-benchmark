@@ -93,15 +93,6 @@ def data_generation_main_pipeline_function(config):
     benchmark_custom_properties = json.dumps({
         'benchmark_name' : config.data_generation_config.benchmark_name
     })
-    full_pipeline_description="\n".join([
-        "Generate all datasets for lightgbm benchmark",
-        "```yaml""",
-        OmegaConf.to_yaml(config.data_generation_config),
-        "```"
-    ])
-
-    if len(full_pipeline_description) > 5000:
-        full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     for generation_task in config.data_generation_config.tasks:
         generate_data_step = generate_data_component(
