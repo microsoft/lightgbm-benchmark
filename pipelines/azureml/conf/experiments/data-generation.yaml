@@ -2,7 +2,7 @@
 # with varying number of features
 #
 # to execute:
-# > python pipelines/azureml/pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml
+# > python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml
 
 defaults:
   - aml: sample
@@ -19,7 +19,8 @@ experiment:
   description: "something interesting to say about this"
 
 data_generation_config:
-  benchmark_name: "benchmark-dev"
+  # name of your particular benchmark
+  benchmark_name: "benchmark-dev" # override this with a unique name
 
   # DATA
   tasks:
