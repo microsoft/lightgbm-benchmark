@@ -1,5 +1,8 @@
 # LightGBM benchmarking suite
 
+[![AzureML Pipelines Validation](https://github.com/microsoft/lightgbm-benchmark/actions/workflows/azureml_pipelines.yml/badge.svg)](https://github.com/microsoft/lightgbm-benchmark/actions/workflows/azureml_pipelines.yml)
+[![Benchmark scripts gated build](https://github.com/microsoft/lightgbm-benchmark/actions/workflows/benchmark_scripts.yml/badge.svg)](https://github.com/microsoft/lightgbm-benchmark/actions/workflows/benchmark_scripts.yml)
+
 The LightGBM benchmark aims at providing tools and automation to compare implementations of lightgbm and other boosting-tree-based algorithms for both training and inferencing. The focus is on production use cases, and the evaluation on both model quality (validation metrics) and computing performance (training speed, compute hours, inferencing latency, etc).
 
 The goal is to support the community of developers of LightGBM by providing tools and a methodology for evaluating new releases of LightGBM on a standard and reproducible benchmark.
