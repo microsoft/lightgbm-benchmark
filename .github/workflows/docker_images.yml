@@ -11,6 +11,12 @@ on:
     paths:
     - 'docker/**'
     - '.github/workflows/docker_images.yml'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Reason'
+        required: false
+        default: '...'
 
 jobs:
 
