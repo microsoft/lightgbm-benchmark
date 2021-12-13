@@ -4,7 +4,7 @@ Generates synthetic data with multiple parameters.
 See config file /pipelines/azureml/conf/experiments/data-generation.yaml
 
 to execute:
-> python pipelines/azureml/pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml +run.submit=True
+> python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml +run.submit=True
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
@@ -93,15 +93,6 @@ def data_generation_main_pipeline_function(config):
     benchmark_custom_properties = json.dumps({
         'benchmark_name' : config.data_generation_config.benchmark_name
     })
-    full_pipeline_description="\n".join([
-        "Generate all datasets for lightgbm benchmark",
-        "```yaml""",
-        OmegaConf.to_yaml(config.data_generation_config),
-        "```"
-    ])
-
-    if len(full_pipeline_description) > 5000:
-        full_pipeline_description = full_pipeline_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     for generation_task in config.data_generation_config.tasks:
         generate_data_step = generate_data_component(
@@ -155,7 +146,7 @@ if __name__ == "__main__":
     # generate a nice markdown description
     experiment_description="\n".join([
         "Generating synthetic datasets (see yaml below).",
-        "```yaml""",
+        "```yaml",
         "data_generation_config:",
         OmegaConf.to_yaml(config.data_generation_config),
         "```"

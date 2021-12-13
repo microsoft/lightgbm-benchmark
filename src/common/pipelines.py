@@ -17,6 +17,8 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 
+from azureml.core import Workspace
+from azureml.pipeline.core import Pipeline
 from shrike.pipeline.aml_connect import azureml_connect as shrike_azureml_connect
 
 # when running this script directly, needed to import common
@@ -60,7 +62,7 @@ class experiment_config:  # pylint: disable=invalid-name
 
 _GLOBAL_CONFIG = None
 
-def parse_pipeline_config(pipeline_config_dataclass, cli_args=None):
+def parse_pipeline_config(pipeline_config_dataclass: dataclass, cli_args: list=None):
     """Standard helper function to submit a pipeline to AzureML.
 
     This is a lightweight version of what Shrike does (https://github.com/Azure/shrike).
@@ -123,7 +125,7 @@ def parse_pipeline_config(pipeline_config_dataclass, cli_args=None):
     return _GLOBAL_CONFIG.copy()
 
 
-def azureml_connect(config):
+def azureml_connect(config: DictConfig):
     """Connects to AzureML.
     
     Args:
@@ -140,15 +142,15 @@ def azureml_connect(config):
         aml_tenant=config.aml.tenant
     )
 
-def pipeline_submit(workspace,
-                    pipeline_config,
-                    pipeline_instance,
-                    experiment_name=None,
-                    experiment_description=None,
-                    display_name=None,
-                    tags=None):
+def pipeline_submit(workspace: Workspace,
+                    pipeline_config: DictConfig,
+                    pipeline_instance: Pipeline,
+                    experiment_name: str=None,
+                    experiment_description: str=None,
+                    display_name: str=None,
+                    tags: dict=None):
     """Standard helper function to submit a pipeline to AzureML.
-   
+
     Args:
         workspace (azure.ml.core.Workspace): AzureML workspace (see azureml_connect())
         pipeline_config (DictConfig): class for hosting the config of pipeline_func
