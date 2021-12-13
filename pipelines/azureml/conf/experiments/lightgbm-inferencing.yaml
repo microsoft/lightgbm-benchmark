@@ -2,34 +2,23 @@
 # on a given user-defined dataset and model
 #
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/lightgbm-inferencing run.submit=True
+# > python pipelines/azureml/pipelines/lightgbm_inferencing.py --exp-config ./pipelines/azureml/conf/experiments/lightgbm-inferencing.yaml
 
 defaults:
   - aml: sample
-  - compute: sample
-  - modules: benchmark
 
-# run parameters are command line arguments for running your experiment
-run: # params for running pipeline
-  experiment_name: "benchmark-lightgbm-inferencing-dev" # IMPORTANT
-  regenerate_outputs: false
-  continue_on_failure: false
-  verbose: false
-  submit: false
-  resume: false
-  canary: false
-  silent: false
-  wait: false
-
-module_loader: # module loading params
-  use_local: "*"
-  force_default_module_version: null
-  force_all_module_version: null
-  local_steps_folder: "../../../../../src/scripts/"
+compute:
+  linux_cpu: "cpu-cluster"
+  linux_gpu: "linux-gpu-nv6"
+  windows_cpu: "win-cpu"
 
 ### CUSTOM PARAMETERS ###
 
-lightgbm_inferencing:
+experiment:
+  name: "benchmark-lightgbm-inferencing-dev"
+  description: "something interesting to say about this"
+
+lightgbm_inferencing_config:
   # name of your particular benchmark
   benchmark_name: "lightgbm-inferencing-dev" # override this with a unique name
 

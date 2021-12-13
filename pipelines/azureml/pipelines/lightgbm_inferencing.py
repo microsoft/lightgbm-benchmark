@@ -12,6 +12,7 @@ to execute:
 import os
 import sys
 import json
+import logging
 
 # config management
 from dataclasses import dataclass
@@ -47,7 +48,7 @@ from common.aml import load_dataset_from_data_input_spec
 # to read that config from a given yaml file + hydra override commands
 
 @dataclass
-class lightgbm_inferencing: # pylint: disable=invalid-name
+class lightgbm_inferencing_config: # pylint: disable=invalid-name
     """ Config object constructed as a dataclass.
 
     NOTE: the name of this class will be used as namespace in your config yaml file.
@@ -63,11 +64,11 @@ class lightgbm_inferencing: # pylint: disable=invalid-name
 # load those components from local yaml specifications
 # use COMPONENTS_ROOT as base folder
 
-lightgbm_python_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_python_score", "spec.yaml"))
-lightgbm_c_api_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_c_api_score", "spec.yaml"))
-custom_win_cli_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "custom_win_cli_score", "spec.yaml"))
-treelite_compile_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "treelite_compile", "spec.yaml"))
-treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "treelite_score", "spec.yaml"))
+lightgbm_python_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_python", "spec.yaml"))
+lightgbm_c_api_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_c_api", "spec.yaml"))
+custom_win_cli_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "custom_win_cli", "spec.yaml"))
+treelite_compile_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "model_transformation", "treelite_compile", "spec.yaml"))
+treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "treelite_python", "spec.yaml"))
 
 ### INFERENCING TASKS ###
 
@@ -95,7 +96,7 @@ def inferencing_task_pipeline_function(benchmark_custom_properties, config, data
     pipeline_outputs = {}
 
     # loop through all inferencing variants
-    for variant_index, variant in enumerate(config.lightgbm_inferencing.variants):
+    for variant_index, variant in enumerate(config.lightgbm_inferencing_config.variants):
         # add last minute custom proeprties
         custom_properties = benchmark_custom_properties.copy()
         custom_properties.update({
@@ -165,7 +166,7 @@ def inferencing_task_pipeline_function(benchmark_custom_properties, config, data
 
         if variant.build:
             # build path is relative to docker/ subfolder
-            custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, "docker", variant.build))
+            custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, variant.build))
             inferencing_step.runsettings.environment.configure(
                 docker=custom_docker
             )
@@ -197,13 +198,13 @@ def inferencing_all_tasks(workspace, config):
     Returns:
         None
     """
-    for inferencing_task in config.lightgbm_inferencing.tasks:
+    for inferencing_task in config.lightgbm_inferencing_config.tasks:
         data = load_dataset_from_data_input_spec(workspace, inferencing_task.data)
         model = load_dataset_from_data_input_spec(workspace, inferencing_task.model)
 
         # create custom properties for this task
         benchmark_custom_properties = {
-            'benchmark_name' : config.lightgbm_inferencing.benchmark_name, 
+            'benchmark_name' : config.lightgbm_inferencing_config.benchmark_name, 
             'benchmark_dataset' : inferencing_task.data.name,
             'benchmark_model' : inferencing_task.model.name,
         }
@@ -212,17 +213,15 @@ def inferencing_all_tasks(workspace, config):
             data=data,
             model=model,
             predict_disable_shape_check=inferencing_task.predict_disable_shape_check or False,
-            benchmark_custom_properties=benchmark_custom_properties
+            benchmark_custom_properties=benchmark_custom_properties,
+            config=config
         )
 
         # add some relevant comments on the subgraph
         inferencing_task_subgraph_step.comment = " -- ".join([
-            f"benchmark name: {config.lightgbm_inferencing.benchmark_name}",
+            f"benchmark name: {config.lightgbm_inferencing_config.benchmark_name}",
             # NOTE: add more here?
         ])
-
-        # return the instance of this general function
-        return inferencing_all_tasks()
 
 
 
@@ -230,19 +229,19 @@ def inferencing_all_tasks(workspace, config):
 
 if __name__ == "__main__":
     # use parse helper function to get arguments from CLI
-    config = parse_pipeline_config(lightgbm_inferencing)
+    config = parse_pipeline_config(lightgbm_inferencing_config)
     
     # you'll need a workspace object to connect
     workspace = azureml_connect(config)
 
     # run the pipeline function with the given arguments
-    pipeline_instance = inferencing_all_tasks(config)
+    pipeline_instance = inferencing_all_tasks(workspace, config)
 
     experiment_description="\n".join([
         "Inferencing on all specified tasks (see yaml below).",
         "```yaml""",
-        "lightgbm_inferencing:",
-        OmegaConf.to_yaml(config.lightgbm_inferencing),
+        "lightgbm_inferencing_config:",
+        OmegaConf.to_yaml(config.lightgbm_inferencing_config),
         "```"
     ])
 
