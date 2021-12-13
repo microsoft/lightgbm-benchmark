@@ -9,6 +9,12 @@ on:
     branches: [ main ]
     paths-ignore:
     - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Reason'
+        required: false
+        default: '...'
 
 jobs:
   build:

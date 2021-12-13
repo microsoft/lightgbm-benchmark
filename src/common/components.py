@@ -170,8 +170,14 @@ class RunnableScript():
         script_instance = cls()
         script_instance.initialize_run(args)
 
-        # run the actual thing
-        script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
+        # catch run function exceptions to properly finalize run (kill/join threads)
+        try:
+            # run the actual thing
+            script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
+        except BaseException as e:
+            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
+            script_instance.finalize_run(args)
+            raise e
 
         # close mlflow
         script_instance.finalize_run(args)
