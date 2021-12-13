@@ -4,7 +4,7 @@ Generates synthetic data with multiple parameters.
 See config file /pipelines/azureml/conf/experiments/data-generation.yaml
 
 to execute:
-> python pipelines/azureml/pipelines/data_generation.py --exp-config ./pipelines/azureml/conf/experiments/data-generation.yaml +run.submit=True
+> python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml +run.submit=True
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # generate a nice markdown description
     experiment_description="\n".join([
         "Generating synthetic datasets (see yaml below).",
-        "```yaml""",
+        "```yaml",
         "data_generation_config:",
         OmegaConf.to_yaml(config.data_generation_config),
         "```"
