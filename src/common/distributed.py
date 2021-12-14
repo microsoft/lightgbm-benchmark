@@ -30,19 +30,18 @@ class MPIHandler():
         self._mpi_init_mode = mpi_init_mode
         self.logger = logging.getLogger(__name__)
 
-    def _mpi_import(self):
-        if self._mpi_module is None:
-            import mpi4py
-            mpi4py.rc.initialize = False
-            mpi4py.rc.finalize = False
-            from mpi4py import MPI
-            self._mpi_module = MPI
+    @classmethod
+    def _mpi_import(cls):
+        import mpi4py
+        mpi4py.rc.initialize = False
+        mpi4py.rc.finalize = False
+        from mpi4py import MPI
 
-        return self._mpi_module
+        return MPI
 
     def initialize(self):
         # doing our own initialization of MPI to have fine-grain control
-        self._mpi_import()
+        self._mpi_module = self._mpi_import()
         self.comm = self._mpi_module.COMM_WORLD
 
         if self._mpi_init_mode is None:

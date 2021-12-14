@@ -5,7 +5,7 @@ from unittest.mock import call, Mock, patch
 import time
 import json
 
-from common.distributed import MultiNodeScript, mpi_config_class
+from common.distributed import MultiNodeScript, MPIHandler, mpi_config_class
 from test_component import (
     assert_runnable_script_properties,
     assert_runnable_script_metrics
@@ -98,3 +98,28 @@ def test_multi_node_script_failure(mpi_handler_mock):
                 "--custom_properties", json.dumps({'benchmark_name':'unittest'})
             ]
         )
+
+
+def test_mpi_handler():
+    """Tests the MPIHandler class"""
+    # create MPI module mock
+    mpi_module_mock = Mock()
+    mpi_module_mock.COMM_WORLD = Mock()
+    mpi_module_mock.COMM_WORLD.Get_size.return_value = 10
+    mpi_module_mock.COMM_WORLD.Get_rank.return_value = 3
+    mpi_module_mock.THREAD_MULTIPLE = 3
+
+    # patch _mpi_import to return our MPI module mock
+    with patch.object(MPIHandler, "_mpi_import") as mpi_import_mock:
+        mpi_import_mock.return_value = mpi_module_mock
+
+        mpi_handler = MPIHandler()
+        mpi_handler.initialize()
+        mpi_config = mpi_handler.mpi_config()
+        mpi_handler.finalize()
+
+        # test this random config
+        assert mpi_config.world_rank == 3
+        assert mpi_config.world_size == 10
+        assert mpi_config.mpi_available == True
+        assert mpi_config.main_node == False
