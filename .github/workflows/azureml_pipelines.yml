@@ -82,7 +82,6 @@ jobs:
     - name : Validate pipelines [training+sweep]
       run: >-
         python pipelines/lightgbm_training.py
-        --config-dir ./conf
         --exp-config ./conf/experiments/lightgbm_training/sweep.yaml
         lightgbm_training_config.tasks="[{train:{name:"dummy_dataset"},test:{name:"dummy_dataset"}}]"
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
