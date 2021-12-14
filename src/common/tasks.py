@@ -39,20 +39,8 @@ class data_generation_task:
 
 @dataclass
 class training_task:
-    # specify either by dataset name
-    train_dataset: Optional[str] = None
-    train_dataset_version: Optional[str] = None
-    # or by datastore+path
-    train_datastore: Optional[str] = None
-    train_datastore_path: Optional[str] = None
-    train_datastore_path_validate: bool = True
-    # specify either by dataset name
-    test_dataset: Optional[str] = None
-    test_dataset_version: Optional[str] = None
-    # or by datastore+path
-    test_datastore: Optional[str] = None
-    test_datastore_path: Optional[str] = None
-    test_datastore_path_validate: bool = True
+    train: data_input_spec = MISSING
+    test: data_input_spec = MISSING
     # provide a key for internal tagging + reporting
     task_key: Optional[str] = None
 
