@@ -6,7 +6,6 @@ import time
 import json
 
 from common.distributed import MultiNodeScript, mpi_config_class
-from common.metrics import MetricsLogger
 from test_component import (
     assert_runnable_script_properties,
     assert_runnable_script_metrics
