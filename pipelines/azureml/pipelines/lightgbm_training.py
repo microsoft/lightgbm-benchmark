@@ -2,7 +2,7 @@
 Runs LightGBM using distributed (mpi) training.
 
 to execute:
-> python pipelines/lightgbm_training.py --exp-config ./pipelines/azureml/conf/experiments/lightgbm-training +run.submit=True
+> python pipelines/azureml/pipelines/lightgbm_training.py --exp-config pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml +run.submit=True
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
@@ -273,11 +273,9 @@ def lightgbm_training_pipeline_function(config,
                 **training_params
             )
             # apply runsettings
-            lightgbm_train_step.runsettings.configure(
-                node_count = variant_params.runtime.nodes,
-                process_count_per_node = variant_params.runtime.processes,
-                target = training_target
-            )
+            lightgbm_train_step.runsettings.target=training_target
+            lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
+            lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
             # apply settings from our custom yaml config
             apply_sweep_settings(lightgbm_train_step, variant_params.sweep)
 
@@ -289,11 +287,9 @@ def lightgbm_training_pipeline_function(config,
                 **training_params
             )
             # apply runsettings
-            lightgbm_train_step.runsettings.configure(
-                node_count = variant_params.runtime.nodes,
-                process_count_per_node = variant_params.runtime.processes,
-                target = training_target
-            )
+            lightgbm_train_step.runsettings.target=training_target
+            lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
+            lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
 
         ###############
         ### RUNTIME ###
