@@ -255,12 +255,12 @@ def lightgbm_training_pipeline_function(config,
         print(f"*** lightgbm variant#{variant_index}: {training_params}")
 
         # figuring out target (cpu/gpu)
-        target = variant_params.runtime.target
-        if not target:
+        training_target = variant_params.runtime.target
+        if not training_target:
             if (variant_params.training.device_type == 'gpu' or variant_params.training.device_type == 'cuda'):
-                target = config.compute.linux_gpu
+                training_target = config.compute.linux_gpu
             else:
-                target = config.compute.linux_cpu
+                training_target = config.compute.linux_cpu
 
         if use_sweep:
             # sweep training
@@ -276,7 +276,7 @@ def lightgbm_training_pipeline_function(config,
             lightgbm_train_step.runsettings.configure(
                 node_count = variant_params.runtime.nodes,
                 process_count_per_node = variant_params.runtime.processes,
-                target = variant_params.runtime.target
+                target = training_target
             )
             # apply settings from our custom yaml config
             apply_sweep_settings(lightgbm_train_step, variant_params.sweep)
@@ -292,7 +292,7 @@ def lightgbm_training_pipeline_function(config,
             lightgbm_train_step.runsettings.configure(
                 node_count = variant_params.runtime.nodes,
                 process_count_per_node = variant_params.runtime.processes,
-                target = variant_params.runtime.target
+                target = training_target
             )
 
         ###############
