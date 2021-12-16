@@ -71,9 +71,8 @@ jobs:
     - name : Validate pipelines [training]
       run: >-
         python pipelines/lightgbm_training.py
-        --config-dir ./conf
-        --config-name experiments/lightgbm_training/cpu
-        lightgbm_training.tasks="[{train_dataset:"dummy_dataset",test_dataset:"dummy_dataset"}]"
+        --exp-config ./conf/experiments/lightgbm_training/cpu.yaml
+        lightgbm_training_config.tasks="[{train:{name:"dummy_dataset"},test:{name:"dummy_dataset"}}]"
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
@@ -83,9 +82,8 @@ jobs:
     - name : Validate pipelines [training+sweep]
       run: >-
         python pipelines/lightgbm_training.py
-        --config-dir ./conf
-        --config-name experiments/lightgbm_training/sweep
-        lightgbm_training.tasks="[{train_dataset:"dummy_dataset",test_dataset:"dummy_dataset"}]"
+        --exp-config ./conf/experiments/lightgbm_training/sweep.yaml
+        lightgbm_training_config.tasks="[{train:{name:"dummy_dataset"},test:{name:"dummy_dataset"}}]"
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
