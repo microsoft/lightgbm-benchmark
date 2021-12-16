@@ -48,7 +48,7 @@ class MetricsLogger():
     def close(self):
         """Close the MLFlow session."""
         if MetricsLogger._initialized:
-            self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
+            self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}', session_id='{mlflow.active_run().info.run_id}'']")
             mlflow.end_run()
             MetricsLogger._initialized = False
         else:

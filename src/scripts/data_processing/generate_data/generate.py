@@ -52,7 +52,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         # add arguments that are specific to the script
         group_params = parser.add_argument_group("Synthesis params")
         group_params.add_argument(
-            "--type", required=True, type=str, choices=["classification", "regression"]
+            "--type", required=True, type=str, choices=["classification", "regression", "lambdarank"]
         )
         group_params.add_argument("--train_samples", required=True, type=int)
         group_params.add_argument("--test_samples", required=True, type=int)
@@ -61,6 +61,8 @@ class GenerateSyntheticDataScript(RunnableScript):
         group_params.add_argument("--n_informative", required=True, type=int)
         group_params.add_argument("--n_redundant", required=False, type=int)
         group_params.add_argument("--random_state", required=False, default=None, type=int)
+        group_params.add_argument("--docs_per_query", required=False, default=20, type=int)
+        group_params.add_argument("--delimiter", required=False, default=',', type=str)
 
         group_o = parser.add_argument_group("Outputs")
         group_o.add_argument(
@@ -81,6 +83,12 @@ class GenerateSyntheticDataScript(RunnableScript):
             type=str,
             help="Output data location (directory)",
         )
+        group_o.add_argument(
+            "--output_header",
+            required=True,
+            type=str,
+            help="Output header location (directory)",
+        )
 
         return parser
 
@@ -98,6 +106,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
+        os.makedirs(args.output_header, exist_ok=True)
 
         metrics_logger.log_parameters(
             type=args.type,
@@ -131,6 +140,19 @@ class GenerateSyntheticDataScript(RunnableScript):
                     n_informative=args.n_informative,
                     random_state=args.random_state,
                 )
+            elif args.type == "lambdarank":
+                X, y = make_regression(
+                    n_samples=total_samples,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    random_state=args.random_state,
+                )
+                # add query column
+                query_col = [[i // args.docs_per_query] for i in range(total_samples)]
+                X = numpy.hstack((query_col, X))
+                # create 30 ranking labels
+                y = ((y - min(y))/(max(y)-min(y))*30).astype(int)
+
             else:
                 raise NotImplementedError(f"--type {args.type} is not implemented.")
 
@@ -150,30 +172,36 @@ class GenerateSyntheticDataScript(RunnableScript):
             inference_data = X[args.train_samples + args.test_samples :]
             logger.info(f"Inference data shape: {inference_data.shape}")
 
+        # create a header 
+        header = [f'Column_{i}' for i in range(train_data.shape[1])]
+        if args.delimiter == 'tab':
+            args.delimiter = "\t"
         # save as CSV
         logger.info(f"Saving data...")
         with metrics_logger.log_time_block("time_data_saving"):
             numpy.savetxt(
                 os.path.join(args.output_train, "train.txt"),
                 train_data,
-                delimiter=",",
+                delimiter=args.delimiter,
                 newline="\n",
                 fmt="%1.3f",
             )
             numpy.savetxt(
                 os.path.join(args.output_test, "test.txt"),
                 test_data,
-                delimiter=",",
+                delimiter=args.delimiter,
                 newline="\n",
                 fmt="%1.3f",
             )
             numpy.savetxt(
                 os.path.join(args.output_inference, "inference.txt"),
                 inference_data,
-                delimiter=",",
+                delimiter=args.delimiter,
                 newline="\n",
                 fmt="%1.3f",
             )
+            with open(os.path.join(args.output_header, "header.txt"), 'w') as hf:
+                hf.writelines(args.delimiter.join(header))
 
 
 def get_arg_parser(parser=None):
