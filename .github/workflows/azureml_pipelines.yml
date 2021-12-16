@@ -59,9 +59,8 @@ jobs:
     - name : Validate pipelines [inferencing]
       run: >-
         python pipelines/lightgbm_inferencing.py
-        --config-dir ./conf
-        --config-name experiments/lightgbm-inferencing
-        lightgbm_inferencing.tasks="[{data:{name:"dummy_dataset"},model:{name:"dummy_dataset"}}]"
+        --exp-config ./conf/experiments/lightgbm-inferencing.yaml
+        lightgbm_inferencing_config.tasks="[{data:{name:"dummy_dataset"},model:{name:"dummy_dataset"}}]"
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
         aml.resource_group=${{secrets.RESOURCE_GROUP}}
         aml.workspace_name=${{secrets.WORKSPACE_NAME}}
