@@ -2,7 +2,7 @@
 # with varying number of features
 #
 # to execute:
-# > python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml
+# > python src/pipelines/azureml/data_generation.py --exp-config conf/experiments/data-generation.yaml
 
 defaults:
   - aml: sample
