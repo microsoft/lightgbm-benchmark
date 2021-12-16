@@ -10,9 +10,7 @@
 
 To be able to submit the benchmark pipelines in AzureML, you need to edit some configuration files with the right references to connect to your AzureML resources.
 
-1. Copy file `conf/aml/sample.yaml` into a file `custom.yaml` in the same directory.
-
-2. Edit file under `conf/aml/custom.yaml` to match with your AzureML workspace references:
+1. Edit file under `conf/aml/custom.yaml` to match with your AzureML workspace references:
 
     ```yaml
     # @package _group_
@@ -23,9 +21,7 @@ To be able to submit the benchmark pipelines in AzureML, you need to edit some c
     auth: "interactive"
     ```
 
-3. Copy file `conf/compute/sample.yaml` into a file `custom.yaml` in the same directory.
-
-4. Edit this file to match with the name of your compute targets in AzureML. Check below for reference. If you haven't created a gpu cluster, you can leave the config file as is for the gpu lines.
+2. Edit file under `conf/compute/custom.yaml` to match with the name of your compute targets in AzureML. Check below for reference. If you haven't created a gpu cluster, you can leave the config file as is for the gpu lines.
 
     ```yaml
     # @package _group_
@@ -35,7 +31,7 @@ To be able to submit the benchmark pipelines in AzureML, you need to edit some c
     ```
 
 !!! note
-    Configs the repo asusme you use `custom` as name to find your aml/compute config. If in the future you have multiple aml/compute configs (ex: `myotheraml.yaml`), when you'll want to run a pipeline, use arguments `aml=myaml compute=myaml` to override.
+    Configs the repo asusme you use `custom` as name to find your aml/compute config. If in the future you have multiple aml/compute configs (ex: `myotheraml.yaml`), when you'll want to run a pipeline, use arguments `aml=myotheraml compute=myotheraml` to override.
 
 ## B. Verify your setup: run a sample pipeline in your workspace
 

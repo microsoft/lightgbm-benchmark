@@ -5,12 +5,8 @@
 # > python src/pipelines/azureml/data_generation.py --exp-config conf/experiments/data-generation.yaml
 
 defaults:
-  - aml: sample
-
-compute:
-  linux_cpu: "cpu-cluster"
-  linux_gpu: "linux-gpu-nv6"
-  windows_cpu: "win-cpu"
+  - aml: custom
+  - compute: custom
 
 ### CUSTOM PARAMETERS ###
 
