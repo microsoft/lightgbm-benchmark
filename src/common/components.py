@@ -182,5 +182,8 @@ class RunnableScript():
         # close mlflow
         script_instance.finalize_run(args)
 
+        # return for unit tests
+        return script_instance
+
 class SingleNodeScript(RunnableScript):
     pass

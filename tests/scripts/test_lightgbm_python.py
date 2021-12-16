@@ -10,10 +10,12 @@ from unittest.mock import patch
 
 from scripts.training.lightgbm_python import train
 from scripts.inferencing.lightgbm_python import score
+from common.distributed import mpi_config_class
 
 # IMPORTANT: see conftest.py for fixtures
 
-def test_lightgbm_python_train(temporary_dir, regression_train_sample, regression_test_sample):
+@patch('common.distributed.MPIHandler')
+def test_lightgbm_python_train(mpi_handler_mock, temporary_dir, regression_train_sample, regression_test_sample):
     """Tests src/scripts/training/lightgbm_python/train.py"""
     model_dir = os.path.join(temporary_dir, "model")
 
@@ -37,6 +39,14 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
         "--feature_fraction", "0.15",
         "--device_type", "cpu"
     ]
+
+    # fake mpi initialization + config
+    mpi_handler_mock().mpi_config.return_value = mpi_config_class(
+        1, # world_size
+        0, # world_rank
+        False, # mpi_available
+        True, # main_node
+    )
 
     # replaces sys.argv with test arguments and run main
     with patch.object(sys, "argv", script_args):
