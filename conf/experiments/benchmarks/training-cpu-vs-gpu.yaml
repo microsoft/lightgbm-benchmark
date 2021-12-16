@@ -1,44 +1,36 @@
-# to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/benchmarks/training-cpu-vs-gpu run.submit=True
+# to execute:
+# > python src/pipelines/azureml/lightgbm_training.py --exp-config conf/experiments/benchmarks/training-cpu-vs-gpu.yaml
 
 defaults:
-  - aml: sample
-  - compute: sample
-  - modules: benchmark
-
-# run parameters are command line arguments for running your experiment
-run: # params for running pipeline
-  experiment_name: "benchmark-lightgbm-training" # IMPORTANT
-  regenerate_outputs: false
-  continue_on_failure: false
-  verbose: false
-  submit: false
-  resume: false
-  canary: false
-  silent: false
-  wait: false
-
-module_loader: # module loading params
-  use_local: "*"
-  force_default_module_version: null
-  force_all_module_version: null
-  local_steps_folder: "../../../../../src/scripts/"
+  - aml: custom
+  - compute: custom
 
 ### CUSTOM PARAMETERS ###
 
-lightgbm_training:
-  benchmark_name: "benchmark-gpu-vs-cpu" # need to be provided at runtime!
+experiment:
+  name: "lightgbm_training_benchmark"
+  description: "something interesting to say about this"
+
+lightgbm_training_config:
+  # name of your particular benchmark
+  benchmark_name: "benchmark-cpu-vs-gpu-20211216.1" # need to be provided at runtime!
 
   # list all the train/test pairs to train on
   tasks:
-    - train_dataset: "data-synthetic-regression-10cols-100000samples-train"
-      test_dataset: "data-synthetic-regression-10cols-10000samples-test"
+    - train:
+        name: "data-synthetic-regression-10cols-100000samples-train"
+      test:
+        name: "data-synthetic-regression-10cols-10000samples-test"
       task_key: "synthetic-regression-10cols" # optional, user to register outputs
-    - train_dataset: "data-synthetic-regression-100cols-100000samples-train"
-      test_dataset: "data-synthetic-regression-100cols-10000samples-test"
+    - train:
+        name: "data-synthetic-regression-100cols-100000samples-train"
+      test:
+        name: "data-synthetic-regression-100cols-10000samples-test"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
-    - train_dataset: "data-synthetic-regression-1000cols-100000samples-train"
-      test_dataset: "data-synthetic-regression-1000cols-10000samples-test"
+    - train:
+        name: "data-synthetic-regression-1000cols-100000samples-train"
+      test:
+        name: "data-synthetic-regression-1000cols-10000samples-test"
       task_key: "synthetic-regression-1000cols" # optional, user to register outputs
 
   # reference settings for the benchmark
@@ -84,6 +76,8 @@ lightgbm_training:
     # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
     output:
       register_model: False
+      #register_model_prefix: "model"
+      #register_model_suffix: null
 
   # variant settings override specific parameters of reference_training
   variants:
