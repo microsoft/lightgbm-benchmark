@@ -1,10 +1,10 @@
 """
 Generates synthetic data with multiple parameters.
 
-See config file /pipelines/azureml/conf/experiments/data-generation.yaml
+See config file /conf/experiments/data-generation.yaml
 
 to execute:
-> python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml +run.submit=True
+> python src/pipelines/azureml/data_generation.py --exp-config conf/experiments/data-generation.yaml
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
