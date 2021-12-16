@@ -67,7 +67,7 @@ jobs:
 
     - name : Validate pipelines [training]
       run: >-
-        python src/pipelines/azureml/pipelines/lightgbm_training.py
+        python src/pipelines/azureml/lightgbm_training.py
         --exp-config ./conf/experiments/lightgbm_training/cpu.yaml
         lightgbm_training_config.tasks="[{train:{name:"dummy_dataset"},test:{name:"dummy_dataset"}}]"
         aml.subscription_id=${{secrets.SUBSCRIPTION}}
