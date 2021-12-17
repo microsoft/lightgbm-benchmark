@@ -23,6 +23,7 @@ nav:
         Custom Pipelines:
             Upload your data: run/azureml/upload-your-data.md
             Train on your data: run/azureml/train-on-your-data.md
+        Designer UI: run/azureml/designer-ui.md
 - Results:
     Inferencing: results/inferencing.md
     Manual: results/manual.md
@@ -36,6 +37,7 @@ nav:
         - tasks.py: references/common/tasks.md
     - src/scripts/:
         - sample/sample.py: references/scripts/sample/sample.md
+        - training/lightgbm_python/: references/scripts/training/lightgbm_python.md
 
 theme:
   name: readthedocs
