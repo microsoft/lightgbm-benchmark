@@ -4,20 +4,21 @@
 """
 LightGBM/Python training script
 """
+import os
 import logging
 import traceback
 from .components import RunnableScript
 from dataclasses import dataclass
-from omegaconf import MISSING
 
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 @dataclass
 class mpi_config_class:
-    world_size: int = MISSING
-    world_rank: int = MISSING
-    mpi_available: bool = MISSING
-    main_node: bool = MISSING
+    world_size: int = 1
+    world_rank: int = 0
+    mpi_available: bool = False
+    main_node: bool = True
+
 
 class MPIHandler():
     """Handling MPI initialization in a separate class
@@ -42,22 +43,38 @@ class MPIHandler():
     def initialize(self):
         # doing our own initialization of MPI to have fine-grain control
         self._mpi_module = self._mpi_import()
-        self.comm = self._mpi_module.COMM_WORLD
 
         if self._mpi_init_mode is None:
-            self._mpi_init_mode = self._mpi_module.THREAD_MULTIPLE
+            # use simple env vars instead
+            self.logger.info(f"no MPI init, using environment variables instead")
+            world_size = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
+            world_rank = int(os.environ.get("OMPI_COMM_WORLD_RANK", "0"))
 
-        try:
-            self._mpi_module.Init_thread(required=self._mpi_init_mode)
-        except self._mpi_module.Exception:
-            self.logger.warning(f"Exception occured during MPI initialization:\n{traceback.format_exc()}")
+            self._mpi_config = mpi_config_class(
+                world_size, # world_size
+                world_rank, # world_rank
+                (world_size > 1), # mpi_available
+                (world_rank == 0), # main_node
+            )
+            self.comm = None
+        else:
+            # use mpi to detect mpi config
+            self.logger.info(f"Running MPI.Init_thread(required={self._mpi_init_mode})")
+            try:
+                self._mpi_module.Init_thread(required=self._mpi_init_mode)
+            except self._mpi_module.Exception:
+                self.logger.warning(f"Exception occured during MPI initialization:\n{traceback.format_exc()}")
 
-        self._mpi_config = self.detect_mpi_config()
+            self.comm = self._mpi_module.COMM_WORLD
+            self._mpi_config = self.detect_mpi_config()
+
 
     def finalize(self):
-        if self._mpi_module.Is_initialized():
+        if self._mpi_module.Is_initialized() and not self._mpi_module.Is_finalized():
             self.logger.info("MPI was initialized, calling MPI.finalize()")
             self._mpi_module.Finalize()
+        else:
+            self.logger.warning(f"MPIHandler.finalize() was called, but MPI.Is_initialized={self._mpi_module.Is_initialized()} and MPI.Is_finalized={self._mpi_module.Is_finalized()}")
 
     def mpi_config(self):
         return self._mpi_config
