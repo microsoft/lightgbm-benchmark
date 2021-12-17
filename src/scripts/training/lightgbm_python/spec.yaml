@@ -1,11 +1,17 @@
 $schema: http://azureml/sdk-1-5/DistributedComponent.json
 name: lightgbm_python_train
-version: 1.0.4
+version: 1.0.5
 display_name: "LightGBM Training (Python API)"
 type: DistributedComponent
 description: >-
-  Train a LightGBM Model. This script can leverage distributed training using MPI.
-  Many of the parameters are documented in LightGBM docs https://lightgbm.readthedocs.io/en/latest/Parameters.html
+  **Train a LightGBM Model**
+  
+  This script can leverage distributed training using MPI.
+  
+  To try this one in Designer UI, follow the tutorial in the [lightgbm-benchmark documentation](https://microsoft.github.io/lightgbm-benchmark/run/azureml/azure-setup/).
+  
+  Many of the parameters are documented in [LightGBM parameter docs](https://lightgbm.readthedocs.io/en/latest/Parameters.html).
+
 is_deterministic: true
 
 tags:
