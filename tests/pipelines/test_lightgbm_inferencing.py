@@ -8,13 +8,13 @@ import tempfile
 import pytest
 from unittest.mock import patch
 
-from pipelines.azureml.data_generation import main
+from pipelines.azureml.lightgbm_inferencing import main
 
-def test_data_generation_main(aml_config, config_directory):
+def test_lightgbm_inferencing(aml_config, config_directory):
     # create test arguments for the script
     script_args = [
-        "src/pipelines/data_generation.py",
-        "--exp-config", os.path.join(config_directory, "experiments", "data-generation.yaml"),
+        "src/pipelines/lightgbm_inferencing.py",
+        "--exp-config", os.path.join(config_directory, "experiments", "lightgbm-inferencing.yaml"),
         f"aml.subscription_id={aml_config.subscription_id}",
         f"aml.resource_group={aml_config.resource_group}",
         f"aml.workspace_name={aml_config.workspace_name}",

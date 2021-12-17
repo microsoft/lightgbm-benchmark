@@ -58,12 +58,31 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope='session')
 def aml_config(request):
-    # creates some aml config for unit tests that require connectivity (tests/pipelines)
+    """
+    Creates some aml config for unit tests that require connectivity (tests/pipelines)
+
+    NOTE: will except with AssertionError and fail test if not provided properly
+    """
+    subscription_id = request.config.option.aml_subscription_id or os.environ.get('AML_SUBSCRIPTION_ID')
+    resource_group = request.config.option.aml_resource_group or os.environ.get('AML_RESOURCE_GROUP')
+    workspace_name = request.config.option.aml_workspace_name or os.environ.get('AML_WORKSPACE_NAME')
+    auth = request.config.option.aml_auth or os.environ.get('AML_AUTH') or "interactive"
+    tenant = request.config.option.aml_tenant or os.environ.get('AML_TENANT')
+
+    test_config = []
+    if subscription_id is None:
+        test_config.append("To run this unit test, you need to provide a subscription through --aml_subscription_id or env var AML_SUBSCRIPTION_ID")
+    if resource_group is None:
+        test_config.append("To run this unit test, you need to provide a subscription through --aml_resource_group or env var AML_RESOURCE_GROUP")
+    if workspace_name is None:
+        test_config.append("To run this unit test, you need to provide a subscription through --aml_workspace_name or env var AML_WORKSPACE_NAME")
+    assert (not test_config), "\n".join(test_config)
+
     return aml_connection_config(
-        request.config.option.aml_subscription_id, # subscription_id: str = MISSING
-        request.config.option.aml_resource_group, # resource_group: str = MISSING
-        request.config.option.aml_workspace_name, # workspace_name: str = MISSING
-        request.config.option.aml_auth, # tenant: Optional[str] = None
-        request.config.option.aml_tenant, # auth: str = "interactive"
-        False
+        subscription_id,
+        resource_group,
+        workspace_name,
+        auth,
+        tenant,
+        False # force auth
     )
