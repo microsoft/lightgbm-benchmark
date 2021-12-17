@@ -8,9 +8,9 @@ description: >-
   
   This script can leverage distributed training using MPI.
   
-  To try this one in Designer UI, follow the tutorial in the [lightgbm-benchmark documentation](https://microsoft.github.io/lightgbm-benchmark/run/azureml/azure-setup/).
-  
   Many of the parameters are documented in [LightGBM parameter docs](https://lightgbm.readthedocs.io/en/latest/Parameters.html).
+
+  To try this one in Designer UI, follow the tutorial in the [lightgbm-benchmark documentation](https://microsoft.github.io/lightgbm-benchmark/run/azureml/designer-ui/). 
 
 is_deterministic: true
 
