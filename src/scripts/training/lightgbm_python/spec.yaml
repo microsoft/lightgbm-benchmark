@@ -97,7 +97,7 @@ inputs:
   label_gain:
     type: String
     optional: True
-    description: "Relevant gaim for labels (used only in lambdarank application)"
+    description: "Relevant gain for labels (used only in lambdarank application)"
   num_iterations:
     type: Integer
     min: 1
