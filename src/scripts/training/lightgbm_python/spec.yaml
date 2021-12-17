@@ -156,7 +156,7 @@ launcher:
     --test {inputs.test}
     --construct {inputs.construct}
     --header {inputs.header}
-    [--label_column {inputs.label_column}]
+    --label_column {inputs.label_column}
     [--group_column {inputs.group_column}]
     --device_type {inputs.device_type}
     --objective {inputs.objective}
