@@ -16,6 +16,10 @@ inputs:
     type: AnyDirectory
     description: directory to the testing data
     optional: false
+  parser_config_file:
+    type: AnyDirectory
+    description: directory to the transform parser config
+    optional: true
   construct:
     type: Boolean
     description: "Use lazy intialization during data loading phase, see https://lightgbm.readthedocs.io/en/latest/pythonapi/lightgbm.Dataset.html#lightgbm.Dataset.construct"
@@ -144,6 +148,7 @@ launcher:
     python train.py
     --train {inputs.train}
     --test {inputs.test}
+    [--parser_config_file {inputs.parser_config_file}]
     --construct {inputs.construct}
     --header {inputs.header}
     [--label_column {inputs.label_column}]
