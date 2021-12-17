@@ -68,6 +68,7 @@ class MPIHandler():
             self.comm = self._mpi_module.COMM_WORLD
             self._mpi_config = self.detect_mpi_config()
 
+        logging.getLogger().info(f"MPI detection results: {self._mpi_config}")
 
     def finalize(self):
         if self._mpi_module.Is_initialized() and not self._mpi_module.Is_finalized():
@@ -94,7 +95,6 @@ class MPIHandler():
                 (self.comm.Get_size() > 1), # mpi_available
                 (self.comm.Get_rank() == 0), # main_node
             )
-            logging.getLogger().info(f"MPI detection results: {mpi_config}")
         except:
             mpi_config = mpi_config_class(
                 1, # world_size
