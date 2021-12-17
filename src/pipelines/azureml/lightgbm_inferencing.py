@@ -5,7 +5,7 @@ B - custom build
 C - treelite
 
 to execute:
-> python pipelines/azureml/pipelines/lightgbm_inferencing.py --exp-config  ./pipelines/azureml/conf/experiments/benchmark-inferencing.yaml +run.submit=True
+> python src/pipelines/azureml/lightgbm_inferencing.py --exp-config  conf/experiments/lightgbm-inferencing.yaml
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction

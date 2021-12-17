@@ -1,36 +1,42 @@
-# to execute, run from /pipelines/azureml/
-# > python pipelines/azureml/pipelines/lightgbm_training.py --exp-config pipelines/azureml/conf/experiments/lightgbm_training/sweep.yaml
+# to execute:
+# > python src/pipelines/azureml/lightgbm_training.py --exp-config conf/experiments/benchmarks/training-cpu-vs-gpu.yaml
 
 defaults:
-  - aml: sample
-
-compute:
-  linux_cpu: "cpu-cluster"
-  linux_gpu: "linux-gpu-nv6"
-  windows_cpu: "win-cpu"
+  - aml: custom
+  - compute: custom
 
 ### CUSTOM PARAMETERS ###
 
 experiment:
-  name: "lightgbm_training_dev"
+  name: "lightgbm_training_benchmark"
   description: "something interesting to say about this"
 
 lightgbm_training_config:
   # name of your particular benchmark
-  benchmark_name: "benchmark-dev" # override this with a unique name
-
+  benchmark_name: "benchmark-cpu-vs-gpu-20211216.1" # need to be provided at runtime!
 
   # list all the train/test pairs to train on
   tasks:
+    - train:
+        name: "data-synthetic-regression-10cols-100000samples-train"
+      test:
+        name: "data-synthetic-regression-10cols-10000samples-test"
+      task_key: "synthetic-regression-10cols" # optional, user to register outputs
     - train:
         name: "data-synthetic-regression-100cols-100000samples-train"
       test:
         name: "data-synthetic-regression-100cols-10000samples-test"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
+    - train:
+        name: "data-synthetic-regression-1000cols-100000samples-train"
+      test:
+        name: "data-synthetic-regression-1000cols-10000samples-test"
+      task_key: "synthetic-regression-1000cols" # optional, user to register outputs
 
-  # NOTE: this example uses only 1 training (reference)
-  # see other config files for creating training variants
+  # reference settings for the benchmark
+  # all variants are defined as diffs of these parameters
   reference:
+    # input parameters
     data:
       auto_partitioning: True # inserts partitioning to match expected number of partitions (if nodes*processes > 1)
       pre_convert_to_binary: False # inserts convertion of train/test data into binary to speed up training (not compatible with auto_partitioning yet)
@@ -40,21 +46,18 @@ lightgbm_training_config:
 
     # lightgbm training parameters
     training:
-      # fixed values
       objective: "regression"
       metric: "rmse"
       boosting: "gbdt"
       tree_learner: "data"
-
-      # "sweepable" training parameters
-      num_iterations: "choice(100, 200)"
-      num_leaves: "choice(10,20,30)"
+      num_iterations: 100
+      num_leaves: 31
       min_data_in_leaf: 20
       learning_rate: 0.1
       max_bin: 255
       feature_fraction: 1.0
 
-      # compute parameters (fixed)
+      # compute parameters
       device_type: "cpu"
 
       # you can add anything under custom_params, it will be sent as a dictionary
@@ -74,19 +77,11 @@ lightgbm_training_config:
     output:
       register_model: False
       #register_model_prefix: "model"
-      #register_model_suffix: "cpu-sweep"
+      #register_model_suffix: null
 
-    # SWEEP
-    sweep:
-        #primary_metric: "node_0/valid_0.rmse" # if you comment it out, will use "node_0/valid_0.METRIC"
-        goal: "minimize"
-        algorithm: "random"
-        early_termination:
-          policy_type: "median_stopping"
-          evaluation_interval: 1
-          delay_evaluation: 5
-          truncation_percentage: 20
-        limits:
-          max_total_trials: 100
-          max_concurrent_trials: 10
-          timeout_minutes: 60
+  # variant settings override specific parameters of reference_training
+  variants:
+    - training:
+        device_type: "gpu"
+      runtime:
+        build: "docker/lightgbm-v3.2.1/linux_gpu_pip.dockerfile" # relative to lightgbm_python folder

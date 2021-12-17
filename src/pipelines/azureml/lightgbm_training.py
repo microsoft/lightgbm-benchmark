@@ -2,7 +2,7 @@
 Runs LightGBM using distributed (mpi) training.
 
 to execute:
-> python pipelines/azureml/pipelines/lightgbm_training.py --exp-config pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml +run.submit=True
+> python src/pipelines/azureml/lightgbm_training.py --exp-config conf/experiments/lightgbm_training/cpu.yaml
 """
 # pylint: disable=no-member
 # NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction

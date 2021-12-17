@@ -11,14 +11,19 @@
 
 ## Check out the generation configuration
 
-Open the file under `pipelines/azureml/conf/experiments/data-generation.yaml`. It contains in particular a section `data_generation` that we will look more closely in this section.
+Open the file under `conf/experiments/data-generation.yaml`. It contains in particular a section `data_generation_config` that we will look more closely in this section.
 
-The `data_generation:` yaml section contains the parameters to run a pipeline that will automatically generate synthetic data for various tasks, at various sizes.
+The following yaml section contains the parameters to run a pipeline that will automatically generate synthetic data for various tasks, at various sizes.
 
 ```yaml
-data_generation:
-  benchmark_name: "benchmark-dev"
+experiment:
+  name: "data_generation_dev"
 
+data_generation_config:
+  # name of your particular benchmark
+  benchmark_name: "benchmark-dev" # override this with a unique name
+
+  # DATA
   tasks:
     - task: "regression"
       train_samples: 100000
@@ -70,13 +75,12 @@ The option `register_outputs` can be turned to `true` if you want the pipeline t
 ## Run the pipeline
 
 !!! warning
-    To execute, run from the `pipelines/azureml/` subdirectory.  
-    For this section, we'll use `myaml` as the name for the AzureML reference config files you created during [local setup](local-setup.md).
+    For this section, we'll use `custom` as the name for the AzureML reference config files you created during [local setup](local-setup.md).
 
 Running the data generation pipeline consists in launching a python script with the pipeline configuration file.
 
 ```bash
-python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True aml=myaml compute=myaml
+python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml
 ```
 
 The python script will build a pipeline based on the collection of manual scripts, each running in its own python environment. The configuration for the parameters from each scripts will be provided from the configuration file in `conf/experiments/data-generation.yaml`.
@@ -86,7 +90,7 @@ Running the python command should open a browser to your workspace opening the e
 To activate output registration, you can either modify it in `data-generation.yaml`, or override it from the command line:
 
 ```bash
-python pipelines/data_generation.py --config-dir ./conf --config-name experiments/data-generation run.submit=True aml=myaml compute=myaml data_generation.register_outputs=True
+python pipelines/azureml/pipelines/data_generation.py --exp-config pipelines/azureml/conf/experiments/data-generation.yaml data_generation.register_outputs=True
 ```
 
 To find the resulting datasets, go into your workspace under the **Datasets** tab.

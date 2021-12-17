@@ -13,14 +13,17 @@
 
 ## Check out the inferencing configuration
 
-Open the file under `pipelines/azureml/conf/experiments/lightgbm-inferencing.yaml`. It contains in particular a section `lightgbm_inferencing` that we will look more closely in this section.
+Open the file under `conf/experiments/lightgbm-inferencing.yaml`. It contains in particular a section `lightgbm_inferencing_config` that we will look more closely in this section.
 
-The `lightgbm_inferencing:` yaml section contains the parameters to run in parallel several inferencing variants on a given set of inferencing data and models.
+The following yaml section contains the parameters to run in parallel several inferencing variants on a given set of inferencing data and models.
 
 ```yaml
-lightgbm_inferencing:
+experiment:
+  name: "lightgbm_inferencing_dev"
+
+lightgbm_inferencing_config:
   # name of your particular benchmark
-  benchmark_name: "lightgbm-inferencing-dev" # override this with a unique name
+  benchmark_name: "benchmark-dev" # override this with a unique name
 
   # list all the data/model pairs to run inferencing with
   tasks:
@@ -31,14 +34,15 @@ lightgbm_inferencing:
 
   # list all inferencing frameworks and their builds
   variants:
-    - framework: lightgbm_python
-    - framework: lightgbm_python
-      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile # relative to repo root
-    - framework: lightgbm_python
-      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile # relative to repo root
-    - framework: lightgbm_cli
-    - framework: lightgbm_c_api
-    - framework: treelite_python
+    - framework: lightgbm_python # v3.3.0 via pypi
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+      build: docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+    - framework: treelite_python # v1.3.0
 ```
 
 ### List of inferencing tasks
@@ -84,32 +88,32 @@ For each task, the pipeline will run inferencing "variants", which are different
 ```yaml
   # list all inferencing frameworks and their builds
   variants:
-    - framework: lightgbm_python
-    - framework: lightgbm_python
-      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile # relative to repo root
-    - framework: lightgbm_python
-      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile # relative to repo root
-    - framework: lightgbm_cli
-    - framework: lightgbm_c_api
-    - framework: treelite_python
+    - framework: lightgbm_python # v3.3.0 via pypi
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+    - framework: lightgbm_c_api # v3.3.0 with C API prediction
+      build: docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+    - framework: lightgbm_c_api # v3.2.1 with C API prediction
+      build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+    - framework: treelite_python # v1.3.0
 ```
 
 We only support a limited set of frameworks. Each framework should correspond to a folder under `src/scripts/inferencing/`. For those of those framework, the pipeline will automatically add model transformation steps (ex: treelite needs to pre-compile the model).
 
-For each framework, you can override the build by specifying a dockerfile under the `build:` field.
+For each framework, you can override the build by specifying a dockerfile under the `build:` field. The path to this docker is relative to the repository root.
 
 ## Run the pipeline
 
 !!! warning
-    To execute, run from the `pipelines/azureml/` subdirectory.  
-    For this section, we'll use `myaml` as the name for the AzureML reference config files you created during [local setup](local-setup.md).
+    For this section, we'll use `custom` as the name for the AzureML reference config files you created during [local setup](local-setup.md).
 
 ### Running a partial benchmark for testing
 
 Running the pipeline consists in launching a python script with the pipeline configuration file.
 
 ```bash
-python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/lightgbm-inferencing run.submit=True aml=myaml compute=myaml
+python src/pipelines/azureml/lightgbm_inferencing.py --exp-config conf/experiments/lightgbm-inferencing.yaml
 ```
 
 The python script will build a pipeline based on the collection of manual scripts, each running in its own python environment. The configuration for the parameters from each scripts will be provided from the configuration file in `conf/experiments/lightgbm-inferencing.yaml`.
@@ -118,12 +122,12 @@ Running the python command should open a browser to your workspace opening the e
 
 ### Running the FULL benchmark pipeline
 
-The configuration we explored above is a reduction of the full benchmark configuration that you will find under `pipelines/azureml/conf/experiments/benchmarks/lightgbm-inferencing.yaml`. **IMPORTANT**: notice the change of path here, under `benchmarks/`.
+The configuration we explored above is a reduction of the full benchmark configuration that you will find under `conf/experiments/benchmarks/lightgbm-inferencing.yaml`. **IMPORTANT**: notice the change of path here, under `benchmarks/`.
 
 The list in this benchmark config file corresponds to the default settings used when running the [data generation pipeline](generate-synthetic-data.md) and the [training benchmark pipeline](benchmark-training.md).
 
 ```bash
-python pipelines/lightgbm_inferencing.py --config-dir ./conf --config-name experiments/benchmarks/lightgbm-inferencing run.submit=True aml=myaml compute=myaml
+python src/pipelines/azureml/lightgbm_inferencing.py --exp-config conf/experiments/benchmarks/lightgbm-inferencing.yaml
 ```
 
 !!! important
