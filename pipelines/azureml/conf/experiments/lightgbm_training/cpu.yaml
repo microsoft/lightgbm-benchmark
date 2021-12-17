@@ -1,38 +1,30 @@
 # to execute, run from /pipelines/azureml/
-# > python pipelines/lightgbm_training.py --config-dir ./conf --config-name experiments/lightgbm_training/cpu run.submit=True
+# > python pipelines/azureml/pipelines/lightgbm_training.py --exp-config pipelines/azureml/conf/experiments/lightgbm_training/cpu.yaml
 
 defaults:
   - aml: sample
-  - compute: sample
-  - modules: benchmark
 
-# run parameters are command line arguments for running your experiment
-run: # params for running pipeline
-  experiment_name: "lightgbm-training-dev" # IMPORTANT
-  regenerate_outputs: false
-  continue_on_failure: false
-  verbose: false
-  submit: false
-  resume: false
-  canary: false
-  silent: false
-  wait: false
-
-module_loader: # module loading params
-  use_local: "*"
-  force_default_module_version: null
-  force_all_module_version: null
-  local_steps_folder: "../../../../../src/scripts/"
+compute:
+  linux_cpu: "cpu-cluster"
+  linux_gpu: "linux-gpu-nv6"
+  windows_cpu: "win-cpu"
 
 ### CUSTOM PARAMETERS ###
 
-lightgbm_training:
-  benchmark_name: "benchmark-dev"
+experiment:
+  name: "lightgbm_training_dev"
+  description: "something interesting to say about this"
+
+lightgbm_training_config:
+  # name of your particular benchmark
+  benchmark_name: "benchmark-dev" # override this with a unique name
 
   # list all the train/test pairs to train on
   tasks:
-    - train_dataset: "data-synthetic-regression-100cols-100000samples-train"
-      test_dataset: "data-synthetic-regression-100cols-10000samples-test"
+    - train:
+        name: "data-synthetic-regression-100cols-100000samples-train"
+      test:
+        name: "data-synthetic-regression-100cols-10000samples-test"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
 
   # NOTE: this example uses only 1 training (reference)
