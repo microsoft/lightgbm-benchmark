@@ -133,7 +133,7 @@ def data_generation_main_pipeline_function(config):
 
 # Step 4: implement main block using helper functions
 
-if __name__ == "__main__":
+def main():
     # use parse helper function to get arguments from CLI
     config = parse_pipeline_config(data_generation_config)
     
@@ -159,3 +159,6 @@ if __name__ == "__main__":
         pipeline_instance,
         experiment_description=experiment_description
     )
+
+if __name__ == "__main__":
+    main()
