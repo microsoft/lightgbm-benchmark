@@ -146,7 +146,7 @@ inputs:
     description: "Show debug logs"
   custom_properties:
     type: String
-    description: "Provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
+    description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
     optional: true
 
 outputs:
