@@ -13,6 +13,7 @@ inputs:
     enum:
       - regression
       - classification
+      - lambdarank
   train_samples:
     type: Integer
     description: Number of training samples
@@ -41,6 +42,15 @@ inputs:
     type: Integer
     description: random seed
     optional: true
+  delimiter:
+    type: String
+    description: selimiter
+    optional: true
+    default: ","
+  docs_per_query:
+    type: Integer
+    description: random seed
+    optional: true
   verbose:
     type: Boolean
     default: False
@@ -56,6 +66,8 @@ outputs:
     type: AnyDirectory
   output_inference:
     type: AnyDirectory
+  output_header:
+    type: AnyDirectory
 
 command: >-
   python generate.py
@@ -67,11 +79,14 @@ command: >-
   --n_informative {inputs.n_informative}
   [--n_redundant {inputs.n_redundant}]
   [--random_state {inputs.random_state}]
+  [--docs_per_query {inputs.docs_per_query}]
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}
+  --output_header {outputs.output_header}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
+  [--delimiter {inputs.delimiter}]
 
 environment:
   conda:

@@ -45,12 +45,14 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-defaults==1.35.0' \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
-                'mpi4py==3.1.1'
+                'mpi4py==3.1.1' \
+                'omegaconf'
 
 # install lightgbm with mpi
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' && \
-    pip install lightgbm-transform==${lightgbm_version}
+    pip install lightgbm==${lightgbm_version} --install-option=--mpi &&\
+    pip install lightgbm-transform
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
