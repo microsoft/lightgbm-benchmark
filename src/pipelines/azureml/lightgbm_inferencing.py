@@ -228,10 +228,11 @@ def inferencing_all_tasks(workspace, config):
         ])
 
 
+### MAIN BLOCK ###
 
 # Step 4: implement main block
 
-if __name__ == "__main__":
+def main():
     # use parse helper function to get arguments from CLI
     config = parse_pipeline_config(lightgbm_inferencing_config)
     
@@ -256,3 +257,6 @@ if __name__ == "__main__":
         pipeline_instance,
         experiment_description=experiment_description
     )
+
+if __name__ == "__main__":
+    main()

@@ -140,4 +140,5 @@ outputs/
 # ignore aml references
 conf/aml/
 conf/compute/
+conf/experiments/prod/
 src/scripts/inferencing/custom_win_cli/static_binaries/
