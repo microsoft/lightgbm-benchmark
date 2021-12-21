@@ -100,7 +100,7 @@ def test_multi_node_script_failure(mpi_handler_mock):
         )
 
 
-def test_mpi_handler():
+def test_mpi_handler_mpi_init():
     """Tests the MPIHandler class"""
     # create MPI module mock
     mpi_module_mock = Mock()
@@ -113,7 +113,7 @@ def test_mpi_handler():
     with patch.object(MPIHandler, "_mpi_import") as mpi_import_mock:
         mpi_import_mock.return_value = mpi_module_mock
 
-        mpi_handler = MPIHandler()
+        mpi_handler = MPIHandler(mpi_init_mode=3) # MPI.THREAD_MULTIPLE
         mpi_handler.initialize()
         mpi_config = mpi_handler.mpi_config()
         mpi_handler.finalize()
@@ -123,3 +123,28 @@ def test_mpi_handler():
         assert mpi_config.world_size == 10
         assert mpi_config.mpi_available == True
         assert mpi_config.main_node == False
+
+def test_mpi_handler_no_mpi_init():
+    """Tests the MPIHandler class"""
+    # create MPI module mock
+    mpi_module_mock = Mock()
+    mpi_module_mock.COMM_WORLD = Mock()
+    mpi_module_mock.COMM_WORLD.Get_size.return_value = 10 # different value just to make the point
+    mpi_module_mock.COMM_WORLD.Get_rank.return_value = 3 # different value just to make the point
+    mpi_module_mock.THREAD_MULTIPLE = 3
+
+    # patch _mpi_import to return our MPI module mock
+    with patch.object(MPIHandler, "_mpi_import") as mpi_import_mock:
+        with patch.dict(os.environ, {"OMPI_COMM_WORLD_SIZE": "6", "OMPI_COMM_WORLD_RANK": "2"}):
+            mpi_import_mock.return_value = mpi_module_mock
+
+            mpi_handler = MPIHandler(mpi_init_mode=None)
+            mpi_handler.initialize()
+            mpi_config = mpi_handler.mpi_config()
+            mpi_handler.finalize()
+
+            # test this random config
+            assert mpi_config.world_rank == 2
+            assert mpi_config.world_size == 6
+            assert mpi_config.mpi_available == True
+            assert mpi_config.main_node == False
