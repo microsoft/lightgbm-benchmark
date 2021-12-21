@@ -86,7 +86,7 @@ To generate a synthetic dataset based on sklearn:
         --learning_rate 0.3 `
         --max_bin 16 `
         --feature_fraction 0.15 `
-        --device_type gpu
+        --device_type cpu
     ```
 
 !!! note
