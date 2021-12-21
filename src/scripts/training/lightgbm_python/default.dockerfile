@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
 LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20211111.1"
 
 # Those arguments will NOT be used by AzureML
