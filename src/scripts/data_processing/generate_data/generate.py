@@ -174,7 +174,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         inferencing_partition_size = args.inferencing_samples // args.inferencing_partitions
 
         batch_size = min(
-            1000,
+            10000,
             train_partition_size,
             test_partition_size,
             inferencing_partition_size,
