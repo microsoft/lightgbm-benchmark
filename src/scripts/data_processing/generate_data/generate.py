@@ -55,8 +55,11 @@ class GenerateSyntheticDataScript(RunnableScript):
             "--type", required=True, type=str, choices=["classification", "regression"]
         )
         group_params.add_argument("--train_samples", required=True, type=int)
+        group_params.add_argument("--train_partitions", required=False, type=int, default=1)
         group_params.add_argument("--test_samples", required=True, type=int)
+        group_params.add_argument("--test_partitions", required=False, type=int, default=1)
         group_params.add_argument("--inferencing_samples", required=True, type=int)
+        group_params.add_argument("--inferencing_partitions", required=False, type=int, default=1)
         group_params.add_argument("--n_features", required=True, type=int)
         group_params.add_argument("--n_informative", required=True, type=int)
         group_params.add_argument("--n_redundant", required=False, type=int)
@@ -116,21 +119,21 @@ class GenerateSyntheticDataScript(RunnableScript):
         # save as CSV
         self.logger.info(f"Saving data...")
         numpy.savetxt(
-            os.path.join(args.output_train, "train.txt"),
+            os.path.join(args.output_train, "train_0.txt"),
             train_data,
             delimiter=",",
             newline="\n",
             fmt="%1.3f",
         )
         numpy.savetxt(
-            os.path.join(args.output_test, "test.txt"),
+            os.path.join(args.output_test, "test_0.txt"),
             test_data,
             delimiter=",",
             newline="\n",
             fmt="%1.3f",
         )
         numpy.savetxt(
-            os.path.join(args.output_inference, "inference.txt"),
+            os.path.join(args.output_inference, "inference_0.txt"),
             inference_data,
             delimiter=",",
             newline="\n",
@@ -157,14 +160,25 @@ class GenerateSyntheticDataScript(RunnableScript):
                     newline="\n",
                     fmt="%1.3f",
                 )
-            
+
+            self.logger.info(f"Wrote batch {i+1}/{iterations}")
+
             del X
             del y
 
         self.logger.info(f"Finished generating file {output_file_path}.")
 
     def generate_regression(self, args):
-        batch_size = min(1000, args.test_samples, args.train_samples, args.inferencing_samples)
+        train_partition_size = args.train_samples // args.train_partitions
+        test_partition_size = args.test_samples // args.test_partitions
+        inferencing_partition_size = args.inferencing_samples // args.inferencing_partitions
+
+        batch_size = min(
+            1000,
+            train_partition_size,
+            test_partition_size,
+            inferencing_partition_size,
+        )
 
         self.logger.info(f"Using batch size {batch_size}")
 
@@ -178,17 +192,33 @@ class GenerateSyntheticDataScript(RunnableScript):
             seed=args.random_state,
         )
 
-        output_file_path = os.path.join(args.output_train, "train.txt")
+        output_tasks = []
 
-        output_tasks = [
-            (os.path.join(args.output_train, "train.txt"), args.train_samples//batch_size),
-            (os.path.join(args.output_test, "test.txt"), args.test_samples//batch_size),
-            (os.path.join(args.output_inference, "inference.txt"), args.inferencing_samples//batch_size),
-        ]
+        # add train partitions to list of tasks
+        for i in range(args.train_partitions):
+            output_tasks.append(
+                (os.path.join(args.output_train, f"train_{i}.txt"), train_partition_size//batch_size)
+            )
+
+        # add test partitions to list of tasks
+        for i in range(args.test_partitions):
+            output_tasks.append(
+                (os.path.join(args.output_test, f"test_{i}.txt"), test_partition_size//batch_size)
+            )
+
+        # add inferencing partitions to list of tasks
+        for i in range(args.inferencing_partitions):
+            output_tasks.append(
+                (os.path.join(args.output_inference, f"inference_{i}.txt"), inferencing_partition_size//batch_size)
+            )
+
+        # show some outputs first
+        for output_file_path, batches in output_tasks:
+            self.logger.info(f"Will generate output {output_file_path} with {batches} batches of size {batch_size}")
 
         # generate each data outputs
-        for output_file_path, samples in output_tasks:
-            self._generate_and_write(generator, samples, output_file_path)
+        for output_file_path, batches in output_tasks:
+            self._generate_and_write(generator, batches, output_file_path)
 
 
     def run(self, args, logger, metrics_logger, unknown_args):

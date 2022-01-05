@@ -22,8 +22,11 @@ def test_generate_data(temporary_dir, task_type):
     script_args = [
         "generate.py",
         "--train_samples", "100",
+        "--train_partitions", "10",
         "--test_samples", "10",
+        "--test_partitions", "2",
         "--inferencing_samples", "100",
+        "--inferencing_partitions", "5",
         "--n_features", "40",
         "--n_informative", "10",
         "--random_state", "5",
@@ -41,11 +44,11 @@ def test_generate_data(temporary_dir, task_type):
 
     # test expected outputs
     assert os.path.isfile(
-        os.path.join(output_train, "train.txt")
-    ), "Script generate.py should generate train.txt under --output dir but did not"
+        os.path.join(output_train, "train_0.txt")
+    ), "Script generate.py should generate train_0.txt under --output dir but did not"
     assert os.path.isfile(
-        os.path.join(output_test, "test.txt")
-    ), "Script generate.py should generate test.txt under --output dir but did not"
+        os.path.join(output_test, "test_0.txt")
+    ), "Script generate.py should generate test_0.txt under --output dir but did not"
     assert os.path.isfile(
-        os.path.join(output_inference, "inference.txt")
-    ), "Script generate.py should generate inference.txt under --output dir but did not"
+        os.path.join(output_inference, "inference_0.txt")
+    ), "Script generate.py should generate inference_0.txt under --output dir but did not"
