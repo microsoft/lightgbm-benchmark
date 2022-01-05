@@ -139,7 +139,7 @@ class GenerateSyntheticDataScript(RunnableScript):
             newline="\n",
             fmt="%1.3f",
         )
-    
+
     def _generate_and_write(self, generator, iterations, output_file_path):
         self.logger.info(f"Opening file {output_file_path} for writing...")
         # create/erase file
@@ -148,18 +148,20 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         # iterate and append
         for i in range(iterations):
-            X,y = generator.generate()
-            y = numpy.reshape(y, (y.shape[0], 1))
-            data = numpy.hstack((y, X))  # keep target as column 0
+            with self.metrics_logger.log_time_block("time_data_generation_batch"):
+                X,y = generator.generate()
+                y = numpy.reshape(y, (y.shape[0], 1))
+                data = numpy.hstack((y, X))  # keep target as column 0
 
-            with open(output_file_path, "a") as output_file:
-                numpy.savetxt(
-                    output_file,
-                    data,
-                    delimiter=",",
-                    newline="\n",
-                    fmt="%1.3f",
-                )
+            with self.metrics_logger.log_time_block("time_data_saving_batch"):
+                with open(output_file_path, "a") as output_file:
+                    numpy.savetxt(
+                        output_file,
+                        data,
+                        delimiter=",",
+                        newline="\n",
+                        fmt="%1.3f",
+                    )
 
             self.logger.info(f"Wrote batch {i+1}/{iterations}")
 
@@ -248,13 +250,12 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         # record a metric
         logger.info(f"Generating data.")
-        with metrics_logger.log_time_block("time_data_generation"):            
-            if args.type == "classification":
-                self.generate_classification(args)
-            elif args.type == "regression":
-                self.generate_regression(args)
-            else:
-                raise NotImplementedError(f"--type {args.type} is not implemented.")
+        if args.type == "classification":
+            self.generate_classification(args)
+        elif args.type == "regression":
+            self.generate_regression(args)
+        else:
+            raise NotImplementedError(f"--type {args.type} is not implemented.")
 
 
 def get_arg_parser(parser=None):
