@@ -23,7 +23,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.components import RunnableScript
-
+from common.data import RegressionDataGenerator
 
 class GenerateSyntheticDataScript(RunnableScript):
     def __init__(self):
@@ -84,6 +84,112 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         return parser
 
+    def generate_classification(self, args):
+        total_samples = (
+                args.train_samples + args.test_samples + args.inferencing_samples
+        )
+
+        X, y = make_classification(
+            n_samples=total_samples,
+            n_features=args.n_features,
+            n_informative=args.n_informative,
+            n_redundant=args.n_redundant,
+            random_state=args.random_state,
+        )
+
+        # target as one column
+        y = numpy.reshape(y, (y.shape[0], 1))
+
+        train_X = X[0 : args.train_samples]
+        train_y = y[0 : args.train_samples]
+        train_data = numpy.hstack((train_y, train_X))  # keep target as column 0
+        self.logger.info(f"Train data shape: {train_data.shape}")
+
+        test_X = X[args.train_samples : args.train_samples + args.test_samples]
+        test_y = y[args.train_samples : args.train_samples + args.test_samples]
+        test_data = numpy.hstack((test_y, test_X))  # keep target as column 0
+        self.logger.info(f"Test data shape: {test_data.shape}")
+
+        inference_data = X[args.train_samples + args.test_samples :]
+        self.logger.info(f"Inference data shape: {inference_data.shape}")
+
+        # save as CSV
+        self.logger.info(f"Saving data...")
+        numpy.savetxt(
+            os.path.join(args.output_train, "train.txt"),
+            train_data,
+            delimiter=",",
+            newline="\n",
+            fmt="%1.3f",
+        )
+        numpy.savetxt(
+            os.path.join(args.output_test, "test.txt"),
+            test_data,
+            delimiter=",",
+            newline="\n",
+            fmt="%1.3f",
+        )
+        numpy.savetxt(
+            os.path.join(args.output_inference, "inference.txt"),
+            inference_data,
+            delimiter=",",
+            newline="\n",
+            fmt="%1.3f",
+        )
+    
+    def _generate_and_write(self, generator, iterations, output_file_path):
+        self.logger.info(f"Opening file {output_file_path} for writing...")
+        # create/erase file
+        with open(output_file_path, "w") as output_file:
+            output_file.write("")
+
+        # iterate and append
+        for i in range(iterations):
+            X,y = generator.generate()
+            y = numpy.reshape(y, (y.shape[0], 1))
+            data = numpy.hstack((y, X))  # keep target as column 0
+
+            with open(output_file_path, "a") as output_file:
+                numpy.savetxt(
+                    output_file,
+                    data,
+                    delimiter=",",
+                    newline="\n",
+                    fmt="%1.3f",
+                )
+            
+            del X
+            del y
+
+        self.logger.info(f"Finished generating file {output_file_path}.")
+
+    def generate_regression(self, args):
+        batch_size = min(1000, args.test_samples, args.train_samples, args.inferencing_samples)
+
+        self.logger.info(f"Using batch size {batch_size}")
+
+        generator = RegressionDataGenerator(
+            batch_size=batch_size,
+            n_features=args.n_features,
+            n_informative=args.n_informative,
+            n_targets=1,
+            bias=0.0,
+            noise=0.0,
+            seed=args.random_state,
+        )
+
+        output_file_path = os.path.join(args.output_train, "train.txt")
+
+        output_tasks = [
+            (os.path.join(args.output_train, "train.txt"), args.train_samples//batch_size),
+            (os.path.join(args.output_test, "test.txt"), args.test_samples//batch_size),
+            (os.path.join(args.output_inference, "inference.txt"), args.inferencing_samples//batch_size),
+        ]
+
+        # generate each data outputs
+        for output_file_path, samples in output_tasks:
+            self._generate_and_write(generator, samples, output_file_path)
+
 
     def run(self, args, logger, metrics_logger, unknown_args):
         """Run script with arguments (the core of the component)
@@ -111,69 +217,14 @@ class GenerateSyntheticDataScript(RunnableScript):
         )
 
         # record a metric
-        logger.info(f"Generating data in memory.")
-        with metrics_logger.log_time_block("time_data_generation"):
-            total_samples = (
-                args.train_samples + args.test_samples + args.inferencing_samples
-            )
+        logger.info(f"Generating data.")
+        with metrics_logger.log_time_block("time_data_generation"):            
             if args.type == "classification":
-                X, y = make_classification(
-                    n_samples=total_samples,
-                    n_features=args.n_features,
-                    n_informative=args.n_informative,
-                    n_redundant=args.n_redundant,
-                    random_state=args.random_state,
-                )
+                self.generate_classification(args)
             elif args.type == "regression":
-                X, y = make_regression(
-                    n_samples=total_samples,
-                    n_features=args.n_features,
-                    n_informative=args.n_informative,
-                    random_state=args.random_state,
-                )
+                self.generate_regression(args)
             else:
                 raise NotImplementedError(f"--type {args.type} is not implemented.")
-
-            # target as one column
-            y = numpy.reshape(y, (y.shape[0], 1))
-
-            train_X = X[0 : args.train_samples]
-            train_y = y[0 : args.train_samples]
-            train_data = numpy.hstack((train_y, train_X))  # keep target as column 0
-            logger.info(f"Train data shape: {train_data.shape}")
-
-            test_X = X[args.train_samples : args.train_samples + args.test_samples]
-            test_y = y[args.train_samples : args.train_samples + args.test_samples]
-            test_data = numpy.hstack((test_y, test_X))  # keep target as column 0
-            logger.info(f"Test data shape: {test_data.shape}")
-
-            inference_data = X[args.train_samples + args.test_samples :]
-            logger.info(f"Inference data shape: {inference_data.shape}")
-
-        # save as CSV
-        logger.info(f"Saving data...")
-        with metrics_logger.log_time_block("time_data_saving"):
-            numpy.savetxt(
-                os.path.join(args.output_train, "train.txt"),
-                train_data,
-                delimiter=",",
-                newline="\n",
-                fmt="%1.3f",
-            )
-            numpy.savetxt(
-                os.path.join(args.output_test, "test.txt"),
-                test_data,
-                delimiter=",",
-                newline="\n",
-                fmt="%1.3f",
-            )
-            numpy.savetxt(
-                os.path.join(args.output_inference, "inference.txt"),
-                inference_data,
-                delimiter=",",
-                newline="\n",
-                fmt="%1.3f",
-            )
 
 
 def get_arg_parser(parser=None):

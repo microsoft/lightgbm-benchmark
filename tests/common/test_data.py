@@ -8,6 +8,7 @@ from common.data import RegressionDataGenerator
 def test_regression_data_generator():
     """Tests format of outputs of RegressionDataGenerator"""
     generator = RegressionDataGenerator(
+        batch_size=64,
         n_features=100,
         n_informative=50,
         n_targets=1,
@@ -17,7 +18,7 @@ def test_regression_data_generator():
     )
 
     for i in range(10):
-        batch = generator.generate_batch(64)
+        batch = generator.generate()
 
         assert batch is not None
         assert isinstance(batch, tuple)
@@ -33,6 +34,7 @@ def test_regression_data_generator():
 def test_regression_data_generator_reproducibility():
     """Tests initializing generator with seeds"""
     generator1 = RegressionDataGenerator(
+        batch_size=64,
         n_features=100,
         n_informative=50,
         n_targets=1,
@@ -40,9 +42,10 @@ def test_regression_data_generator_reproducibility():
         noise=1.0,
         seed=4
     )
-    X1,y1 = generator1.generate_batch(64)
+    X1,y1 = generator1.generate()
 
     generator2 = RegressionDataGenerator(
+        batch_size=64,
         n_features=100,
         n_informative=50,
         n_targets=1,
@@ -50,9 +53,10 @@ def test_regression_data_generator_reproducibility():
         noise=1.0,
         seed=5
     )
-    X2,y2 = generator2.generate_batch(64)
+    X2,y2 = generator2.generate()
 
     generator3 = RegressionDataGenerator(
+        batch_size=64,
         n_features=100,
         n_informative=50,
         n_targets=1,
@@ -60,7 +64,7 @@ def test_regression_data_generator_reproducibility():
         noise=1.0,
         seed=4 # <<< Equal to generator 1
     )
-    X3,y3 = generator3.generate_batch(64)
+    X3,y3 = generator3.generate()
 
     # if using same seed twice, should be equal strictly
     assert (X1 == X3).all()
