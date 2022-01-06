@@ -119,9 +119,9 @@ def data_generation_main_pipeline_function(config):
                 name=f"{dataset_prefix}-{generation_task.train_samples}samples-train",
                 create_new_version=True,
                 tags={
-                    'phase':'train',
+                    'type':'train',
                     'task':generation_task.task,
-                    'type':'synthetic',
+                    'origin':'synthetic',
                     'samples':generation_task.train_samples,
                     'features':generation_task.n_features,
                     'informative':generation_task.n_informative
@@ -131,9 +131,9 @@ def data_generation_main_pipeline_function(config):
                 name=f"{dataset_prefix}-{generation_task.test_samples}samples-test",
                 create_new_version=True,
                 tags={
-                    'phase':'test',
+                    'type':'test',
                     'task':generation_task.task,
-                    'type':'synthetic',
+                    'origin':'synthetic',
                     'samples':generation_task.test_samples,
                     'features':generation_task.n_features,
                     'informative':generation_task.n_informative
@@ -143,9 +143,9 @@ def data_generation_main_pipeline_function(config):
                 name=f"{dataset_prefix}-{generation_task.inferencing_samples}samples-inference",
                 create_new_version=True,
                 tags={
-                    'phase':'inference',
+                    'type':'inference',
                     'task':generation_task.task,
-                    'type':'synthetic',
+                    'origin':'synthetic',
                     'samples':generation_task.inferencing_samples,
                     'features':generation_task.n_features,
                     'informative':generation_task.n_informative
