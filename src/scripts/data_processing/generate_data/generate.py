@@ -33,6 +33,10 @@ class GenerateSyntheticDataScript(RunnableScript):
             framework_version="sklearn.__version__"
         )
 
+        # this will collect all the "tasks" (file to generate)
+        # for multi-tasking if available (work in progress)
+        self.generation_tasks = []
+
     @classmethod
     def get_arg_parser(cls, parser=None):
         """Adds component/module arguments to a given argument parser.
@@ -140,37 +144,9 @@ class GenerateSyntheticDataScript(RunnableScript):
             fmt="%1.3f",
         )
 
-    def _generate_and_write(self, generator, iterations, output_file_path):
-        self.logger.info(f"Opening file {output_file_path} for writing...")
-        # create/erase file
-        with open(output_file_path, "w") as output_file:
-            output_file.write("")
 
-        # iterate and append
-        for i in range(iterations):
-            with self.metrics_logger.log_time_block("time_data_generation_batch"):
-                X,y = generator.generate()
-                y = numpy.reshape(y, (y.shape[0], 1))
-                data = numpy.hstack((y, X))  # keep target as column 0
-
-            with self.metrics_logger.log_time_block("time_data_saving_batch"):
-                with open(output_file_path, "a") as output_file:
-                    numpy.savetxt(
-                        output_file,
-                        data,
-                        delimiter=",",
-                        newline="\n",
-                        fmt="%1.3f",
-                    )
-
-            self.logger.info(f"Wrote batch {i+1}/{iterations}")
-
-            del X
-            del y
-
-        self.logger.info(f"Finished generating file {output_file_path}.")
-
-    def generate_regression(self, args):
+    def generate_regression_tasks(self, args):
+        """Create generation tasks based on arguments"""
         train_partition_size = args.train_samples // args.train_partitions
         test_partition_size = args.test_samples // args.test_partitions
         inferencing_partition_size = args.inferencing_samples // args.inferencing_partitions
@@ -194,33 +170,60 @@ class GenerateSyntheticDataScript(RunnableScript):
             seed=args.random_state,
         )
 
-        output_tasks = []
-
         # add train partitions to list of tasks
         for i in range(args.train_partitions):
-            output_tasks.append(
-                (os.path.join(args.output_train, f"train_{i}.txt"), train_partition_size//batch_size)
+            self.generation_tasks.append(
+                (os.path.join(args.output_train, f"train_{i}.txt"), generator, train_partition_size//batch_size)
             )
 
         # add test partitions to list of tasks
         for i in range(args.test_partitions):
-            output_tasks.append(
-                (os.path.join(args.output_test, f"test_{i}.txt"), test_partition_size//batch_size)
+            self.generation_tasks.append(
+                (os.path.join(args.output_test, f"test_{i}.txt"), generator, test_partition_size//batch_size)
             )
 
         # add inferencing partitions to list of tasks
         for i in range(args.inferencing_partitions):
-            output_tasks.append(
-                (os.path.join(args.output_inference, f"inference_{i}.txt"), inferencing_partition_size//batch_size)
+            self.generation_tasks.append(
+                (os.path.join(args.output_inference, f"inference_{i}.txt"), generator, inferencing_partition_size//batch_size)
             )
 
+    def execute_tasks(self):
         # show some outputs first
-        for output_file_path, batches in output_tasks:
-            self.logger.info(f"Will generate output {output_file_path} with {batches} batches of size {batch_size}")
+        for output_file_path, generator, batches in self.generation_tasks:
+            self.logger.info(f"Will generate output {output_file_path} with {batches} batches")
 
         # generate each data outputs
-        for output_file_path, batches in output_tasks:
-            self._generate_and_write(generator, batches, output_file_path)
+        for output_file_path, generator, batches in self.generation_tasks:
+            self.logger.info(f"Opening file {output_file_path} for writing...")
+
+            # create/erase file
+            with open(output_file_path, "w") as output_file:
+                output_file.write("")
+
+            # iterate and append
+            for i in range(batches):
+                with self.metrics_logger.log_time_block("time_data_generation_batch"):
+                    X,y = generator.generate()
+                    y = numpy.reshape(y, (y.shape[0], 1))
+                    data = numpy.hstack((y, X))  # keep target as column 0
+
+                with self.metrics_logger.log_time_block("time_data_saving_batch"):
+                    with open(output_file_path, "a") as output_file:
+                        numpy.savetxt(
+                            output_file,
+                            data,
+                            delimiter=",",
+                            newline="\n",
+                            fmt="%1.3f",
+                        )
+
+                self.logger.info(f"Wrote batch {i+1}/{batches}")
+
+                del X
+                del y
+
+            self.logger.info(f"Finished generating file {output_file_path}.")
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -253,7 +256,8 @@ class GenerateSyntheticDataScript(RunnableScript):
         if args.type == "classification":
             self.generate_classification(args)
         elif args.type == "regression":
-            self.generate_regression(args)
+            self.generate_regression_tasks(args)
+            self.execute_tasks()
         else:
             raise NotImplementedError(f"--type {args.type} is not implemented.")
 
