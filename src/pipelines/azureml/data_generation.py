@@ -115,17 +115,41 @@ def data_generation_main_pipeline_function(config):
                 cols=generation_task.n_features
             )
             
-            generate_data_step.outputs.train.register_as(
+            generate_data_step.outputs.output_train.register_as(
                 name=f"{dataset_prefix}-{generation_task.train_samples}samples-train",
-                create_new_version=True
-            )  
-            generate_data_step.outputs.test.register_as(
+                create_new_version=True,
+                tags={
+                    'phase':'train',
+                    'task':generation_task.task,
+                    'type':'synthetic',
+                    'samples':generation_task.train_samples,
+                    'features':generation_task.n_features,
+                    'informative':generation_task.n_informative
+                }
+            )
+            generate_data_step.outputs.output_test.register_as(
                 name=f"{dataset_prefix}-{generation_task.test_samples}samples-test",
-                create_new_version=True
-            )  
-            generate_data_step.outputs.inference.register_as(
+                create_new_version=True,
+                tags={
+                    'phase':'test',
+                    'task':generation_task.task,
+                    'type':'synthetic',
+                    'samples':generation_task.test_samples,
+                    'features':generation_task.n_features,
+                    'informative':generation_task.n_informative
+                }
+            )
+            generate_data_step.outputs.output_inference.register_as(
                 name=f"{dataset_prefix}-{generation_task.inferencing_samples}samples-inference",
-                create_new_version=True
+                create_new_version=True,
+                tags={
+                    'phase':'inference',
+                    'task':generation_task.task,
+                    'type':'synthetic',
+                    'samples':generation_task.inferencing_samples,
+                    'features':generation_task.n_features,
+                    'informative':generation_task.n_informative
+                }
             )  
 
 
