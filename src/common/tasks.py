@@ -39,6 +39,7 @@ class data_generation_task:
     inferencing_partitions: int = 1
     n_features: int = MISSING
     n_informative: Optional[int] = None
+    delimiter: str = "comma"
 
 @dataclass
 class training_task:

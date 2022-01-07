@@ -68,6 +68,14 @@ inputs:
     description: random seed
     optional: true
 
+  delimiter:
+    type: Enum
+    default: "comma"
+    enum:
+      - tab
+      - comma
+      - space
+
   # generic benchmark parameters
   verbose:
     type: Boolean
@@ -99,6 +107,7 @@ command: >-
   --n_informative {inputs.n_informative}
   [--n_redundant {inputs.n_redundant}]
   [--random_state {inputs.random_state}]
+  --delimiter {inputs.delimiter}
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}

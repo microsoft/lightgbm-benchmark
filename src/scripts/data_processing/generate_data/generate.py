@@ -69,6 +69,11 @@ class GenerateSyntheticDataScript(RunnableScript):
         group_params.add_argument("--n_redundant", required=False, type=int)
         group_params.add_argument("--random_state", required=False, default=None, type=int)
 
+        group_params = parser.add_argument_group("Format params")
+        group_params.add_argument(
+            "--delimiter", required=False, type=str, choices=['tab', 'comma', 'space'], default='comma'
+        )
+
         group_o = parser.add_argument_group("Outputs")
         group_o.add_argument(
             "--output_train",
@@ -125,21 +130,21 @@ class GenerateSyntheticDataScript(RunnableScript):
         numpy.savetxt(
             os.path.join(args.output_train, "train_0.txt"),
             train_data,
-            delimiter=",",
+            delimiter=args.delimiter,
             newline="\n",
             fmt="%1.3f",
         )
         numpy.savetxt(
             os.path.join(args.output_test, "test_0.txt"),
             test_data,
-            delimiter=",",
+            delimiter=args.delimiter,
             newline="\n",
             fmt="%1.3f",
         )
         numpy.savetxt(
             os.path.join(args.output_inference, "inference_0.txt"),
             inference_data,
-            delimiter=",",
+            delimiter=args.delimiter,
             newline="\n",
             fmt="%1.3f",
         )
@@ -213,7 +218,7 @@ class GenerateSyntheticDataScript(RunnableScript):
                         numpy.savetxt(
                             output_file,
                             data,
-                            delimiter=",",
+                            delimiter=args.delimiter,
                             newline="\n",
                             fmt="%1.3f",
                         )
@@ -239,6 +244,14 @@ class GenerateSyntheticDataScript(RunnableScript):
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
+
+        # transform delimiter
+        if args.delimiter == "comma":
+            args.delimiter = ","
+        elif args.delimiter == "tab"
+            args.delimiter = "\t"
+        elif args.delimiter == "space"
+            args.delimiter = " "
 
         metrics_logger.log_parameters(
             type=args.type,
