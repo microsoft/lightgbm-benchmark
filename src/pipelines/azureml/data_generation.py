@@ -101,10 +101,14 @@ def data_generation_main_pipeline_function(config):
         generate_data_step = generate_data_component(
             learning_task = generation_task.task,
             train_samples = generation_task.train_samples,
+            train_partitions = generation_task.train_partitions,
             test_samples = generation_task.test_samples,
+            test_partitions = generation_task.test_partitions,
             inferencing_samples = generation_task.inferencing_samples,
+            inferencing_partitions = generation_task.inferencing_partitions,
             n_features = generation_task.n_features,
             n_informative = generation_task.n_informative,
+            delimiter = generation_task.delimiter,
             random_state = 5,
             verbose = False,
             custom_properties = benchmark_custom_properties
