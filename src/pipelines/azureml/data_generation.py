@@ -94,7 +94,10 @@ def data_generation_main_pipeline_function(config):
         'benchmark_name' : config.data_generation_config.benchmark_name
     })
 
+    # for each task provided in the general config
     for generation_task in config.data_generation_config.tasks:
+
+        # run a generation step with the right parameters
         generate_data_step = generate_data_component(
             learning_task = generation_task.task,
             train_samples = generation_task.train_samples,
@@ -106,26 +109,54 @@ def data_generation_main_pipeline_function(config):
             verbose = False,
             custom_properties = benchmark_custom_properties
         )
+        # run it on the right compute target
         generate_data_step.runsettings.configure(target=config.compute.linux_cpu)
 
+        # if config asks to register the outputs automatically...
         if config.data_generation_config.register_outputs:
+            # create a prefix for the dataset
             dataset_prefix = "{prefix}-{task}-{cols}cols".format(
                 prefix=config.data_generation_config.register_outputs_prefix,
                 task=generation_task.task,
                 cols=generation_task.n_features
             )
             
-            generate_data_step.outputs.train.register_as(
+            # register each output (train, test, inference)
+            generate_data_step.outputs.output_train.register_as(
                 name=f"{dataset_prefix}-{generation_task.train_samples}samples-train",
-                create_new_version=True
-            )  
-            generate_data_step.outputs.test.register_as(
+                create_new_version=True,
+                tags={ # add tags that will show up in AzureML
+                    'type':'train',
+                    'task':generation_task.task,
+                    'origin':'synthetic',
+                    'samples':generation_task.train_samples,
+                    'features':generation_task.n_features,
+                    'informative':generation_task.n_informative
+                }
+            )
+            generate_data_step.outputs.output_test.register_as(
                 name=f"{dataset_prefix}-{generation_task.test_samples}samples-test",
-                create_new_version=True
-            )  
-            generate_data_step.outputs.inference.register_as(
+                create_new_version=True,
+                tags={ # add tags that will show up in AzureML
+                    'type':'test',
+                    'task':generation_task.task,
+                    'origin':'synthetic',
+                    'samples':generation_task.test_samples,
+                    'features':generation_task.n_features,
+                    'informative':generation_task.n_informative
+                }
+            )
+            generate_data_step.outputs.output_inference.register_as(
                 name=f"{dataset_prefix}-{generation_task.inferencing_samples}samples-inference",
-                create_new_version=True
+                create_new_version=True,
+                tags={ # add tags that will show up in AzureML
+                    'type':'inference',
+                    'task':generation_task.task,
+                    'origin':'synthetic',
+                    'samples':generation_task.inferencing_samples,
+                    'features':generation_task.n_features,
+                    'informative':generation_task.n_informative
+                }
             )  
 
 
