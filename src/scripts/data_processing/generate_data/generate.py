@@ -248,9 +248,9 @@ class GenerateSyntheticDataScript(RunnableScript):
         # transform delimiter
         if args.delimiter == "comma":
             args.delimiter = ","
-        elif args.delimiter == "tab"
+        elif args.delimiter == "tab":
             args.delimiter = "\t"
-        elif args.delimiter == "space"
+        elif args.delimiter == "space":
             args.delimiter = " "
 
         metrics_logger.log_parameters(
