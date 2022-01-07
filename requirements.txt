@@ -6,6 +6,7 @@ mlflow==1.21.0
 shrike[pipeline]==1.14.7
 azure-ml-component==0.9.4.post1  # for component dsl
 azureml-train-core==1.36.0  # for azureml.train.hyperdrive
+azureml-dataset-runtime==1.36.0  # to register dataset
 hydra-core~=1.0.3
 omegaconf~=2.1
 treelite==2.1.0
