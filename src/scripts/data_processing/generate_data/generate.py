@@ -193,7 +193,7 @@ class GenerateSyntheticDataScript(RunnableScript):
                 (os.path.join(args.output_inference, f"inference_{i}.txt"), generator, inferencing_partition_size//batch_size)
             )
 
-    def execute_tasks(self):
+    def execute_tasks(self, args):
         # show some outputs first
         for output_file_path, generator, batches in self.generation_tasks:
             self.logger.info(f"Will generate output {output_file_path} with {batches} batches")
@@ -270,7 +270,7 @@ class GenerateSyntheticDataScript(RunnableScript):
             self.generate_classification(args)
         elif args.type == "regression":
             self.generate_regression_tasks(args)
-            self.execute_tasks()
+            self.execute_tasks(args)
         else:
             raise NotImplementedError(f"--type {args.type} is not implemented.")
 
