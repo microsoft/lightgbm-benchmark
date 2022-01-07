@@ -14,6 +14,9 @@ from distutils.util import strtobool
 import lightgbm
 from collections import namedtuple
 
+import lightgbm
+import mpi4py
+
 # Add the right path to PYTHONPATH
 # so that you can import from common.*
 COMMON_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -25,7 +28,7 @@ if COMMON_ROOT not in sys.path:
 # useful imports from common
 from common.components import RunnableScript
 from common.io import get_all_files
-from common.lightgbm_utils import LightGBMCallbackHandler
+from common.lightgbm_utils import LightGBMDistributedCallbackHandler
 from common.distributed import MultiNodeScript
 
 class LightGBMPythonMpiTrainingScript(MultiNodeScript):
@@ -182,10 +185,12 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         # figure out the lgbm params from cli args + mpi config
         lgbm_params = self.load_lgbm_params_from_cli(args, mpi_config)
 
-        # create a handler for the metrics callbacks
-        callbacks_handler = LightGBMCallbackHandler(
+        # create a handler
+        callbacks_handler = LightGBMDistributedCallbackHandler(
             metrics_logger=metrics_logger,
-            metrics_prefix=f"node_{mpi_config.world_rank}/"
+            mpi_comm = self.mpi_config.mpi_comm,
+            world_rank=self.mpi_config.world_rank,
+            world_size=self.mpi_config.world_size
         )
 
         # make sure the output argument exists
@@ -241,6 +246,9 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         if args.export_model and mpi_config.main_node:
             logger.info(f"Writing model in {args.export_model}")
             booster.save_model(args.export_model)
+
+        # finalize all remaining metrics
+        callbacks_handler.finalize()
 
 
 def get_arg_parser(parser=None):
