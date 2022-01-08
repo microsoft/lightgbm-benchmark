@@ -104,61 +104,7 @@ class GenerateSyntheticDataScript(RunnableScript):
 
 
         return parser
-
-    def generate_classification(self, args):
-        total_samples = (
-                args.train_samples + args.test_samples + args.inferencing_samples
-        )
-
-        X, y = make_classification(
-            n_samples=total_samples,
-            n_features=args.n_features,
-            n_informative=args.n_informative,
-            n_redundant=args.n_redundant,
-            random_state=args.random_state,
-        )
-
-        # target as one column
-        y = numpy.reshape(y, (y.shape[0], 1))
-
-        train_X = X[0 : args.train_samples]
-        train_y = y[0 : args.train_samples]
-        train_data = numpy.hstack((train_y, train_X))  # keep target as column 0
-        self.logger.info(f"Train data shape: {train_data.shape}")
-
-        test_X = X[args.train_samples : args.train_samples + args.test_samples]
-        test_y = y[args.train_samples : args.train_samples + args.test_samples]
-        test_data = numpy.hstack((test_y, test_X))  # keep target as column 0
-        self.logger.info(f"Test data shape: {test_data.shape}")
-
-        inference_data = X[args.train_samples + args.test_samples :]
-        self.logger.info(f"Inference data shape: {inference_data.shape}")
-
-        # save as CSV
-        self.logger.info(f"Saving data...")
-        numpy.savetxt(
-            os.path.join(args.output_train, "train_0.txt"),
-            train_data,
-            delimiter=args.delimiter,
-            newline="\n",
-            fmt="%1.3f",
-        )
-        numpy.savetxt(
-            os.path.join(args.output_test, "test_0.txt"),
-            test_data,
-            delimiter=args.delimiter,
-            newline="\n",
-            fmt="%1.3f",
-        )
-        numpy.savetxt(
-            os.path.join(args.output_inference, "inference_0.txt"),
-            inference_data,
-            delimiter=args.delimiter,
-            newline="\n",
-            fmt="%1.3f",
-        )
-
-    
+   
 
     def generate_tasks(self, args):
         """Create generation tasks based on arguments"""
