@@ -23,7 +23,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.components import RunnableScript
-from common.data import RegressionDataGenerator
+from common.data import RegressionDataGenerator, RankingDataGenerator, ClassificationDataGenerator
 
 class GenerateSyntheticDataScript(RunnableScript):
     def __init__(self):
@@ -56,7 +56,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         # add arguments that are specific to the script
         group_params = parser.add_argument_group("Synthesis params")
         group_params.add_argument(
-            "--type", required=True, type=str, choices=["classification", "regression"]
+            "--type", required=True, type=str, choices=["classification", "regression", "lambdarank"]
         )
         group_params.add_argument("--train_samples", required=True, type=int)
         group_params.add_argument("--train_partitions", required=False, type=int, default=1)
@@ -68,7 +68,9 @@ class GenerateSyntheticDataScript(RunnableScript):
         group_params.add_argument("--n_informative", required=True, type=int)
         group_params.add_argument("--n_redundant", required=False, type=int)
         group_params.add_argument("--random_state", required=False, default=None, type=int)
-
+        group_params.add_argument("--docs_per_query", required=False, default=20, type=int)
+        group_params.add_argument("--n_label_classes", required=False, default=10, type=int)
+    
         group_params = parser.add_argument_group("Format params")
         group_params.add_argument(
             "--delimiter", required=False, type=str, choices=['tab', 'comma', 'space'], default='comma'
@@ -93,6 +95,13 @@ class GenerateSyntheticDataScript(RunnableScript):
             type=str,
             help="Output data location (directory)",
         )
+        group_o.add_argument(
+            "--output_header",
+            required=True,
+            type=str,
+            help="Output header location (directory)",
+        )
+
 
         return parser
 
@@ -149,8 +158,9 @@ class GenerateSyntheticDataScript(RunnableScript):
             fmt="%1.3f",
         )
 
+    
 
-    def generate_regression_tasks(self, args):
+    def generate_tasks(self, args):
         """Create generation tasks based on arguments"""
         train_partition_size = args.train_samples // args.train_partitions
         test_partition_size = args.test_samples // args.test_partitions
@@ -165,15 +175,40 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         self.logger.info(f"Using batch size {batch_size}")
 
-        generator = RegressionDataGenerator(
-            batch_size=batch_size,
-            n_features=args.n_features,
-            n_informative=args.n_informative,
-            n_targets=1,
-            bias=0.0,
-            noise=0.0,
-            seed=args.random_state,
-        )
+        if args.type =="regression":
+            generator = RegressionDataGenerator(
+                    batch_size=batch_size,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    n_targets=1,
+                    bias=0.0,
+                    noise=0.0,
+                    seed=args.random_state,
+                )
+        elif args.type =="lambdarank":
+            generator = RankingDataGenerator(
+                    docs_per_query=args.docs_per_query,
+                    n_label_classes=args.n_label_classes,
+                    batch_size=batch_size,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    n_targets=1,
+                    bias=0.0,
+                    noise=0.0,
+                    seed=args.random_state,
+                )
+        elif args.type =="classification":
+            generator = ClassificationDataGenerator(
+                    n_label_classes=args.n_label_classes,
+                    batch_size=batch_size,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    n_targets=1,
+                    bias=0.0,
+                    noise=0.0,
+                    seed=args.random_state,
+                )
+
 
         # add train partitions to list of tasks
         for i in range(args.train_partitions):
@@ -229,6 +264,12 @@ class GenerateSyntheticDataScript(RunnableScript):
                 del y
 
             self.logger.info(f"Finished generating file {output_file_path}.")
+        
+        self.logger.info(f"Will create a header file for the generated data")
+        # create a header 
+        header = [f'Column_{i}' for i in range(data.shape[1])]
+        with open(os.path.join(args.output_header, "header.txt"), 'w') as hf:
+            hf.writelines(args.delimiter.join(header))
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -244,6 +285,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
+        os.makedirs(args.output_header, exist_ok=True)
 
         # transform delimiter
         if args.delimiter == "comma":
@@ -266,10 +308,10 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         # record a metric
         logger.info(f"Generating data.")
-        if args.type == "classification":
-            self.generate_classification(args)
-        elif args.type == "regression":
-            self.generate_regression_tasks(args)
+        if args.type in ["regression", "classification", "lambdarank"]:
+        #     self.generate_classification(args)
+        # elif args.type == "regression" or args.type == "lambdarank":
+            self.generate_tasks(args)
             self.execute_tasks(args)
         else:
             raise NotImplementedError(f"--type {args.type} is not implemented.")

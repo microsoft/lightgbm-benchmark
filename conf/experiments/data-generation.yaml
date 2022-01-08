@@ -26,18 +26,21 @@ data_generation_config:
       inferencing_samples: 10000
       n_features: 10
       n_informative: 10
-    - task: "regression"
-      train_samples: 100000
-      test_samples: 10000
-      inferencing_samples: 10000
-      n_features: 100
-      n_informative: 100
-    - task: "regression"
-      train_samples: 100000
-      test_samples: 10000
-      inferencing_samples: 10000
-      n_features: 1000
-      n_informative: 1000
+    - task: "lambdarank"
+      train_samples: 100
+      test_samples: 100
+      inferencing_samples: 100
+      n_features: 10
+      n_informative: 13
+      n_label_classes: 5
+      docs_per_query: 10
+    - task: "classification"
+      train_samples: 100
+      test_samples: 100
+      inferencing_samples: 100
+      n_features: 10
+      n_informative: 13
+      n_label_classes: 3
 
   register_outputs: false
   register_outputs_prefix: "data-synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"
