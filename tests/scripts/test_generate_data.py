@@ -78,9 +78,9 @@ def test_generate_regression_data(temporary_dir):
         os.path.join(output_inference, "inference_1.txt")
     ), "Script generate.py should NOT generate inference_1.txt under --output dir but DID"
 
-    assert not os.path.isfile(
+    assert os.path.isfile(
         os.path.join(output_header, "header.txt")
-    ), "Script generate.py should NOT generate header.txt under --output dir but DID"
+    ), "Script generate.py should generate inference_0.txt under --output dir but did not"
 
 def test_generate_classification_data(temporary_dir):
     """Tests src/scripts/data_processing/generate_data/generate.py"""
@@ -134,9 +134,9 @@ def test_generate_classification_data(temporary_dir):
         os.path.join(output_inference, "inference_1.txt")
     ), "Script generate.py should NOT generate inference_1.txt under --output dir but DID"
 
-    assert not os.path.isfile(
+    assert os.path.isfile(
         os.path.join(output_header, "header.txt")
-    ), "Script generate.py should NOT generate header.txt under --output dir but DID"
+    ), "Script generate.py should generate inference_0.txt under --output dir but did not"
 
 def test_generate_ranking_data(temporary_dir):
     """Tests src/scripts/data_processing/generate_data/generate.py"""
@@ -209,6 +209,6 @@ def test_generate_ranking_data(temporary_dir):
         os.path.join(output_inference, "inference_1.txt")
     ), "Script generate.py should NOT generate inference_1.txt under --output dir but DID"
 
-    assert not os.path.isfile(
+    assert os.path.isfile(
         os.path.join(output_header, "header.txt")
-    ), "Script generate.py should NOT generate header.txt under --output dir but DID"
+    ), "Script generate.py should generate inference_0.txt under --output dir but did not"
