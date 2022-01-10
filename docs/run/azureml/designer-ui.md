@@ -14,17 +14,17 @@ AzureML has a graphical user interface to create and run ML experiments. The com
 
 1. Open the AzureML **Components** tab, and click on **New Component**
 
-    ![](/img/designer-ui-components-tab-create.png)
+    ![](../../img/designer-ui-components-tab-create.png)
 
 2. Select the source **Github repo** and paste the link to the component you want to create. For instance, for lightgbm training use `https://github.com/microsoft/lightgbm-benchmark/blob/main/src/scripts/training/lightgbm_python/spec.yaml`.
 
     Alternatively, you can also use your local clone of this repository. To do that, use **Local Files** instead and browse your folders to point to the right `spec.yaml`.
 
-    ![](/img/designer-ui-components-tab-create-github.png)
+    ![](../../img/designer-ui-components-tab-create-github.png)
 
 3. The following panel will show the details of the component, its version number, etc. Click on **Create** to finalize the creation process.
 
-    ![](/img/designer-ui-components-tab-create-component.png)
+    ![](../../img/designer-ui-components-tab-create-component.png)
 
 4. You will need to repeat this process for each component you want to import. Below of the list of 5 components we'll use for the rest of this tutorial.
 
@@ -40,7 +40,7 @@ AzureML has a graphical user interface to create and run ML experiments. The com
 
 1. In AzureML, go in the **Designer** tab and click `+` button to create a new pipeline.
 
-![create new pipeline from designer ui](/img/designer-ui-pipelines-new.png)
+![create new pipeline from designer ui](../../img/designer-ui-pipelines-new.png)
 
 2. [See animation below] To compose a pipeline, you can simply drag-n-drop components in the authoring space in the middle of the screen. The components you're creater earlier will be "custom components" (as opposted to built-in).
 
@@ -50,7 +50,7 @@ AzureML has a graphical user interface to create and run ML experiments. The com
     - Click on settings (⚙️) and pick default compute cluster `cpu-cluster` (see [AzureML Setup instructions](./azure-setup)).
     - Click on "Submit"
 
-![compose a pipeline (animation)](/img/designer-ui-pipelines-compose.gif)
+![compose a pipeline (animation)](../../img/designer-ui-pipelines-compose.gif)
 
 3. When submitting, a prompt will show up asking for experiment name. Click on **Create new** and type any name. Then **Submit**.
 
@@ -64,7 +64,7 @@ Default values above should provide a very minimal training of LightGBM. Once tr
 
 2. Open the "Metrics" panel and check out perf metrics and training/validation metrics available in the component.
 
-![snapshot of metrics panel for lightgbm training](/img/lightgbm-training-metrics.png)
+![snapshot of metrics panel for lightgbm training](../../img/lightgbm-training-metrics.png)
 
 !!! note
     Check out the [LightGBM training component](../../references/scripts/training/lightgbm_python.md) in the reference docs for an updated **list of parameters and metrics**.
