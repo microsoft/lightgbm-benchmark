@@ -17,9 +17,7 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 
-from azureml.core import Workspace
-from azureml.pipeline.core import Pipeline
-from shrike.pipeline.aml_connect import azureml_connect as shrike_azureml_connect
+from azure.ml import MLClient
 
 # when running this script directly, needed to import common
 from .paths import COMPONENTS_ROOT, CONFIG_PATH
@@ -134,17 +132,31 @@ def azureml_connect(config: DictConfig):
     Returns:
         workspace (azure.ml.core.Workspace)
     """
-    return shrike_azureml_connect(
-        aml_subscription_id=config.aml.subscription_id,
-        aml_resource_group=config.aml.resource_group,
-        aml_workspace_name=config.aml.workspace_name,
-        aml_auth=config.aml.auth,
-        aml_tenant=config.aml.tenant
+    if config.aml.auth == "msi":
+        from azure.identity import ManagedIdentityCredential
+        auth = ManagedIdentityCredential()
+    elif config.aml.auth == "azurecli":
+        from azure.identity import AzureCliCredential
+        auth = AzureCliCredential()
+    elif config.aml.auth == "interactive":
+        from azure.identity import InteractiveBrowserCredential
+
+        auth = InteractiveBrowserCredential(
+            tenant_id=config.aml.tenant, force=config.aml.force
+        )
+    else:
+        auth = None
+
+    return MLClient(
+        credential=auth,
+        subscription_id=config.aml.subscription_id,
+        resource_group_name=config.aml.resource_group,
+        workspace_name=config.aml.workspace_name
     )
 
-def pipeline_submit(workspace: Workspace,
+def pipeline_submit(ml_client: MLClient,
                     pipeline_config: DictConfig,
-                    pipeline_instance: Pipeline,
+                    pipeline_instance,
                     experiment_name: str=None,
                     experiment_description: str=None,
                     display_name: str=None,
@@ -152,7 +164,7 @@ def pipeline_submit(workspace: Workspace,
     """Standard helper function to submit a pipeline to AzureML.
 
     Args:
-        workspace (azure.ml.core.Workspace): AzureML workspace (see azureml_connect())
+        ml_client (azure.ml.MLClient): AzureML client (see azureml_connect())
         pipeline_config (DictConfig): class for hosting the config of pipeline_func
         pipeline_instance (Pipeline): pipeline object
         experiment_name (str): override config.experiment.name at runtime
@@ -163,21 +175,18 @@ def pipeline_submit(workspace: Workspace,
     Returns:
         pipeline (azure.ml.core.PipelineRun)
     """
-    if pipeline_config.run.validate:
-        pipeline_instance.validate(workspace=workspace)
+    #if pipeline_config.run.validate:
+    #    pipeline_instance.validate(workspace=workspace)
 
     experiment_description = (experiment_description or pipeline_config.experiment.description)
     if experiment_description and len(experiment_description) > 5000:
         experiment_description = experiment_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     if pipeline_config.run.submit:
-        return pipeline_instance.submit(
-            workspace=workspace,
+        return ml_client.jobs.create_or_update(
+            pipeline_instance,
             experiment_name=(experiment_name or pipeline_config.experiment.name),
             description=experiment_description,
-            display_name=(display_name or pipeline_config.experiment.display_name),
             tags=(tags or pipeline_config.experiment.tags),
-            default_compute_target=pipeline_config.compute.default_compute_target,
-            regenerate_outputs=pipeline_config.run.regenerate_outputs,
-            continue_on_step_failure=pipeline_config.run.continue_on_failure,
+            continue_run_on_step_failure=pipeline_config.run.continue_on_failure
         )
