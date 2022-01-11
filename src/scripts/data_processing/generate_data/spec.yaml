@@ -1,8 +1,8 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
-name: generate_synthetic_data
-version: 1.0.5
+name: lightgbm_benchmark.data.generate
+version: 2.0.0
 display_name: "Generate Synthetic Data"
-type: CommandComponent
+type: command
 description: "Generate data for classification or regression."
 is_deterministic: true
 
@@ -14,62 +14,62 @@ tags:
 
 inputs:
   learning_task:
-    type: Enum
+    type: string
     default: "regression"
     enum:
       - regression
       - classification
   train_samples:
-    type: Integer
+    type: integer
     description: Number of training samples to generate
     default: 1000
     optional: false
   train_partitions:
-    type: Integer
+    type: integer
     description: Number of partitions to generate for training data
     default: 1
     optional: false
   test_samples:
-    type: Integer
+    type: integer
     description: Number of testing samples to generate
     default: 100
     optional: false
   test_partitions:
-    type: Integer
+    type: integer
     description: Number of partitions to generate for testing data
     default: 1
     optional: false
   inferencing_samples:
-    type: Integer
+    type: integer
     description: Number of inferencing samples to generate
     default: 1000
     optional: false
   inferencing_partitions:
-    type: Integer
+    type: integer
     description: Number of partitions to generate for inferencing data
     default: 1
     optional: false
   n_features:
-    type: Integer
+    type: integer
     description: Number of features/columns
     default: 100
     optional: false
   n_informative:
-    type: Integer
+    type: integer
     description: Number of informative features
     default: 100
     optional: false
   n_redundant:
-    type: Integer
+    type: integer
     description: number of redundant features (for classification)
     optional: true
   random_state:
-    type: Integer
+    type: integer
     description: random seed
     optional: true
 
   delimiter:
-    type: Enum
+    type: string
     default: "comma"
     enum:
       - tab
@@ -78,21 +78,21 @@ inputs:
 
   # generic benchmark parameters
   verbose:
-    type: Boolean
+    type: boolean
     default: False
     description: "Show debug logs"
   custom_properties:
-    type: String
+    type: string
     description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
     optional: true
 
 outputs:
   output_train:
-    type: AnyDirectory
+    type: path
   output_test:
-    type: AnyDirectory
+    type: path
   output_inference:
-    type: AnyDirectory
+    type: path
 
 command: >-
   python generate.py
@@ -114,8 +114,8 @@ command: >-
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
 
-environment:
-  conda:
-    # conda file path is resolved after additional includes
-    conda_dependencies_file: conda_env.yaml
-  os: Linux
+environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cuda11-gpu:3
+#  conda:
+#    # conda file path is resolved after additional includes
+#    conda_dependencies_file: conda_env.yaml
+#  os: Linux
