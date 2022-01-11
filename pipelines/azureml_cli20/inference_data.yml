@@ -1,6 +1,0 @@
-name: synthetic_inference_4000col
-version: 1
-description: Synthetic dataset for inference, for regression task, 4000 cols
-datastore: azureml:workspaceblobstore
-local_path: ../../data/
-path: /synthetic/inference.txt
