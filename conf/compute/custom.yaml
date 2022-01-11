@@ -1,0 +1,4 @@
+# @package _group_
+linux_cpu: "cpu-cluster"
+linux_gpu: "linux-gpu-nv6"
+windows_cpu: "win-cpu"

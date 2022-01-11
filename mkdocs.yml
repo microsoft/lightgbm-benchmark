@@ -11,26 +11,66 @@ nav:
     Developer Guide: contribute/developer-guide.md
     Reporting Guide: contribute/reporting-guide.md
 - Run:
-    Install: quickstart/install.md
-    Run Manually: quickstart/manual-benchmark.md
-    Run in AzureML CLI v2.0: quickstart/azureml-cli20-benchmark.md
+    Install: run/install.md
+    Run manually: run/manual-benchmark.md
+    Run in AzureML:
+        Azure Setup: run/azureml/azure-setup.md
+        Local Setup: run/azureml/local-setup.md
+        Benchmark Pipelines:
+            Generate data: run/azureml/generate-synthetic-data.md
+            Training: run/azureml/benchmark-training.md
+            Inferencing: run/azureml/benchmark-inferencing.md
+        Custom Pipelines:
+            Upload your data: run/azureml/upload-your-data.md
+            Train on your data: run/azureml/train-on-your-data.md
+        Designer UI: run/azureml/designer-ui.md
 - Results:
-    Latest: results/latest.md
+    Inferencing: results/inferencing.md
+    Manual: results/manual.md
+- Reference Docs:
+    - src/common/:
+        - aml.py: references/common/aml.md
+        - components.py: references/common/components.md
+        - io.py: references/common/io.md
+        - lightgbm_utils.py: references/common/lightgbm_utils.md
+        - metrics.py: references/common/metrics.md
+        - tasks.py: references/common/tasks.md
+    - src/scripts/:
+        - sample/sample.py: references/scripts/sample/sample.md
+        - training/lightgbm_python/: references/scripts/training/lightgbm_python.md
 
 theme:
   name: readthedocs
   name: material
 
 markdown_extensions:
-- pymdownx.highlight:
-    linenums: true
-    linenums_style: pymdownx-inline
+- pymdownx.tabbed
 - pymdownx.superfences
 - pymdownx.snippets
+- admonition
+- pymdownx.highlight:
+    use_pygments: true
+    linenums: true
+    linenums_style: pymdownx-inline
 # https://github.com/mkdocs/mkdocs/issues/777
 - markdown_include.include:
     base_path: .
 
 plugins:
 - search
-- mkdocstrings
+- mkdocstrings:
+    default_handler: python
+    handlers:
+        python:
+            setup_commands:
+            - import sys
+            - sys.path.append("src")
+            rendering:
+                show_source: true
+                show_if_no_docstring: false
+                members_order: "source"
+                show_root_toc_entry: false
+                show_root_heading: false
+    #custom_templates: templates
+    watch:
+      - src/

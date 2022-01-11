@@ -1,0 +1,90 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+    - 'docker/**'
+    - '.github/workflows/docker_images.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+    - 'docker/**'
+    - '.github/workflows/docker_images.yml'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Reason'
+        required: false
+        default: '...'
+
+jobs:
+
+  linux_container_build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dockerfile:
+          - docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_cpu_mpi_pip.dockerfile
+          - docker/lightgbm-v3.2.1/linux_cuda_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_gpu_build.dockerfile
+          - docker/lightgbm-v3.2.1/linux_gpu_pip.dockerfile
+          - docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
+          - docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
+          - docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+          - src/scripts/training/lightgbm_python/default.dockerfile
+          - src/scripts/inferencing/lightgbm_python/default.dockerfile
+          - src/scripts/inferencing/lightgbm_c_api/default.dockerfile
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Query Git branch name
+      uses: petehouston/github-actions-query-branch-name@v1.2
+  
+    - name: Check branch name
+      run: |-
+        echo "GIT_BRANCH_NAME = $GIT_BRANCH_NAME"
+        echo "GIT_BRANCH_NAME_HEAD = $GIT_BRANCH_NAME_BEAD"
+        echo "GIT_BRANCH_NAME_BASE = $GIT_BRANCH_NAME_BASE"
+        echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name }}"
+        echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_head }}"
+        echo "Branch name: ${{ steps.queryBranch.outputs.git_branch_name_base }}"
+  
+    - uses: marceloprado/has-changed-path@v1
+      id: dockerfile-changed
+      with:
+        paths: ${{ matrix.dockerfile}}
+
+    - name: Build the Docker image
+      if: steps.dockerfile-changed.outputs.changed == 'true'
+      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s) --build-arg lightgbm_benchmark_branch=$GIT_BRANCH_NAME
+
+  windows_container_build:
+
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        dockerfile:
+          - docker/lightgbm-v3.2.1/windows_cpu_pip.dockerfile
+          - docker/lightgbm-v3.3.0/windows_cpu_pip.dockerfile
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: marceloprado/has-changed-path@v1
+      id: dockerfile-changed
+      with:
+        paths: docker/${{ matrix.dockerfile}}
+
+    - name: Build the Docker image
+      if: steps.dockerfile-changed.outputs.changed == 'true'
+      run: docker build . --file ${{ matrix.dockerfile }} --tag temp:$(date +%s)

@@ -1,0 +1,43 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: sample_module
+version: 1.0.1
+display_name: "Sample Module"
+type: CommandComponent
+description: A sample module to implement your own
+is_deterministic: true
+
+inputs:
+  data:
+    type: AnyDirectory
+    description: directory to the inference data
+    optional: false
+  model:
+    type: AnyDirectory
+    description: directory to the model
+    optional: false
+  verbose:
+    type: Boolean
+    optional: true
+  custom_properties:
+    type: String
+    description: additional custom tags for the job
+    optional: true
+
+outputs:
+  predictions:
+    type: AnyDirectory
+    description: output of the sample
+
+command: >-
+  python sample.py
+  --data {inputs.data}
+  --model {inputs.model}
+  --output {outputs.predictions}
+  [--verbose {inputs.verbose}]
+  [--custom_properties {inputs.custom_properties}]
+
+environment:
+  conda:
+    # conda file path is resolved after additional includes
+    conda_dependencies_file: conda_env.yaml
+  os: Linux

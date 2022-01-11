@@ -1,0 +1,86 @@
+name: AzureML Pipelines Validation
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+    - 'docs/**'
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Reason'
+        required: false
+        default: '...'
+
+jobs:
+  build:
+    environment: mlops
+
+    runs-on: ubuntu-latest
+
+    steps:
+  
+    - name: check out repo
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8==3.9.1 pytest~=6.2 pytest-cov~=2.11
+        sudo apt-get install libopenmpi-dev
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # hotfix for azurecli issue
+        pip install --upgrade --force-reinstall --no-cache-dir "azure-cli<2.30.0"
+
+    - name: azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDS}}
+
+    - name : Validate pipelines [data generation]
+      run: >-
+        python src/pipelines/azureml/data_generation.py
+        --exp-config ./conf/experiments/data-generation.yaml
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+
+    - name : Validate pipelines [inferencing]
+      run: >-
+        python src/pipelines/azureml/lightgbm_inferencing.py
+        --exp-config ./conf/experiments/lightgbm-inferencing.yaml
+        lightgbm_inferencing_config.tasks="[{data:{name:"dummy_dataset"},model:{name:"dummy_dataset"}}]"
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+
+    - name : Validate pipelines [training]
+      run: >-
+        python src/pipelines/azureml/lightgbm_training.py
+        --exp-config ./conf/experiments/lightgbm_training/cpu.yaml
+        lightgbm_training_config.tasks="[{train:{name:"dummy_dataset"},test:{name:"dummy_dataset"}}]"
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"
+
+    - name : Validate pipelines [training+sweep]
+      run: >-
+        python src/pipelines/azureml/lightgbm_training.py
+        --exp-config ./conf/experiments/lightgbm_training/sweep.yaml
+        lightgbm_training_config.tasks="[{train:{name:"dummy_dataset"},test:{name:"dummy_dataset"}}]"
+        aml.subscription_id=${{secrets.SUBSCRIPTION}}
+        aml.resource_group=${{secrets.RESOURCE_GROUP}}
+        aml.workspace_name=${{secrets.WORKSPACE_NAME}}
+        aml.auth="azurecli"

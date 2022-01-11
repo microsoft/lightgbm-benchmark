@@ -2,102 +2,131 @@
 # Licensed under the MIT license.
 
 """
-These classes provide some tools to automate wall time compute and logging
+These classes provide some tools to automate wall time compute and logging.
 """
 import os
 import time
+import re
 from functools import wraps
 import mlflow
 import platform
+import psutil
 import json
 import traceback
 import logging
 
+
+class MetricType():
+    # a metric your script generates once (per node), example: training time
+    ONETIME_METRIC = 1
+
+    # a metric generated multiple times, once per "step" or iteration, example: rmse
+    ITERATION_METRIC = 2
+
+    # a perf metric generated at regular intervals
+    PERF_INTERVAL_METRIC = 2
+
+
 class MetricsLogger():
     """
-    Class for handling metrics logging in a singleton
-
-    Example:
-    --------
-    >> from common.metrics import MetricsLogger
-    >>
-    >> metrics_logger = MetricsLogger()
-    >> metrics_logger.log_metrics("rmse", 0.456)
+    Class for handling metrics logging in MLFlow.
     """
     _initialized = False
-    _instance = None
-    _session_name = None
-    _logger = logging.getLogger(__name__)
 
-    @classmethod
-    def _initialize_azureml_mlflow_client(cls):
-        if cls._initialized:
-            return
-        print(f"Initializing MLFLOW [session='{cls._session_name}']")
-        try:
-            # if any of that fails, fall back to normal
-            from azureml.core.run import Run
-
-            azureml_run = Run.get_context()
-            if "_OfflineRun" not in str(azureml_run):
-                # if we're running this script REMOTELY, get aml and compute args from run context
-                ws = azureml_run.experiment.workspace
-                mlflow.set_tracking_uri(ws.get_mlflow_tracking_uri())
-                mlflow.start_run()
-                cls._initialized = True
-            else:
-                # if we're running this script LOCALLY, add your own +aml=X +compute=X arguments
-                return
-        except:
-            print(f"Failed at AzureML initialization for some reason.")
-
-    def __new__(cls, session_name=None):
-        """ Create a new instance of the Singleton if necessary """
-        if cls._instance is None:
-            # if this is the first time we're initializing
-            cls._instance = super(MetricsLogger, cls).__new__(cls)
-            if not cls._session_name:
-                # if no previously recorded session name
-                cls._session_name = session_name
-            elif session_name:
-                # if new session name specified, overwrite
-                cls._session_name = session_name
-            cls._logger.info(f"Initializing MLFLOW [session='{cls._session_name}']")
+    def __init__(self, session_name=None, metrics_prefix=None):
+        self._metrics_prefix = metrics_prefix
+        self._session_name = session_name
+        self._logger = logging.getLogger(__name__)
+    
+    def open(self):
+        """Opens the MLFlow session."""
+        if not MetricsLogger._initialized:
+            self._logger.info(f"Initializing MLFLOW [session='{self._session_name}', metrics_prefix={self._metrics_prefix}]")
             mlflow.start_run()
-        else:
-            # if this is not the first time
-            pass
-
-        return cls._instance
+            MetricsLogger._initialized = True
 
     def close(self):
-        self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
-        mlflow.end_run()
+        """Close the MLFlow session."""
+        if MetricsLogger._initialized:
+            self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
+            mlflow.end_run()
+            MetricsLogger._initialized = False
+        else:
+            self._logger.warning(f"Call to finalize MLFLOW [session='{self._session_name}'] that was never initialized.")
 
-    def log_metric(self, key, value):
+    @classmethod
+    def _remove_non_allowed_chars(cls, name_string):
+        """ Removes chars not allowed for metric keys in mlflow """
+        return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
+
+    def log_metric(self, key, value, step=None, type=MetricType.ONETIME_METRIC):
+        """Logs a metric key/value pair.
+
+        Args:
+            key (str): metric key
+            value (str): metric value
+            step (int): which step to log this metric? (see mlflow.log_metric())
+            type (int): type of the metric
+        """
+        if self._metrics_prefix:
+            key = self._metrics_prefix + key
+
+        key = self._remove_non_allowed_chars(key)
+
         self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
         # NOTE: there's a limit to the name of a metric
         if len(key) > 50:
             key = key[:50]
-        mlflow.log_metric(key, value)
+
+        if type == MetricType.PERF_INTERVAL_METRIC:
+            pass # for now, do not process those
+        else:
+            try:
+                mlflow.log_metric(key, value, step=step)
+            except mlflow.exceptions.MlflowException:
+                self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+    def log_figure(self, figure, artifact_file):
+        """Logs a figure using mlflow
+        
+        Args:
+            figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
+            artifact_file (str): name of file to record
+        """
+        try:
+            mlflow.log_figure(figure, artifact_file)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
 
     def set_properties(self, **kwargs):
-        """ Set properties/tags for the session """
+        """Set properties/tags for the session.
+        
+        Args:
+            kwargs (dict): any keyword argument will be passed as tags to MLFLow
+        """
         self._logger.debug(f"mlflow[session={self._session_name}].set_tags({kwargs})")
         mlflow.set_tags(kwargs)
 
     def set_platform_properties(self):
-        """ Capture platform sysinfo and record as properties """
+        """ Capture platform sysinfo and record as properties. """
         self.set_properties(
             machine=platform.machine(),
             processor=platform.processor(),
+            architecture="-".join(platform.architecture()),
+            platform=platform.platform(),
             system=platform.system(),
             system_version=platform.version(),
-            cpu_count=os.cpu_count()
+            cpu_count=os.cpu_count(),
+            cpu_frequency=round(psutil.cpu_freq().current),
+            system_memory=round((psutil.virtual_memory().total) / (1024*1024*1024))
         )
 
     def set_properties_from_json(self, json_string):
-        """ Set properties/tags for the session from a json_string """
+        """ Set properties/tags for the session from a json_string.
+        
+        Args:
+            json_string (str): a string parsable as json, contains a dict.
+        """
         try:
             json_dict = json.loads(json_string)
         except:
@@ -115,15 +144,101 @@ class MetricsLogger():
         self.set_properties(**properties_dict)
 
     def log_parameters(self, **kwargs):
-        """ Set parameters for the session """
+        """ Logs parameters to MLFlow.
+        
+        Args:
+            kwargs (dict): any keyword arguments will be passed as parameters to MLFlow
+        """
         self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
-        mlflow.log_params(kwargs)
+        # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
+        for key,value in kwargs.items():
+            if isinstance(value, str) and len(value) > 255:
+                self._logger.warning(f"parameter {key} (str) could not be logged, value length {len(value)} > 255")
+            else:
+                mlflow.log_param(key,value)
 
-    def log_time_block(self, metric_name):
-        """ [Proxy] Records time of execution for block of code """
+    def log_time_block(self, metric_name, step=None):
+        """ [Proxy] Use in a `with` statement to measure execution time of a code block.
+        Uses LogTimeBlock.
+        
+        Example
+        -------
+        ```python
+        with LogTimeBlock("my_perf_metric_name"):
+            print("(((sleeping for 1 second)))")
+            time.sleep(1)
+        ```
+        """
         # see class below with proper __enter__ and __exit__
-        return LogTimeBlock(metric_name)
+        return LogTimeBlock(metric_name, step=step, metrics_logger=self)
 
+    def log_inferencing_latencies(self, time_per_batch, batch_length=1, factor_to_usecs=1000000.0):
+        """Logs prediction latencies (for inferencing) with lots of fancy metrics and plots.
+
+        Args:
+            time_per_batch_list (List[float]): time per inferencing batch
+            batch_lengths (Union[List[int],int]): length of each batch (List or constant)
+            factor_to_usecs (float): factor to apply to time_per_batch to convert to microseconds
+        """
+        if isinstance(batch_length, list):
+            sum_batch_lengths = sum(batch_length)
+        else:
+            sum_batch_lengths = batch_length*len(time_per_batch)
+
+        # log metadata
+        self.log_metric("prediction_batches", len(time_per_batch))
+        self.log_metric("prediction_queries", sum_batch_lengths)
+
+        if len(time_per_batch) > 0:
+            self.log_metric("prediction_latency_avg", (sum(time_per_batch) * factor_to_usecs)/sum_batch_lengths) # usecs
+
+        # if there's more than 1 batch, compute percentiles
+        if len(time_per_batch) > 1:
+            import numpy as np
+            import matplotlib.pyplot as plt
+            plt.switch_backend('agg')
+
+            # latency per batch
+            batch_run_times = np.array(time_per_batch) * factor_to_usecs
+            self.log_metric("batch_latency_p50_usecs", np.percentile(batch_run_times, 50))
+            self.log_metric("batch_latency_p75_usecs", np.percentile(batch_run_times, 75))
+            self.log_metric("batch_latency_p90_usecs", np.percentile(batch_run_times, 90))
+            self.log_metric("batch_latency_p95_usecs", np.percentile(batch_run_times, 95))
+            self.log_metric("batch_latency_p99_usecs", np.percentile(batch_run_times, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(batch_run_times, bins=100)
+            ax.set_title("Latency-per-batch histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            self.log_figure(fig, "batch_latency_log_histogram.png")
+
+            # latency per query
+            if isinstance(batch_length, list):
+                prediction_latencies = np.array(time_per_batch) * factor_to_usecs / np.array(batch_length)
+            else:
+                prediction_latencies = np.array(time_per_batch) * factor_to_usecs / batch_length
+
+            self.log_metric("prediction_latency_p50_usecs", np.percentile(prediction_latencies, 50))
+            self.log_metric("prediction_latency_p75_usecs", np.percentile(prediction_latencies, 75))
+            self.log_metric("prediction_latency_p90_usecs", np.percentile(prediction_latencies, 90))
+            self.log_metric("prediction_latency_p95_usecs", np.percentile(prediction_latencies, 95))
+            self.log_metric("prediction_latency_p99_usecs", np.percentile(prediction_latencies, 99))
+
+            # show the distribution prediction latencies
+            fig, ax = plt.subplots(1)
+            ax.hist(prediction_latencies, bins=100)
+            ax.set_title("Latency-per-prediction histogram (log scale)")
+            plt.xlabel("usecs")
+            plt.ylabel("occurence")
+            plt.yscale('log')
+
+            # record in mlflow
+            self.log_figure(fig, "prediction_latency_log_histogram.png")
 
 
 ########################
@@ -132,37 +247,29 @@ class MetricsLogger():
 
 class LogTimeBlock(object):
     """ This class should be used to time a code block.
-    The time diff is computed from __enter__ to __exit__
-    and can be:
-    - printed out (see kwargs verbose)
-    - logged as metric in a run (see kwargs run)
-    - added to a dictionary (see kwargs profile)
+    The time diff is computed from __enter__ to __exit__.
 
     Example
     -------
-    >>> with LogTimeBlock("my_perf_metric_name"):
-            print("(((sleeping for 1 second)))")
-            time.sleep(1)
-    --- time elapsted my_perf_metric_name : 1.0 s
-    { 'my_perf_metric_name': 1.0 }
+    ```python
+    with LogTimeBlock("my_perf_metric_name"):
+        print("(((sleeping for 1 second)))")
+        time.sleep(1)
+    ```
     """
 
     def __init__(self, name, **kwargs):
         """
         Constructs the LogTimeBlock.
 
-        Arguments
-        ---------
-        name: {str}
-            key for the time difference (for storing as metric)
-
-        Keyword Arguments
-        -----------------
-        tags: {dict}
-            add properties to metrics for logging as log_row()
+        Args:
+        name (str): key for the time difference (for storing as metric)
+        kwargs (dict): any keyword will be added  as properties to metrics for logging (work in progress)
         """
         # kwargs
         self.tags = kwargs.get('tags', None)
+        self.step = kwargs.get('step', None)
+        self.metrics_logger = kwargs.get('metrics_logger', None)
 
         # internal variables
         self.name = name
@@ -176,28 +283,14 @@ class LogTimeBlock(object):
     def __exit__(self, exc_type, value, traceback):
         """ Stops the timer and stores accordingly
         gets triggered at beginning of code block.
-        Note: arguments are by design for with statements. """
+        
+        Note:
+            arguments are by design for with statements.
+        """
         run_time = time.time() - self.start_time # stops "timer"
 
         self._logger.info(f"--- time elapsed: {self.name} = {run_time:2f} s" + (f" [tags: {self.tags}]" if self.tags else ""))
-        MetricsLogger().log_metric(self.name, run_time)
-
-
-####################
-### METHOD TIMER ###
-####################
-
-def log_time_function(func):
-    """ decorator to log wall time of a function/method """
-    @wraps(func)
-    def perf_wrapper(*args, **kwargs):
-        log_name = "{}.time".format(func.__qualname__)
-        start_time = time.time()
-        output = func(*args, **kwargs)
-        run_time = time.time() - start_time
-
-        logging.getLogger(__name__).info("--- time elapsed: {} = {:2f} s".format(log_name, run_time))
-        MetricsLogger().log_metric(log_name, run_time)
-
-        return output
-    return perf_wrapper
+        if self.metrics_logger:
+            self.metrics_logger.log_metric(self.name, run_time, step=self.step)
+        else:
+            MetricsLogger().log_metric(self.name, run_time, step=self.step)

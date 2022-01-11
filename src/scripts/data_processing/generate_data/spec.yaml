@@ -1,0 +1,121 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: generate_synthetic_data
+version: 1.0.5
+display_name: "Generate Synthetic Data"
+type: CommandComponent
+description: "Generate data for classification or regression."
+is_deterministic: true
+
+tags:
+  git: https://github.com/microsoft/lightgbm-benchmark
+  docs: https://microsoft.github.io/lightgbm-benchmark
+  framework: scikit-learn
+  framework_version: 0.24.2
+
+inputs:
+  learning_task:
+    type: Enum
+    default: "regression"
+    enum:
+      - regression
+      - classification
+  train_samples:
+    type: Integer
+    description: Number of training samples to generate
+    default: 1000
+    optional: false
+  train_partitions:
+    type: Integer
+    description: Number of partitions to generate for training data
+    default: 1
+    optional: false
+  test_samples:
+    type: Integer
+    description: Number of testing samples to generate
+    default: 100
+    optional: false
+  test_partitions:
+    type: Integer
+    description: Number of partitions to generate for testing data
+    default: 1
+    optional: false
+  inferencing_samples:
+    type: Integer
+    description: Number of inferencing samples to generate
+    default: 1000
+    optional: false
+  inferencing_partitions:
+    type: Integer
+    description: Number of partitions to generate for inferencing data
+    default: 1
+    optional: false
+  n_features:
+    type: Integer
+    description: Number of features/columns
+    default: 100
+    optional: false
+  n_informative:
+    type: Integer
+    description: Number of informative features
+    default: 100
+    optional: false
+  n_redundant:
+    type: Integer
+    description: number of redundant features (for classification)
+    optional: true
+  random_state:
+    type: Integer
+    description: random seed
+    optional: true
+
+  delimiter:
+    type: Enum
+    default: "comma"
+    enum:
+      - tab
+      - comma
+      - space
+
+  # generic benchmark parameters
+  verbose:
+    type: Boolean
+    default: False
+    description: "Show debug logs"
+  custom_properties:
+    type: String
+    description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
+    optional: true
+
+outputs:
+  output_train:
+    type: AnyDirectory
+  output_test:
+    type: AnyDirectory
+  output_inference:
+    type: AnyDirectory
+
+command: >-
+  python generate.py
+  --type {inputs.learning_task}
+  --train_samples {inputs.train_samples}
+  --train_partitions {inputs.train_partitions}
+  --test_samples {inputs.test_samples}
+  --test_partitions {inputs.test_partitions}
+  --inferencing_samples {inputs.inferencing_samples}
+  --inferencing_partitions {inputs.inferencing_partitions}
+  --n_features {inputs.n_features}
+  --n_informative {inputs.n_informative}
+  [--n_redundant {inputs.n_redundant}]
+  [--random_state {inputs.random_state}]
+  --delimiter {inputs.delimiter}
+  --output_train {outputs.output_train}
+  --output_test {outputs.output_test}
+  --output_inference {outputs.output_inference}
+  --verbose {inputs.verbose}
+  [--custom_properties {inputs.custom_properties}]
+
+environment:
+  conda:
+    # conda file path is resolved after additional includes
+    conda_dependencies_file: conda_env.yaml
+  os: Linux

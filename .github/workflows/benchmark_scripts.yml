@@ -6,11 +6,22 @@ name: Benchmark scripts gated build
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+    - 'docs/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+    - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Reason'
+        required: false
+        default: '...'
 
 jobs:
   build:
+    environment: mlops
 
     runs-on: ubuntu-latest
 
@@ -23,17 +34,25 @@ jobs:
   
     - uses: actions/checkout@v2
 
-    - name: Set up Python 3.9
+    - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.9
+        python-version: 3.8
 
     - name: Install dependencies
       run: |
+        sudo apt-get install libopenmpi-dev
         python -m pip install --upgrade pip
         pip install flake8==3.9.1 pytest~=6.2 pytest-cov~=2.11
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        # hotfix for azurecli issue
+        pip install --upgrade --force-reinstall --no-cache-dir "azure-cli<2.30.0"
 
+    - name: azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDS}}
+  
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -42,8 +61,14 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test with pytest
-      run: |
-        python -m pytest tests/ --junitxml=test-build-result.xml
+      run: >-
+        python -m pytest tests/
+        --junitxml=test-build-result.xml
+        --cov=src/ --cov-report xml:coverage.xml --cov-report term
+        --aml_subscription_id=${{secrets.SUBSCRIPTION}}
+        --aml_resource_group=${{secrets.RESOURCE_GROUP}}
+        --aml_workspace_name=${{secrets.WORKSPACE_NAME}}
+        --aml_auth="azurecli"
 
     - name: Publish test results
       uses: EnricoMi/publish-unit-test-result-action/composite@v1
@@ -51,3 +76,20 @@ jobs:
         check_name: Unit Test Results for Build
         github_token: ${{ secrets.GITHUB_TOKEN }}
         files: test-build-result.xml
+
+    - name: Code Coverage Summary Report
+      uses: irongut/CodeCoverageSummary@v1.0.2
+      # uses: joshjohanning/CodeCoverageSummary@v1.0.2
+      with:
+        filename: coverage.xml
+        badge: true
+        hide_complexity: true
+        format: 'markdown'
+        output: 'both'
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      if: github.event_name == 'pull_request'
+      with:
+        recreate: true
+        path: code-coverage-results.md

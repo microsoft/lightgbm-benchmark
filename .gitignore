@@ -133,3 +133,12 @@ data/
 
 # ignore mlflow local dumps
 mlruns/
+
+# ignore hydra outputs (sdk 1.5 + shrike)
+outputs/
+
+# ignore aml references
+conf/aml/
+conf/compute/
+conf/experiments/prod/
+src/scripts/inferencing/custom_win_cli/static_binaries/
