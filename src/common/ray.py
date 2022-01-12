@@ -36,6 +36,7 @@ class RayScript(RunnableScript):
         )
 
         # ray init settings
+        self.self_is_head = False
         self.head_address = None
         self.head_port = 6379
         self.redis_password = None
@@ -93,20 +94,17 @@ class RayScript(RunnableScript):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing Ray component script...")
 
-        # open mlflow
-        self.metrics_logger.open()
-
         if args.ray_on_aml:
             # if running on AzureML, get context of cluster from env variables
             self.head_address = os.environ.get("AZ_BATCHAI_JOB_MASTER_NODE_IP")
             self.redis_password = os.environ.get("AZUREML_RUN_TOKEN_RAND", "12345")
-            self_is_head = (os.environ.get("OMPI_COMM_WORLD_RANK", "0") == "0")
-            available_nodes = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
+            self.self_is_head = (os.environ.get("OMPI_COMM_WORLD_RANK", "0") == "0")
+            self.available_nodes = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
 
-            if self_is_head: # if we're on the first node of this job
-                if available_nodes > 1: # and if number of nodes if more than one
+            if self.self_is_head: # if we're on the first node of this job
+                if self.available_nodes > 1: # and if number of nodes if more than one
                     # then initialize head node to listen to cluster nodes
-                    self.logger.info(f"Available nodes = {available_nodes}, initializing ray for HEAD node.")
+                    self.logger.info(f"Available nodes = {self.available_nodes}, initializing ray for HEAD node.")
                     self.setup_head_node()
 
                     # then run ray init
@@ -116,26 +114,22 @@ class RayScript(RunnableScript):
 
                     # and wait for cluster nodes to be initialized as well
                     for i in range(60):
-                        self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{available_nodes}]")
-                        if (len(ray.nodes()) >= available_nodes):
+                        self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{self.available_nodes}]")
+                        if (len(ray.nodes()) >= self.available_nodes):
                             break
                         time.sleep(1)
                     else:
                         raise Exception("Could not reach maximum number of nodes before 60 seconds.")
                 else:
                     # if just one node, nothing to do here
-                    self.logger.info(f"Available nodes = {available_nodes}, running ray.init() as for a single node...")
+                    self.logger.info(f"Available nodes = {self.available_nodes}, running ray.init() as for a single node...")
                     ray.init()
 
             else:
                 self.setup_cluster_node()
-                # go to sleep
-                self.cluster_node_sleep()
-                # and never return...
-
-
 
         else:
+            # if not running this script in AzureML...
             if args.ray_head:
                 # initialize ray for remote ray cluster
                 ray.init(
@@ -146,12 +140,16 @@ class RayScript(RunnableScript):
                 # initialize ray locally
                 ray.init()
 
+        # open mlflow
+        self.metrics_logger.open()
+
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
-        self.logger.info("Finalizing Ray component script...")
+        self.logger.info(f"Finalizing Ray component script [nodes={len(ray.nodes())}]...")
 
-        # clean ray exit
-        ray.shutdown()
+        # clean ray exit on HEAD node only
+        if self.self_is_head:
+            ray.shutdown()
 
         # close mlflow
         self.metrics_logger.close()
@@ -207,21 +205,52 @@ class RayScript(RunnableScript):
         ]
         self.run_ray_cli(ray_setup_command, timeout=None)
 
-        # then report that setup is complete
-        self.report_node_setup_complete()
 
-    def cluster_node_sleep(self):
-        # then go into sleep and show some useful logs
-        self.logger.info("Getting into sleep now...")
-        while(True):
-            time.sleep(10)
+    ############################
+    ### SPECIFIC MAIN METHOD ###
+    ############################
 
-            # TODO: figure out the exit strategy here
+    @classmethod
+    def main(cls, cli_args=None):
+        """ Component main function, it is not recommended to override this method.
+        It parses arguments and executes run() with the right arguments.
 
-        self.logger.warning("Received shutdown signal, shutting down node.")
+        Args:
+            cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
+        """
+        # initialize root logger
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        console_handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
-        # not sure we need this, but doing it anyway
-        self.run_ray_cli(["ray", "stop", "--force", "-v"])
+        # construct arg parser
+        parser = cls.get_arg_parser()
 
-        # exit, do not return!
-        sys.exit(0)
+        # if argument parsing fails, or if unknown arguments, will except
+        args, unknown_args = parser.parse_known_args(cli_args)
+        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+
+        # create script instance, initialize mlflow
+        script_instance = cls()
+        script_instance.initialize_run(args)
+
+        # catch run function exceptions to properly finalize run (kill/join threads)
+        try:
+            # run the actual run method ONLY ON HEAD
+            if script_instance.self_is_head:
+                script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
+            else:
+                script_instance.logger.warning("This is not HEAD node, exiting script now")
+        except BaseException as e:
+            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
+            script_instance.finalize_run(args)
+            raise e
+
+        # close mlflow
+        script_instance.finalize_run(args)
+
+        # return for unit tests
+        return script_instance
