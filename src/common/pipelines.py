@@ -183,10 +183,30 @@ def pipeline_submit(ml_client: MLClient,
         experiment_description = experiment_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     if pipeline_config.run.submit:
-        return ml_client.jobs.create_or_update(
+        pipeline_run = ml_client.jobs.create_or_update(
             pipeline_instance,
             experiment_name=(experiment_name or pipeline_config.experiment.name),
             description=experiment_description,
             tags=(tags or pipeline_config.experiment.tags),
             continue_run_on_step_failure=pipeline_config.run.continue_on_failure
         )
+
+        logging.info(
+            f"""
+#################################
+#################################
+#################################
+
+Follow link below to access your pipeline run directly:
+-------------------------------------------------------
+{pipeline_run.get_portal_url()}
+
+#################################
+#################################
+#################################
+        """
+        )
+
+        return pipeline_run
+    else:
+        logging.warning("Pipeline was not submitted, to submit it please add +run.submit=true to your command.")
