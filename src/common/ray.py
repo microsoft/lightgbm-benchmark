@@ -36,7 +36,7 @@ class RayScript(RunnableScript):
         )
 
         # ray init settings
-        self.self_is_head = False
+        self.self_is_head = True
         self.head_address = None
         self.head_port = 6379
         self.redis_password = None
@@ -129,6 +129,9 @@ class RayScript(RunnableScript):
                 self.setup_cluster_node()
 
         else:
+            # considering this one as head
+            self.self_is_head = True
+
             # if not running this script in AzureML...
             if args.ray_head:
                 # initialize ray for remote ray cluster
