@@ -1,4 +1,4 @@
-$schema: http://azureml/sdk-2-0/CommandComponent.json
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: lightgbm_benchmark.data.generate
 version: 2.0.0
 display_name: "Generate Synthetic Data"
@@ -94,8 +94,11 @@ outputs:
   output_inference:
     type: path
 
+code:
+  local_path: "../../../"
+
 command: >-
-  python generate.py
+  python scripts/data_processing/generate_data/generate.py
   --type {inputs.learning_task}
   --train_samples {inputs.train_samples}
   --train_partitions {inputs.train_partitions}
@@ -114,8 +117,7 @@ command: >-
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
 
-environment: azureml:AzureML-sklearn-0.24-ubuntu18.04-py37-cuda11-gpu:3
-#  conda:
-#    # conda file path is resolved after additional includes
-#    conda_dependencies_file: conda_env.yaml
-#  os: Linux
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+  conda_file: conda_env.yaml
+  os_type: linux
