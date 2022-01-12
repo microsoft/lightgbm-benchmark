@@ -197,5 +197,7 @@ Follow link below to access your pipeline run directly:
 #################################
         """
         )
+
+        return pipeline_run
     else:
         logging.warning("Pipeline was not submitted, to submit it please add +run.submit=true to your command.")
