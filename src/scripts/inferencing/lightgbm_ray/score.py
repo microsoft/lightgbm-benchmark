@@ -60,7 +60,7 @@ class LightGBMRayPythonInferencingScript(RayScript):
             required=False, type=input_file_path, help="Exported model location (file path)")
         group_i.add_argument("--output",
             required=False, default=None, type=str, help="Inferencing output location (file path)")
-        
+
         group_params = parser.add_argument_group("Scoring parameters")
         group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
