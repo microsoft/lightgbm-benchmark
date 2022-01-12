@@ -145,10 +145,11 @@ class RayScript(RunnableScript):
 
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
-        self.logger.info(f"Finalizing Ray component script [nodes={len(ray.nodes())}]...")
+        self.logger.info(f"Finalizing Ray component script...")
 
         # clean ray exit on HEAD node only
         if self.self_is_head:
+            self.logger.info(f"At finalization, number of nodes is [nodes={len(ray.nodes())}]")
             ray.shutdown()
 
         # close mlflow
