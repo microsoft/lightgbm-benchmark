@@ -110,7 +110,7 @@ def data_generation_main_pipeline_function(config):
                 delimiter = generation_task.delimiter,
                 random_state = 5,
                 verbose = False,
-                custom_properties = benchmark_custom_properties
+                #custom_properties = benchmark_custom_properties # TODO: fails for now
             )
             # run it on the right compute target
             generate_data_step.compute = config.compute.linux_cpu
