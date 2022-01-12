@@ -99,8 +99,9 @@ class RayScript(RunnableScript):
         if args.ray_on_aml:
             # if running on AzureML, get context of cluster from env variables
             self.head_address = os.environ.get("AZ_BATCHAI_JOB_MASTER_NODE_IP")
-            self.redis_password = os.environ.get("AZUREML_RUN_TOKEN_RAND")
-            self_is_head = (os.environ.get("OMPI_COMM_WORLD_NODE_RANK") == "0")
+            self.redis_password = os.environ.get("AZUREML_RUN_TOKEN_RAND", "12345")
+            self_is_head = (os.environ.get("OMPI_COMM_WORLD_NODE_RANK", "0") == "0")
+            available_nodes = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
 
             if self_is_head:
                 self.setup_head_node()
@@ -110,7 +111,18 @@ class RayScript(RunnableScript):
                 self.cluster_node_sleep()
                 # and never return...
 
-            ray.init(address="auto", _redis_password=self.redis_password)
+            ray_init_ret_val = ray.init(address="auto", _redis_password=self.redis_password)
+            self.logger.info(f"Ray init returned: {ray_init_ret_val}")
+            self.logger.info("Ray resources: {}".format(ray.available_resources()))
+
+            for i in range(60):
+                self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{available_nodes}]")
+                if (len(ray.nodes()) < available_nodes):
+                    break
+                time.sleep(1)
+            else:
+                raise Exception("Could not reach maximum number of nodes before 60 seconds.")
+
         else:
             if args.ray_head:
                 # initialize ray for remote ray cluster
@@ -168,13 +180,6 @@ class RayScript(RunnableScript):
             f"--redis-password={self.redis_password}"
         ]
         self.run_ray_cli(ray_setup_command)
-
-        # AFTER ray start,
-        # send cluster setup to all other nodes
-        self.broadcast_cluster_setup()
-
-        # then wait for all nodes to finish setup
-        self.wait_on_nodes_setup()
 
     def setup_cluster_node(self):
         """Setup to run only on non-head cluster nodes"""
