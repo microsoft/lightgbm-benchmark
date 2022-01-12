@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 
 """
-LightGBM/Python training script
+Helper code to run Ray distributed scripts [EXPERIMENTAL]
 """
 import os
 import logging
@@ -10,11 +10,11 @@ import traceback
 from .components import RunnableScript
 from dataclasses import dataclass
 
-from .perf import PerformanceMetricsCollector, PerfReportPlotter
 from distutils.util import strtobool
 
 import subprocess
 import ray
+import time
 
 class RayScript(RunnableScript):
     def __init__(self, task, framework, framework_version, metrics_prefix=None):
@@ -100,28 +100,40 @@ class RayScript(RunnableScript):
             # if running on AzureML, get context of cluster from env variables
             self.head_address = os.environ.get("AZ_BATCHAI_JOB_MASTER_NODE_IP")
             self.redis_password = os.environ.get("AZUREML_RUN_TOKEN_RAND", "12345")
-            self_is_head = (os.environ.get("OMPI_COMM_WORLD_NODE_RANK", "0") == "0")
+            self_is_head = (os.environ.get("OMPI_COMM_WORLD_RANK", "0") == "0")
             available_nodes = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
 
-            if self_is_head:
-                self.setup_head_node()
+            if self_is_head: # if we're on the first node of this job
+                if available_nodes > 1: # and if number of nodes if more than one
+                    # then initialize head node to listen to cluster nodes
+                    self.logger.info(f"Available nodes = {available_nodes}, initializing ray for HEAD node.")
+                    self.setup_head_node()
+
+                    # then run ray init
+                    ray_init_ret_val = ray.init(address="auto", _redis_password=self.redis_password)
+                    self.logger.info(f"Ray init returned: {ray_init_ret_val}")
+                    self.logger.info("Ray resources: {}".format(ray.available_resources()))
+
+                    # and wait for cluster nodes to be initialized as well
+                    for i in range(60):
+                        self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{available_nodes}]")
+                        if (len(ray.nodes()) >= available_nodes):
+                            break
+                        time.sleep(1)
+                    else:
+                        raise Exception("Could not reach maximum number of nodes before 60 seconds.")
+                else:
+                    # if just one node, nothing to do here
+                    self.logger.info(f"Available nodes = {available_nodes}, running ray.init() as for a single node...")
+                    ray.init()
+
             else:
                 self.setup_cluster_node()
                 # go to sleep
                 self.cluster_node_sleep()
                 # and never return...
 
-            ray_init_ret_val = ray.init(address="auto", _redis_password=self.redis_password)
-            self.logger.info(f"Ray init returned: {ray_init_ret_val}")
-            self.logger.info("Ray resources: {}".format(ray.available_resources()))
 
-            for i in range(60):
-                self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{available_nodes}]")
-                if (len(ray.nodes()) < available_nodes):
-                    break
-                time.sleep(1)
-            else:
-                raise Exception("Could not reach maximum number of nodes before 60 seconds.")
 
         else:
             if args.ray_head:
@@ -191,7 +203,7 @@ class RayScript(RunnableScript):
             "start",
             f"--address={self.head_address}:{self.head_port}",
             f"--redis-password={self.redis_password}",
-            "--block" # should remain in subprocess forever
+            #"--block" # should remain in subprocess forever
         ]
         self.run_ray_cli(ray_setup_command, timeout=None)
 
