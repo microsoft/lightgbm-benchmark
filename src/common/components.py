@@ -159,6 +159,12 @@ class RunnableScript():
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
+        # show the command used to run
+        if cli_args:
+            logger.info(f"Running main() with specific cli args: {cli_args}")
+        else:
+            logger.info(f"Running main() with sys.argv={sys.argv}")
+
         # construct arg parser
         parser = cls.get_arg_parser()
     
