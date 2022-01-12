@@ -97,7 +97,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         )
         group_o.add_argument(
             "--output_header",
-            required=True,
+            required=False,
             type=str,
             help="Output header location (directory)",
         )
@@ -126,7 +126,6 @@ class GenerateSyntheticDataScript(RunnableScript):
                     batch_size=batch_size,
                     n_features=args.n_features,
                     n_informative=args.n_informative,
-                    n_targets=1,
                     bias=0.0,
                     noise=0.0,
                     seed=args.random_state,
@@ -138,7 +137,6 @@ class GenerateSyntheticDataScript(RunnableScript):
                     batch_size=batch_size,
                     n_features=args.n_features,
                     n_informative=args.n_informative,
-                    n_targets=1,
                     bias=0.0,
                     noise=0.0,
                     seed=args.random_state,
@@ -149,7 +147,6 @@ class GenerateSyntheticDataScript(RunnableScript):
                     batch_size=batch_size,
                     n_features=args.n_features,
                     n_informative=args.n_informative,
-                    n_targets=1,
                     bias=0.0,
                     noise=0.0,
                     seed=args.random_state,
@@ -179,6 +176,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         for output_file_path, generator, batches in self.generation_tasks:
             self.logger.info(f"Will generate output {output_file_path} with {batches} batches")
 
+        partition_count=0
         # generate each data outputs
         for output_file_path, generator, batches in self.generation_tasks:
             self.logger.info(f"Opening file {output_file_path} for writing...")
@@ -190,7 +188,7 @@ class GenerateSyntheticDataScript(RunnableScript):
             # iterate and append
             for i in range(batches):
                 with self.metrics_logger.log_time_block("time_data_generation_batch"):
-                    X,y = generator.generate()
+                    X,y = generator.generate(partition_count)
                     y = numpy.reshape(y, (y.shape[0], 1))
                     data = numpy.hstack((y, X))  # keep target as column 0
 
@@ -209,13 +207,17 @@ class GenerateSyntheticDataScript(RunnableScript):
                 del X
                 del y
 
+                partition_count+=1
+
             self.logger.info(f"Finished generating file {output_file_path}.")
         
         self.logger.info(f"Will create a header file for the generated data")
         # create a header 
-        header = [f'Column_{i}' for i in range(data.shape[1])]
-        with open(os.path.join(args.output_header, "header.txt"), 'w') as hf:
-            hf.writelines(args.delimiter.join(header))
+        if args.output_header:
+            os.makedirs(args.output_header, exist_ok=True)
+            header = [f'Column_{i}' for i in range(data.shape[1])]
+            with open(os.path.join(args.output_header, "header.txt"), 'w') as hf:
+                hf.writelines(args.delimiter.join(header))
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -231,7 +233,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
-        os.makedirs(args.output_header, exist_ok=True)
+
 
         # transform delimiter
         if args.delimiter == "comma":
@@ -254,14 +256,8 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         # record a metric
         logger.info(f"Generating data.")
-        if args.type in ["regression", "classification", "lambdarank"]:
-        #     self.generate_classification(args)
-        # elif args.type == "regression" or args.type == "lambdarank":
-            self.generate_tasks(args)
-            self.execute_tasks(args)
-        else:
-            raise NotImplementedError(f"--type {args.type} is not implemented.")
-
+        self.generate_tasks(args)
+        self.execute_tasks(args)
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """

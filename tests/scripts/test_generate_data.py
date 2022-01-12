@@ -211,4 +211,4 @@ def test_generate_ranking_data(temporary_dir):
 
     assert os.path.isfile(
         os.path.join(output_header, "header.txt")
-    ), "Script generate.py should generate inference_0.txt under --output dir but did not"
+    ), "Script generate.py should generate header.txt under --output dir but did not"

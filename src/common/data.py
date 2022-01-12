@@ -15,7 +15,6 @@ class RegressionDataGenerator():
                  batch_size: int,
                  n_features: int,
                  n_informative: int,
-                 n_targets: int,
                  bias: float,
                  noise: float,
                  seed: int):
@@ -23,16 +22,15 @@ class RegressionDataGenerator():
         self.batch_size = batch_size
         self.n_features = n_features
         self.n_informative = min(n_features, n_informative)
-        self.n_targets = n_targets
         self.bias = bias
         self.noise = noise
         self.generator = np.random.RandomState(seed)
 
         # Generate a ground truth model with only n_informative features being non-zeros
-        self.ground_truth = np.zeros((self.n_features, self.n_targets))
-        self.ground_truth[:n_informative, :] = 100 * self.generator.rand(self.n_informative, self.n_targets)
+        self.ground_truth = np.zeros((self.n_features, 1))
+        self.ground_truth[:n_informative, :] = 100 * self.generator.rand(self.n_informative, 1)
 
-    def generate(self):
+    def generate(self, partition_count=0):
         """Generate one batch of data.
 
         Returns:
@@ -60,7 +58,6 @@ class ClassificationDataGenerator():
                  batch_size: int,
                  n_features: int,
                  n_informative: int,
-                 n_targets: int,
                  bias: float,
                  noise: float,
                  seed: int):
@@ -69,16 +66,15 @@ class ClassificationDataGenerator():
         self.batch_size = batch_size
         self.n_features = n_features
         self.n_informative = min(n_features, n_informative)
-        self.n_targets = n_targets
         self.bias = bias
         self.noise = noise
         self.generator = np.random.RandomState(seed)
 
         # Generate a ground truth model with only n_informative features being non-zeros
-        self.ground_truth = np.zeros((self.n_features, self.n_targets))
-        self.ground_truth[:n_informative, :] = 100 * self.generator.rand(self.n_informative, self.n_targets)
+        self.ground_truth = np.zeros((self.n_features, 1))
+        self.ground_truth[:n_informative, :] = 100 * self.generator.rand(self.n_informative, 1)
 
-    def generate(self):
+    def generate(self, partition_count=0):
         """Generate one batch of data.
 
         Returns:
@@ -109,7 +105,6 @@ class RankingDataGenerator():
                  batch_size: int,
                  n_features: int,
                  n_informative: int,
-                 n_targets: int,
                  bias: float,
                  noise: float,
                  seed: int):
@@ -119,16 +114,15 @@ class RankingDataGenerator():
         self.batch_size = batch_size
         self.n_features = n_features
         self.n_informative = min(n_features, n_informative)
-        self.n_targets = n_targets
         self.bias = bias
         self.noise = noise
         self.generator = np.random.RandomState(seed)
 
         # Generate a ground truth model with only n_informative features being non-zeros
-        self.ground_truth = np.zeros((self.n_features, self.n_targets))
-        self.ground_truth[:n_informative, :] = 100 * self.generator.rand(self.n_informative, self.n_targets)
+        self.ground_truth = np.zeros((self.n_features, 1))
+        self.ground_truth[:n_informative, :] = 100 * self.generator.rand(self.n_informative, 1)
 
-    def generate(self):
+    def generate(self, partition_count=0):
         """Generate one batch of data.
 
         Returns:
@@ -138,9 +132,10 @@ class RankingDataGenerator():
         # Randomly generate a well conditioned input set
         X = self.generator.randn(self.batch_size, self.n_features)
         y = np.dot(X, self.ground_truth) + self.bias
+        base_count = max(self.docs_per_query, 1000) * (partition_count + 1)
 
         # add query column
-        query_col = [[i // self.docs_per_query] for i in range(self.batch_size)]
+        query_col = [[(i // self.docs_per_query) + base_count] for i in range(self.batch_size)]
         X = np.hstack((query_col, X))
 
         # Add noise
