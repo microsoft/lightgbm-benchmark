@@ -190,22 +190,21 @@ def pipeline_submit(ml_client: MLClient,
             tags=(tags or pipeline_config.experiment.tags),
             continue_run_on_step_failure=pipeline_config.run.continue_on_failure
         )
+#         logging.info(
+#             f"""
+# #################################
+# #################################
+# #################################
 
-        logging.info(
-            f"""
-#################################
-#################################
-#################################
+# Follow link below to access your pipeline run directly:
+# -------------------------------------------------------
+# {pipeline_run.get_portal_url()}
 
-Follow link below to access your pipeline run directly:
--------------------------------------------------------
-{pipeline_run.get_portal_url()}
-
-#################################
-#################################
-#################################
-        """
-        )
+# #################################
+# #################################
+# #################################
+#         """
+#         )
 
         return pipeline_run
     else:
