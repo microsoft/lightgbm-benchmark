@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-1-5/SweepComponent.json
-name: lightgbm_python_train_sweep
-version: 1.0.1
+name: lightgbm.train.sweep.python.basic
+version: 1.0.6
 display_name: LightGBM Training Sweep
 type: SweepComponent
 description: "Hyperparameter optimization for LightGBM training, capable of distributed training (MPI)"
@@ -17,7 +17,7 @@ is_deterministic: false
 #    type: path
 #    description: writes some stats file of the trial component.
 
-trial: file:./spec.yaml
+trial: file:./spec_basic.yaml
 
 algorithm: random
 
