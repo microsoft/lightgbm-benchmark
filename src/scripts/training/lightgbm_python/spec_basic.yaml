@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-1-5/DistributedComponent.json
 name: lightgbm_python_train
-version: 1.0.5
+version: 1.0.6-basic
 display_name: "LightGBM Training (Python API)"
 type: DistributedComponent
 description: >-
@@ -182,9 +182,6 @@ launcher:
     [--custom_properties {inputs.custom_properties}]
 
 environment:
-  docker:
-    build:
-      dockerfile: file:default.dockerfile
   conda:
-    userManagedDependencies: true
+    conda_dependencies_file: lightgbm_basic_env.yaml
   os: Linux
