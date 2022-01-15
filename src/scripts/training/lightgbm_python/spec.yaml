@@ -190,6 +190,8 @@ launcher:
     [--custom_properties {inputs.custom_properties}]
 
 environment:
+  docker:
+    image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
   conda:
     conda_dependencies_file: lightgbm_basic_env.yaml
   os: Linux
