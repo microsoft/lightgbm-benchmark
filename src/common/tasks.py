@@ -99,6 +99,7 @@ class lightgbm_training_variant_parameters:
 
     # COMPUTE
     device_type: str = "cpu"
+    multinode_driver: str = "socket"
     verbose: bool = False
 
 @dataclass
@@ -130,6 +131,7 @@ class lightgbm_training_output_variant_parameters:
 @dataclass
 class training_variant:
     # three below are mandatory sections of the variant config
+    framework: str = MISSING
     data: lightgbm_training_data_variant_parameters = MISSING
     training: lightgbm_training_variant_parameters = MISSING
     runtime: lightgbm_training_environment_variant_parameters = MISSING
