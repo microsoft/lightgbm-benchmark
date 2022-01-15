@@ -79,6 +79,7 @@ lightgbm_inferencing_config:
       build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction
       build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
+    - framework: lightgbm_ray # ray implementation
     - framework: treelite_python # v1.3.0
 
     # to use custom_win_cli, you need to compile your own binaries
