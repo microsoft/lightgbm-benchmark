@@ -134,6 +134,13 @@ inputs:
       - gpu
       - cuda
     description: "Device for the tree learning, you can use GPU to achieve the faster learning (to use gpu/cuda you need a specific dockerfile)"
+  multinode_comm:
+    type: Enum
+    default: 'socket'
+    enum:
+      - socket
+      - mpi
+    description: "Communication framework used for multi-node training (socket for lightgbm basic, mpi for lightgbm compiled for mpi)"
   custom_params:
     type: String
     optional: true
@@ -165,6 +172,7 @@ launcher:
     --label_column {inputs.label_column}
     [--group_column {inputs.group_column}]
     --device_type {inputs.device_type}
+    --multinode_comm {inputs.multinode_comm}
     --objective {inputs.objective}
     --metric {inputs.metric}
     [--label_gain {inputs.label_gain}]

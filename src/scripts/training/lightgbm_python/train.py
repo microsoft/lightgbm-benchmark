@@ -28,7 +28,8 @@ from common.io import get_all_files
 from common.lightgbm_utils import LightGBMCallbackHandler
 from common.distributed import MultiNodeScript
 
-class LightGBMPythonMpiTrainingScript(MultiNodeScript):
+
+class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
     def __init__(self):
         super().__init__(
             task = "train",
@@ -50,7 +51,7 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
             if parser is None, creates a new parser instance
         """
         # add generic arguments
-        parser = RunnableScript.get_arg_parser(parser)
+        parser = MultiNodeScript.get_arg_parser(parser)
 
         group_i = parser.add_argument_group("Input Data")
         group_i.add_argument("--train",
@@ -86,11 +87,11 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         return parser
 
 
-    def load_lgbm_params_from_cli(self, args, mpi_config):
+    def load_lgbm_params_from_cli(self, args, multinode_config):
         """Gets the right LightGBM parameters from argparse + mpi config
         Args:
             args (argparse.Namespace)
-            mpi_config (namedtuple): as returned from detect_mpi_config()
+            multinode_config (namedtuple): as returned from MultiNodeDriver (see common/distributed.py)
         
         Returns:
             lgbm_params (dict)
@@ -98,21 +99,39 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         # copy all parameters from argparse
         cli_params = dict(vars(args))
 
-        # removing arguments that are purely CLI
-        for key in ['verbose', 'custom_properties', 'export_model', 'test', 'train', 'custom_params', 'construct', 'disable_perf_metrics']:
+        # removing arguments from argparse that are not actual lightgbm parameters
+        non_lgbm_params = [
+            'verbose',
+            'custom_properties',
+            'export_model',
+            'test',
+            'train',
+            'custom_params',
+            'construct',
+            'disable_perf_metrics',
+            'multinode_driver',
+            'multinode_machines',
+            'multinode_listen_port',
+        ]
+        for key in non_lgbm_params:
             del cli_params[key]
 
         # doing some fixes and hardcoded values
         lgbm_params = cli_params
-        lgbm_params['feature_pre_filter'] = False
         lgbm_params['verbose'] = 2
         lgbm_params['header'] = bool(args.header) # strtobool returns 0 or 1, lightgbm needs actual bool
-        lgbm_params['is_provide_training_metric'] = True
 
-        # add mpi parameters if relevant
-        if mpi_config.mpi_available:
-            lgbm_params['num_machines'] = mpi_config.world_size
-            lgbm_params['machines'] = ":"
+        # configure multinode
+        if multinode_config.multinode_available:
+            if isinstance(multinode_config.machines, list):
+                # use ip addresses
+                lgbm_params['num_machines'] = len(multinode_config.machines)
+                lgbm_params['machines'] = ",".join([f"{ip}:{multinode_config.local_listen_port}" for ip in multinode_config.machines])
+                lgbm_params['local_listen_port'] = multinode_config.local_listen_port
+            else:
+                # use mpi
+                lgbm_params['num_machines'] = multinode_config.world_size
+                lgbm_params['machines'] = ":"
 
         # process custom params
         if args.custom_params:
@@ -122,25 +141,25 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         return lgbm_params
 
 
-    def assign_train_data(self, args, mpi_config):
+    def assign_train_data(self, args, multinode_config):
         """ Identifies which training file to load on this node.
         Checks for consistency between number of files and mpi config.
         Args:
             args (argparse.Namespace)
-            mpi_config (namedtuple): as returned from detect_mpi_config()
+            multinode_config (namedtuple): as returned from detect_multinode_config()
         
         Returns:
             str: path to the data file for this node
         """
         train_file_paths = get_all_files(args.train)
 
-        if mpi_config.mpi_available:    
+        if multinode_config.multinode_available:    
             # depending on mode, we'll require different number of training files
             if args.tree_learner == "data" or args.tree_learner == "voting":
-                if len(train_file_paths) == mpi_config.world_size:
-                    train_data = train_file_paths[mpi_config.world_rank]
+                if len(train_file_paths) == multinode_config.world_size:
+                    train_data = train_file_paths[multinode_config.world_rank]
                 else:
-                    raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {mpi_config.world_rank}, you need to partition the input data into {mpi_config.world_rank} files (currently found {len(train_file_paths)})")
+                    raise Exception(f"To use MPI with tree_learner={args.tree_learner} and node count {multinode_config.world_rank}, you need to partition the input data into {multinode_config.world_rank} files (currently found {len(train_file_paths)})")
             elif args.tree_learner == "feature":
                 if len(train_file_paths) == 1:
                     train_data = train_file_paths[0]
@@ -177,24 +196,24 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
             unknown_args (list[str]): list of arguments not recognized during argparse
         """
         # get mpi config as a namedtuple
-        mpi_config = self.mpi_config()
+        multinode_config = self.get_multinode_config()
 
         # figure out the lgbm params from cli args + mpi config
-        lgbm_params = self.load_lgbm_params_from_cli(args, mpi_config)
+        lgbm_params = self.load_lgbm_params_from_cli(args, multinode_config)
 
         # create a handler for the metrics callbacks
         callbacks_handler = LightGBMCallbackHandler(
             metrics_logger=metrics_logger,
-            metrics_prefix=f"node_{mpi_config.world_rank}/"
+            metrics_prefix=f"node_{multinode_config.world_rank}/"
         )
 
         # make sure the output argument exists
-        if args.export_model and mpi_config.main_node:
+        if args.export_model and multinode_config.main_node:
             os.makedirs(args.export_model, exist_ok=True)
             args.export_model = os.path.join(args.export_model, "model.txt")
 
         # log params only once by doing it only on main node (node 0)
-        if mpi_config.main_node:
+        if multinode_config.main_node:
             # log lgbm parameters
             logger.info(f"LGBM Params: {lgbm_params}")
             metrics_logger.log_parameters(**lgbm_params)
@@ -203,9 +222,9 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
         lightgbm.register_logger(logger)
 
         logger.info(f"Loading data for training")
-        with metrics_logger.log_time_block("time_data_loading", step=mpi_config.world_rank):
+        with metrics_logger.log_time_block("time_data_loading", step=multinode_config.world_rank):
             # obtain the path to the train data for this node
-            train_data_path = self.assign_train_data(args, mpi_config)
+            train_data_path = self.assign_train_data(args, multinode_config)
             test_data_paths = get_all_files(args.test)
 
             logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
@@ -217,8 +236,8 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
                     train_data.create_valid(test_data_path).construct() for test_data_path in test_data_paths
                 ]
                 # capture data shape in metrics
-                metrics_logger.log_metric(key="train_data.length", value=train_data.num_data(), step=mpi_config.world_rank)
-                metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature(), step=mpi_config.world_rank)
+                metrics_logger.log_metric(key="train_data.length", value=train_data.num_data(), step=multinode_config.world_rank)
+                metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature(), step=multinode_config.world_rank)
             else:
                 train_data = lightgbm.Dataset(train_data_path, params=lgbm_params)
                 val_datasets = [
@@ -230,26 +249,26 @@ class LightGBMPythonMpiTrainingScript(MultiNodeScript):
                 # metrics_logger.log_metric(key="train_data.width", value="n/a")
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
-        with metrics_logger.log_time_block("time_training", step=mpi_config.world_rank):
+        with metrics_logger.log_time_block("time_training", step=multinode_config.world_rank):
             booster = lightgbm.train(
                 lgbm_params,
                 train_data,
                 valid_sets = val_datasets,
-                callbacks=[callbacks_handler.callback]
+                #callbacks=[callbacks_handler.callback]
             )
 
-        if args.export_model and mpi_config.main_node:
+        if args.export_model and multinode_config.main_node:
             logger.info(f"Writing model in {args.export_model}")
             booster.save_model(args.export_model)
 
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """
-    return LightGBMPythonMpiTrainingScript.get_arg_parser(parser)
+    return LightGBMPythonMultiNodeTrainingScript.get_arg_parser(parser)
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """
-    LightGBMPythonMpiTrainingScript.main(cli_args)
+    LightGBMPythonMultiNodeTrainingScript.main(cli_args)
 
 if __name__ == "__main__":
     main()
