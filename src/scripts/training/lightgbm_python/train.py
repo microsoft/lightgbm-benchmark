@@ -215,7 +215,7 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
         # log params only once by doing it only on main node (node 0)
         if multinode_config.main_node:
             # log lgbm parameters
-            logger.info(f"LGBM Params: {lgbm_params}")
+            logger.info(f"LightGBM parameters: {lgbm_params}")
             metrics_logger.log_parameters(**lgbm_params)
 
         # register logger for lightgbm logs
