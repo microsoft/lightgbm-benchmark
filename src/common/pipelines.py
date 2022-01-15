@@ -171,7 +171,7 @@ def pipeline_submit(workspace: Workspace,
         experiment_description = experiment_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     if pipeline_config.run.submit:
-        return pipeline_instance.submit(
+        pipeline_run = pipeline_instance.submit(
             workspace=workspace,
             experiment_name=(experiment_name or pipeline_config.experiment.name),
             description=experiment_description,
@@ -181,3 +181,23 @@ def pipeline_submit(workspace: Workspace,
             regenerate_outputs=pipeline_config.run.regenerate_outputs,
             continue_on_step_failure=pipeline_config.run.continue_on_failure,
         )
+
+        logging.info(
+            f"""
+#################################
+#################################
+#################################
+
+Follow link below to access your pipeline run directly:
+-------------------------------------------------------
+{pipeline_run.get_portal_url()}
+
+#################################
+#################################
+#################################
+        """
+        )
+
+        return pipeline_run
+    else:
+        logging.warning("Pipeline was not submitted, to submit it please add +run.submit=true to your command.")

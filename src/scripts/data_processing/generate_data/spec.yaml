@@ -1,9 +1,9 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: generate_synthetic_data
 version: 1.0.5
-display_name: "Generate Synthetic Data (small)"
+display_name: "Generate Synthetic Data"
 type: CommandComponent
-description: "Generate synthetic data using scikit-learn make_* functions"
+description: "Generate data for classification or regression."
 is_deterministic: true
 
 tags:
@@ -24,15 +24,30 @@ inputs:
     description: Number of training samples to generate
     default: 1000
     optional: false
+  train_partitions:
+    type: Integer
+    description: Number of partitions to generate for training data
+    default: 1
+    optional: false
   test_samples:
     type: Integer
     description: Number of testing samples to generate
     default: 100
     optional: false
+  test_partitions:
+    type: Integer
+    description: Number of partitions to generate for testing data
+    default: 1
+    optional: false
   inferencing_samples:
     type: Integer
     description: Number of inferencing samples to generate
     default: 1000
+    optional: false
+  inferencing_partitions:
+    type: Integer
+    description: Number of partitions to generate for inferencing data
+    default: 1
     optional: false
   n_features:
     type: Integer
@@ -52,6 +67,14 @@ inputs:
     type: Integer
     description: random seed
     optional: true
+
+  delimiter:
+    type: Enum
+    default: "comma"
+    enum:
+      - tab
+      - comma
+      - space
 
   # generic benchmark parameters
   verbose:
@@ -75,12 +98,16 @@ command: >-
   python generate.py
   --type {inputs.learning_task}
   --train_samples {inputs.train_samples}
+  --train_partitions {inputs.train_partitions}
   --test_samples {inputs.test_samples}
+  --test_partitions {inputs.test_partitions}
   --inferencing_samples {inputs.inferencing_samples}
+  --inferencing_partitions {inputs.inferencing_partitions}
   --n_features {inputs.n_features}
   --n_informative {inputs.n_informative}
   [--n_redundant {inputs.n_redundant}]
   [--random_state {inputs.random_state}]
+  --delimiter {inputs.delimiter}
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}

@@ -3,9 +3,13 @@ pytest==6.2.4
 pytest-cov==2.12.1
 pytest-mock==3.6.1
 mlflow==1.21.0
-shrike[pipeline]==1.11.10
-hydra-core==1.0.7
-omegaconf==2.0.6
+shrike[pipeline]==1.14.7
+azure-ml-component==0.9.4.post1  # for component dsl
+azureml-train-core==1.36.0  # for azureml.train.hyperdrive
+azureml-dataset-runtime==1.36.0  # to register dataset
+hydra-core~=1.0.3
+typing_extensions==4.0.1 # for hydra
+omegaconf~=2.1
 treelite==2.1.0
 treelite_runtime==2.1.0
 mpi4py==3.1.1

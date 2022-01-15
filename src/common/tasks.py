@@ -32,10 +32,14 @@ class data_generation_task:
     task: str = MISSING
     task_key: Optional[str] = None
     train_samples: int = MISSING
+    train_partitions: int = 1
     test_samples: int = MISSING
+    test_partitions: int = 1
     inferencing_samples: int = MISSING
+    inferencing_partitions: int = 1
     n_features: int = MISSING
     n_informative: Optional[int] = None
+    delimiter: str = "comma"
 
 @dataclass
 class training_task:
