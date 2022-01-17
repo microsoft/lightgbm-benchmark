@@ -96,13 +96,15 @@ class MultiNodeMPIDriver(MultiNodeDriver):
         return MPI
 
     def initialize(self, **kwargs):
+        self._mpi_module = self._mpi_import()
+
         if self._mpi_init_mode is None:
-            # use simple env vars instead
+            # do not init mpi, but use openmpi env vars to detect mpi config
             self.logger.info(f"no MPI init, using environment variables instead")
             world_size = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
             world_rank = int(os.environ.get("OMPI_COMM_WORLD_RANK", "0"))
 
-            self._multinode_config = mpi_config_class(
+            self._multinode_config = multinode_config_class(
                 world_size, # world_size
                 world_rank, # world_rank
                 (world_size > 1), # mpi_available
@@ -110,9 +112,7 @@ class MultiNodeMPIDriver(MultiNodeDriver):
             )
             self.comm = None
         else:
-            self._mpi_module = self._mpi_import()
-
-            # use mpi to detect mpi config
+            # init mpi and use comm to detect mpi config
             self.logger.info(f"Running MPI.Init_thread(required={self._mpi_init_mode})")
             try:
                 self._mpi_module.Init_thread(required=self._mpi_init_mode)
@@ -121,7 +121,7 @@ class MultiNodeMPIDriver(MultiNodeDriver):
 
             self.comm = self._mpi_module.COMM_WORLD
             try:
-                self.mpi_config = mpi_config_class(
+                self.mpi_config = multinode_config_class(
                     self.comm.Get_size(), # world_size
                     self.comm.Get_rank(), # world_rank
                     (self.comm.Get_size() > 1), # mpi_available
@@ -129,7 +129,7 @@ class MultiNodeMPIDriver(MultiNodeDriver):
                 )
                 self.logger.info(f"MPI detection results: {self._multinode_config}")
             except:
-                self.mpi_config = mpi_config_class(
+                self.mpi_config = multinode_config_class(
                     1, # world_size
                     0, # world_rank
                     False, # mpi_available
@@ -141,10 +141,6 @@ class MultiNodeMPIDriver(MultiNodeDriver):
         return self._multinode_config
 
     def finalize(self):
-        if self._mpi_init_mode is None:
-            self.logger.info(f"no MPI init, not finalizing")
-            return
-
         if self._mpi_module.Is_initialized() and not self._mpi_module.Is_finalized():
             self.logger.info("MPI was initialized, calling MPI.finalize()")
             self._mpi_module.Finalize()
@@ -173,7 +169,7 @@ class MultiNodeScript(RunnableScript):
         )
 
         # keep those for initialization
-        self._mpi_init_node = mpi_init_mode
+        self._mpi_init_mode = mpi_init_mode
 
     @classmethod
     def get_arg_parser(cls, parser=None):
@@ -204,8 +200,8 @@ class MultiNodeScript(RunnableScript):
 
         if args.multinode_driver == 'socket':
             self.multinode_driver = MultiNodeSocketDriver(machines=args.multinode_machines, listen_port=args.multinode_listen_port)
-        elif multinode_driver == 'mpi':
-            self.multinode_driver = MultiNodeMPIDriver(mpi_init_mode=mpi_init_mode)
+        elif args.multinode_driver == 'mpi':
+            self.multinode_driver = MultiNodeMPIDriver(mpi_init_mode=self._mpi_init_mode)
         else:
             raise NotImplementedError(f"multinode_driver={multinode_driver} is not implemented, use 'socket' or 'mpi'")
 
