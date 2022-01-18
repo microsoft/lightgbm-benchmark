@@ -27,7 +27,7 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
                 'mpi4py==3.1.1' \
-                'lightgbm==${lightgbm_version}'
+                lightgbm==${lightgbm_version}
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
