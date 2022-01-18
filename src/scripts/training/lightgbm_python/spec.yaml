@@ -191,7 +191,9 @@ launcher:
 
 environment:
   docker:
-    image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+    build:
+      # file path is resolved after additional includes
+      dockerfile: file:./default.dockerfile
   conda:
-    conda_dependencies_file: lightgbm_basic_env.yaml
+    userManagedDependencies: true
   os: Linux
