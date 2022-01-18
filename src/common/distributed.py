@@ -32,18 +32,22 @@ class MultiNodeDriver:
         self._kwargs = kwargs
 
     def initialize(self):
+        """Initialize the driver"""
         self.logger.info(f"{self.__class__.__name__}.initialize(): pass.")
 
     def get_multinode_config(self):
+        """Get internal multinode config"""
         return self._multinode_config
 
     def finalize(self):
+        """Finalize/close resources used by the driver"""
         self.logger.info(f"{self.__class__.__name__}.finalize(): pass.")
 
 
 class MultiNodeSocketDriver(MultiNodeDriver):
     """Handling multinode initialization for socket"""
     def initialize(self, **kwargs):
+        """Initialize the driver"""
         self.logger.info(f"{self.__class__.__name__}.initialize(): discovering nodes from within the job.")
         if 'AZ_BATCH_NODE_LIST' in os.environ: # if within AzureML
             self.logger.info("Discovering multinode socket config from inside AzureML.")
@@ -96,6 +100,7 @@ class MultiNodeMPIDriver(MultiNodeDriver):
         return MPI
 
     def initialize(self, **kwargs):
+        """Initialize the driver"""
         self._mpi_module = self._mpi_import()
 
         if self._mpi_init_mode is None:
@@ -138,9 +143,11 @@ class MultiNodeMPIDriver(MultiNodeDriver):
                 self.logger.critical(f"MPI detection failed, switching to single node: {mpi_config}, see traceback below:\n{traceback.format_exc()}")
 
     def get_multinode_config(self):
+        """Get internal multinode config"""
         return self._multinode_config
 
     def finalize(self):
+        """Finalize/close resources used by the driver"""
         if self._mpi_module.Is_initialized() and not self._mpi_module.Is_finalized():
             self.logger.info("MPI was initialized, calling MPI.finalize()")
             self._mpi_module.Finalize()
@@ -157,7 +164,6 @@ class MultiNodeScript(RunnableScript):
             framework (str): name of ML framework
             framework_version (str): a version of this framework
             metrics_prefix (str): any prefix to add to this scripts metrics
-            driver (str): using 'socket' or 'mpi'?
             mpi_init_mode (int): mode to initialize MPI
         """
         # just use the regular init
@@ -233,7 +239,7 @@ class MultiNodeScript(RunnableScript):
             self.perf_report_collector.start()
 
     def get_multinode_config(self):
-        """Getter"""
+        """Get internal multinode config"""
         return self.multinode_driver._multinode_config
 
     def finalize_run(self, args):
