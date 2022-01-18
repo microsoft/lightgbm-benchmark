@@ -296,7 +296,7 @@ def lightgbm_training_pipeline_function(config,
         ### RUNTIME ###
         ###############
 
-        # # optional: override docker (ex: to test custom builds)
+        # optional: override docker (ex: to test custom builds)
         if 'build' in variant_params.runtime and variant_params.runtime.build:
             custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, variant_params.runtime.build))
             lightgbm_train_step.runsettings.environment.configure(
