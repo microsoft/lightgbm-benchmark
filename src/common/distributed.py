@@ -126,7 +126,7 @@ class MultiNodeMPIDriver(MultiNodeDriver):
 
             self.comm = self._mpi_module.COMM_WORLD
             try:
-                self.mpi_config = multinode_config_class(
+                self._multinode_config = multinode_config_class(
                     self.comm.Get_size(), # world_size
                     self.comm.Get_rank(), # world_rank
                     (self.comm.Get_size() > 1), # mpi_available
@@ -134,13 +134,13 @@ class MultiNodeMPIDriver(MultiNodeDriver):
                 )
                 self.logger.info(f"MPI detection results: {self._multinode_config}")
             except:
-                self.mpi_config = multinode_config_class(
+                self._multinode_config = multinode_config_class(
                     1, # world_size
                     0, # world_rank
                     False, # mpi_available
                     True, # main_node
                 )
-                self.logger.critical(f"MPI detection failed, switching to single node: {mpi_config}, see traceback below:\n{traceback.format_exc()}")
+                self.logger.critical(f"MPI detection failed, switching to single node: {self._multinode_config}, see traceback below:\n{traceback.format_exc()}")
 
     def get_multinode_config(self):
         """Get internal multinode config"""
