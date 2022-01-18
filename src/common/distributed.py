@@ -209,7 +209,7 @@ class MultiNodeScript(RunnableScript):
         elif args.multinode_driver == 'mpi':
             self.multinode_driver = MultiNodeMPIDriver(mpi_init_mode=self._mpi_init_mode)
         else:
-            raise NotImplementedError(f"multinode_driver={multinode_driver} is not implemented, use 'socket' or 'mpi'")
+            raise NotImplementedError(f"multinode_driver={args.multinode_driver} is not implemented, use 'socket' or 'mpi'")
 
         # initialize driver
         self.multinode_driver.initialize()
