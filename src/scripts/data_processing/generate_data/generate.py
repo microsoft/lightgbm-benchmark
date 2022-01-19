@@ -75,6 +75,9 @@ class GenerateSyntheticDataScript(RunnableScript):
         group_params.add_argument(
             "--delimiter", required=False, type=str, choices=['tab', 'comma', 'space'], default='comma'
         )
+        group_params.add_argument(
+            "--header", required=False, type=strtobool, default=False, help="generate header for output files"
+        )
 
         group_o = parser.add_argument_group("Outputs")
         group_o.add_argument(
@@ -183,7 +186,14 @@ class GenerateSyntheticDataScript(RunnableScript):
 
             # create/erase file
             with open(output_file_path, "w") as output_file:
-                output_file.write("")
+                if args.header:
+                    # generate synthetic header
+                    output_file.write(args.delimiter.join([
+                        str(i) for i in range(args.n_features+1)
+                    ]))
+                    output_file.write("\n")
+                else:
+                    output_file.write("")
 
             # iterate and append
             for i in range(batches):
