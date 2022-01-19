@@ -40,6 +40,7 @@ class RayScript(RunnableScript):
         self.head_address = None
         self.head_port = 6379
         self.redis_password = None
+        self.available_nodes = 1
 
     @classmethod
     def get_arg_parser(cls, parser=None):

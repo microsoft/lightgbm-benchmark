@@ -61,10 +61,8 @@ class LightGBMOnRayTrainingScript(RayScript):
             required=True, type=str, help="Testing data location (file path)")
         group_i.add_argument("--test_data_format",
             required=False, type=str, choices=['CSV', 'PARQUET', 'PETAFORM'], default=None, help="type of input test data (CSV, PARQUET, PETAFORM), default using same as train")
-        group_i.add_argument("--construct",
-            required=False, default=True, type=strtobool, help="use lazy initialization during data loading phase")
-        group_i.add_argument("--header", required=False, default=False, type=strtobool)
-        group_i.add_argument("--label_column", required=False, default="0", type=str)
+        #group_i.add_argument("--header", required=False, default=False, type=strtobool)
+        group_i.add_argument("--label_column", required=True, type=str)
         group_i.add_argument("--group_column", required=False, default=None, type=str)
 
         group_o = parser.add_argument_group("Outputs")
@@ -86,6 +84,10 @@ class LightGBMOnRayTrainingScript(RayScript):
         group_lgbm.add_argument("--feature_fraction", required=True, type=float)
         group_lgbm.add_argument("--device_type", required=False, type=str, default="cpu")
         group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
+
+        group_lgbm = parser.add_argument_group("LightGBM/Ray runsettings")
+        group_lgbm.add_argument("--ray_actors", required=False, default=None, type=int, help="number of actors (default: count available nodes, or 1)")
+
 
         return parser
 
@@ -119,7 +121,6 @@ class LightGBMOnRayTrainingScript(RayScript):
         # doing some fixes and hardcoded values
         lgbm_params = cli_params
         lgbm_params['verbose'] = 2
-        lgbm_params['header'] = bool(args.header) # strtobool returns 0 or 1, lightgbm needs actual bool
 
         # process custom params
         if args.custom_params:
@@ -160,8 +161,9 @@ class LightGBMOnRayTrainingScript(RayScript):
         train_set = lightgbm_ray.RayDMatrix(
             train_paths,
             label=args.label_column,  # Will select this column as the label
-            #columns=columns,
-            filetype=train_data_format
+            #columns=[str(i) for i in range(4001)],
+            filetype=train_data_format,
+            #distributed=False
         )
 
         logger.info(f"Loading data for validation")
@@ -171,25 +173,29 @@ class LightGBMOnRayTrainingScript(RayScript):
         val_set = lightgbm_ray.RayDMatrix(
             validation_paths,
             label=args.label_column,  # Will select this column as the label
-            #columns=columns,
-            filetype=val_data_format
+            #columns=[str(i) for i in range(4001)],
+            filetype=val_data_format,
+            #distributed=False
         )
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
         evals_result = {}
-        bst = lightgbm_ray.train(
+        booster = lightgbm_ray.train(
             lgbm_params,
             train_set,
             evals_result=evals_result,
             valid_sets=[val_set],
             valid_names=["test"],
             verbose_eval=False,
-            ray_params=lightgbm_ray.RayParams(num_actors=2, cpus_per_actor=2)
+            ray_params=lightgbm_ray.RayParams(
+                num_actors=args.ray_actors or self.available_nodes, # number of VMs
+                #cpus_per_actor=2
+            )
         )
 
         if args.export_model:
             logger.info(f"Writing model in {args.export_model}")
-            booster.save_model(args.export_model)
+            booster.booster_.save_model(args.export_model)
 
 
 def get_arg_parser(parser=None):
