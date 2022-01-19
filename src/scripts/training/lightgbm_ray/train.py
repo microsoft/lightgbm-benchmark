@@ -163,7 +163,7 @@ class LightGBMOnRayTrainingScript(RayScript):
             label=args.label_column,  # Will select this column as the label
             #columns=[str(i) for i in range(4001)],
             filetype=train_data_format,
-            #distributed=False
+            distributed=False
         )
 
         logger.info(f"Loading data for validation")
@@ -175,7 +175,7 @@ class LightGBMOnRayTrainingScript(RayScript):
             label=args.label_column,  # Will select this column as the label
             #columns=[str(i) for i in range(4001)],
             filetype=val_data_format,
-            #distributed=False
+            distributed=False
         )
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
