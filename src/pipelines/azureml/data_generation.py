@@ -108,6 +108,8 @@ def data_generation_main_pipeline_function(config):
             inferencing_partitions = generation_task.inferencing_partitions,
             n_features = generation_task.n_features,
             n_informative = generation_task.n_informative,
+            n_label_classes = generation_task.n_label_classes,
+            docs_per_query = generation_task.docs_per_query,
             delimiter = generation_task.delimiter,
             random_state = 5,
             verbose = False,
