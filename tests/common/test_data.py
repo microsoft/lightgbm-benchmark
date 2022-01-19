@@ -11,7 +11,6 @@ def test_regression_data_generator():
         batch_size=64,
         n_features=100,
         n_informative=50,
-        n_targets=1,
         bias=1.0,
         noise=1.0,
         seed=4
@@ -37,7 +36,6 @@ def test_regression_data_generator_reproducibility():
         batch_size=64,
         n_features=100,
         n_informative=50,
-        n_targets=1,
         bias=1.0,
         noise=1.0,
         seed=4
@@ -48,7 +46,6 @@ def test_regression_data_generator_reproducibility():
         batch_size=64,
         n_features=100,
         n_informative=50,
-        n_targets=1,
         bias=1.0,
         noise=1.0,
         seed=5
@@ -59,7 +56,6 @@ def test_regression_data_generator_reproducibility():
         batch_size=64,
         n_features=100,
         n_informative=50,
-        n_targets=1,
         bias=1.0,
         noise=1.0,
         seed=4 # <<< Equal to generator 1
