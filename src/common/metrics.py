@@ -98,6 +98,13 @@ class MetricsLogger():
         except mlflow.exceptions.MlflowException:
             self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
 
+    def log_artifact(self, local_path, artifact_path=None):
+        """Logs an artifat"""
+        try:
+            mlflow.log_artifact(local_path=local_path, artifact_path=artifact_path)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log artifact using MLFLOW due to exception:\n{traceback.format_exc()}")
+
     def set_properties(self, **kwargs):
         """Set properties/tags for the session.
         

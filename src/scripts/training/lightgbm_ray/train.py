@@ -26,6 +26,7 @@ if COMMON_ROOT not in sys.path:
 from common.components import RunnableScript
 from common.io import get_all_files
 from common.ray import RayScript
+import ray
 import lightgbm_ray # RayDMatrix, RayParams, train
 from common.lightgbm_utils import LightGBMCallbackHandler
 
@@ -204,20 +205,32 @@ class LightGBMOnRayTrainingScript(RayScript):
         booster = lightgbm_ray.train(
             lgbm_params,
             train_set,
-            num_boost_round=lgbm_params['num_iterations'],
+            num_boost_round=lgbm_params['num_iterations'], # this is required, num_iterations in lgbm_params will be discarded anyway
             evals_result=evals_result,
             additional_results=additional_results,
             valid_sets=[ val_set ],
-            valid_names=[ "test" ],
+            valid_names=[ "valid_0" ],
             verbose_eval=True,
             ray_params=lightgbm_ray.RayParams(
                 num_actors=args.ray_actors or self.available_nodes, # number of VMs
                 #cpus_per_actor=2
             ),
-            #callbacks=[callbacks_handler.callback]
+            #callbacks=[callbacks_handler.callback] # TODO: doesn't work with common module
         )
-        print(f"evals_results={evals_result}")
-        print(f"additional_results={additional_results}")
+        logger.info(f"Processing evals_results...")
+        for eval_set_key in evals_result:
+            for metric_key in evals_result[eval_set_key].keys():
+                for step, metric_value in enumerate(evals_result[eval_set_key][metric_key]):
+                    metrics_logger.log_metric(f"node_0/{eval_set_key}.{metric_key}", metric_value, step=step)
+
+        logger.info(f"Processing additional_results={additional_results}")
+        metrics_logger.log_metric("time_training", additional_results.get('training_time_s'))
+        metrics_logger.log_metric("total_time", additional_results.get('total_time_s'))
+        metrics_logger.log_metric("time_data_loading", additional_results.get('total_time_s')-additional_results.get('training_time_s'))
+
+        # record the ray timeline in mlflow
+        ray.timeline(filename="./ray-timeline.json")
+        metrics_logger.log_artifact("./ray-timeline.json")
 
         if args.export_model:
             logger.info(f"Writing model in {args.export_model}")
