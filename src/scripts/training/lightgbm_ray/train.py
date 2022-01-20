@@ -200,10 +200,13 @@ class LightGBMOnRayTrainingScript(RayScript):
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
         evals_result = {}
+        additional_results = {}
         booster = lightgbm_ray.train(
             lgbm_params,
             train_set,
+            num_boost_round=lgbm_params['num_iterations'],
             evals_result=evals_result,
+            additional_results=additional_results,
             valid_sets=[ val_set ],
             valid_names=[ "test" ],
             verbose_eval=True,
@@ -213,6 +216,8 @@ class LightGBMOnRayTrainingScript(RayScript):
             ),
             #callbacks=[callbacks_handler.callback]
         )
+        print(f"evals_results={evals_result}")
+        print(f"additional_results={additional_results}")
 
         if args.export_model:
             logger.info(f"Writing model in {args.export_model}")
