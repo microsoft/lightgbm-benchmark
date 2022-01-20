@@ -1,12 +1,12 @@
 $schema: http://azureml/sdk-1-5/DistributedComponent.json
-name: lightgbm_python_train
-version: 1.0.5
-display_name: "LightGBM Training (Python API)"
+name: lightgbm.ray.train
+version: 1.0.6
+display_name: "LightGBM Training (Ray API)"
 type: DistributedComponent
 description: >-
   **Train a LightGBM Model**
   
-  This script can leverage distributed training using MPI.
+  This script can leverage distributed training using Ray.
   
   Many of the parameters are documented in [LightGBM parameter docs](https://lightgbm.readthedocs.io/en/latest/Parameters.html).
 
@@ -17,8 +17,8 @@ is_deterministic: true
 tags:
   git: https://github.com/microsoft/lightgbm-benchmark
   docs: https://microsoft.github.io/lightgbm-benchmark
-  framework: lightgbm
-  framework_version: 3.3.0
+  framework: lightgbm_ray
+  framework_version: 0.1.2
 
 inputs:
   # Inputs
@@ -171,7 +171,7 @@ launcher:
     [--custom_params {inputs.custom_params}]
     --boosting {inputs.boosting}
     --tree_learner {inputs.tree_learner}
-    --num_trees {inputs.num_iterations}
+    --num_iterations {inputs.num_iterations}
     --num_leaves {inputs.num_leaves}
     --min_data_in_leaf {inputs.min_data_in_leaf}
     --learning_rate {inputs.learning_rate}
@@ -180,6 +180,7 @@ launcher:
     --export_model {outputs.model}
     --verbose {inputs.verbose}
     [--custom_properties {inputs.custom_properties}]
+    --ray_on_aml True
 
 environment:
   docker:

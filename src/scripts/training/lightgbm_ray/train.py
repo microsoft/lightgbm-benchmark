@@ -27,6 +27,7 @@ from common.components import RunnableScript
 from common.io import get_all_files
 from common.ray import RayScript
 import lightgbm_ray # RayDMatrix, RayParams, train
+from common.lightgbm_utils import LightGBMCallbackHandler
 
 class LightGBMOnRayTrainingScript(RayScript):
     def __init__(self):
@@ -76,7 +77,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         group_lgbm.add_argument("--boosting_type", required=True, type=str)
         group_lgbm.add_argument("--tree_learner", required=True, type=str)
         group_lgbm.add_argument("--label_gain", required=False, type=str, default=None)
-        group_lgbm.add_argument("--num_trees", required=True, type=int)
+        group_lgbm.add_argument("--num_iterations", required=True, type=int)
         group_lgbm.add_argument("--num_leaves", required=True, type=int)
         group_lgbm.add_argument("--min_data_in_leaf", required=True, type=int)
         group_lgbm.add_argument("--learning_rate", required=True, type=float)
@@ -87,6 +88,7 @@ class LightGBMOnRayTrainingScript(RayScript):
 
         group_lgbm = parser.add_argument_group("LightGBM/Ray runsettings")
         group_lgbm.add_argument("--ray_actors", required=False, default=None, type=int, help="number of actors (default: count available nodes, or 1)")
+        group_lgbm.add_argument("--ray_data_distributed", required=False, default=True, type=strtobool, help="is data pre-partitioned (True) or should ray distribute it (False)")
 
 
         return parser
@@ -113,6 +115,10 @@ class LightGBMOnRayTrainingScript(RayScript):
             'custom_params',
             'construct',
             'disable_perf_metrics',
+            'ray_head_port',
+            'ray_on_aml',
+            'train_data_format',
+            'ray_data_distributed'
         ]
         for key in non_lgbm_params:
             if key in cli_params:
@@ -142,6 +148,11 @@ class LightGBMOnRayTrainingScript(RayScript):
         # figure out the lgbm params from cli args
         lgbm_params = self.load_lgbm_params_from_cli(args)
 
+        # create a handler for the metrics callbacks
+        callbacks_handler = LightGBMCallbackHandler(
+            metrics_logger=metrics_logger
+        )
+
         # make sure the output argument exists
         if args.export_model:
             os.makedirs(args.export_model, exist_ok=True)
@@ -163,19 +174,28 @@ class LightGBMOnRayTrainingScript(RayScript):
             label=args.label_column,  # Will select this column as the label
             #columns=[str(i) for i in range(4001)],
             filetype=train_data_format,
-            distributed=False
+            distributed=args.ray_data_distributed,
+
         )
 
         logger.info(f"Loading data for validation")
         validation_paths = list(sorted(glob.glob(os.path.join(args.test, "*"))))
         logger.info(f"Found {len(validation_paths)} validation files")
+        
+        # NOTE: it seems we need to have as many test sets as actors
+        required_validation_sets = args.ray_actors or self.available_nodes
+        if len(validation_paths) == 1 and required_validation_sets > 1:
+            logger.info(f"Creating artificial {required_validation_sets} test sets")
+            validation_paths = [ validation_paths[0] for _ in range(required_validation_sets) ]
+
+        # load the validation data into RayDMatrix
         val_data_format = getattr(lightgbm_ray.RayFileType, args.test_data_format or args.train_data_format)
         val_set = lightgbm_ray.RayDMatrix(
             validation_paths,
             label=args.label_column,  # Will select this column as the label
             #columns=[str(i) for i in range(4001)],
             filetype=val_data_format,
-            distributed=False
+            distributed=True
         )
 
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
@@ -184,13 +204,14 @@ class LightGBMOnRayTrainingScript(RayScript):
             lgbm_params,
             train_set,
             evals_result=evals_result,
-            valid_sets=[val_set],
-            valid_names=["test"],
-            verbose_eval=False,
+            valid_sets=[ val_set ],
+            valid_names=[ "test" ],
+            verbose_eval=True,
             ray_params=lightgbm_ray.RayParams(
                 num_actors=args.ray_actors or self.available_nodes, # number of VMs
                 #cpus_per_actor=2
-            )
+            ),
+            #callbacks=[callbacks_handler.callback]
         )
 
         if args.export_model:
