@@ -42,6 +42,7 @@ class data_generation_task:
     n_label_classes: Optional[int] = None
     docs_per_query: Optional[int] = None
     delimiter: str = "comma"
+    header: bool = False
 
 @dataclass
 class training_task:

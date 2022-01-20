@@ -87,6 +87,10 @@ inputs:
       - tab
       - comma
       - space
+  header:
+    type: Boolean
+    default: False
+    description: "generate header for output files"
 
   # generic benchmark parameters
   verbose:
