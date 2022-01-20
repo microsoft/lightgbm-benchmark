@@ -126,6 +126,7 @@ command: >-
   [--n_redundant {inputs.n_redundant}]
   [--random_state {inputs.random_state}]
   --delimiter {inputs.delimiter}
+  --header {inputs.header}
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}
