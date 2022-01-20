@@ -88,7 +88,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 
         group_lgbm = parser.add_argument_group("LightGBM/Ray runsettings")
-        group_lgbm.add_argument("--ray_actors", required=False, default=None, type=int, help="number of actors (default: count available nodes, or 1)")
+        group_lgbm.add_argument("--lightgbm_ray_actors", required=False, default=None, type=int, help="number of actors (default: count available nodes, or 1)")
         group_lgbm.add_argument("--ray_data_distributed", required=False, default=True, type=strtobool, help="is data pre-partitioned (True) or should ray distribute it (False)")
 
 
@@ -119,6 +119,7 @@ class LightGBMOnRayTrainingScript(RayScript):
             'ray_head_port',
             'ray_on_aml',
             'train_data_format',
+            'lightgbm_ray_actors',
             'ray_data_distributed'
         ]
         for key in non_lgbm_params:
@@ -150,9 +151,9 @@ class LightGBMOnRayTrainingScript(RayScript):
         lgbm_params = self.load_lgbm_params_from_cli(args)
 
         # create a handler for the metrics callbacks
-        callbacks_handler = LightGBMCallbackHandler(
-            metrics_logger=metrics_logger
-        )
+        # callbacks_handler = LightGBMCallbackHandler(
+        #     metrics_logger=metrics_logger
+        # )
 
         # make sure the output argument exists
         if args.export_model:
@@ -163,12 +164,25 @@ class LightGBMOnRayTrainingScript(RayScript):
         logger.info(f"LightGBM parameters: {lgbm_params}")
         metrics_logger.log_parameters(**lgbm_params)
 
-        # register logger for lightgbm logs
-        #lightgbm.register_logger(logger)
+        # get expected number of actors
+        num_actors = args.lightgbm_ray_actors or self.available_nodes
+
+        ### DATA LOADING (train) ###
 
         logger.info(f"Loading data for training")
         train_paths = list(sorted(glob.glob(os.path.join(args.train, "*"))))
-        logger.info(f"Found {len(train_paths)} training files")
+
+        # detect sharding strategy exceptions
+        if len(train_paths) != num_actors:
+            # NOTE: when this happens, data is read entirely on head node
+            # then ray distributes it to cluster nodes (distributed=False)
+            logger.warning(f"Found {len(train_paths)} training files != num_actors={num_actors} => forcing distributed=False")
+            args.ray_data_distributed = False
+        else:
+            # NOTE: in this situation, each node will read one shard of data which means 1 file
+            # https://github.com/ray-project/xgboost_ray/blob/master/xgboost_ray/matrix.py#L605
+            logger.info(f"Found {len(train_paths)} training files == num_actors={num_actors} => using distributed from args.ray_data_distributed={args.ray_data_distributed}")
+
         train_data_format = getattr(lightgbm_ray.RayFileType, args.train_data_format)
         train_set = lightgbm_ray.RayDMatrix(
             train_paths,
@@ -176,15 +190,17 @@ class LightGBMOnRayTrainingScript(RayScript):
             #columns=[str(i) for i in range(4001)],
             filetype=train_data_format,
             distributed=args.ray_data_distributed,
-
+            sharding=lightgbm_ray.RayShardingMode.INTERLEAVED # if distributed=True, 1 shard = 1 file
         )
+
+        ### DATA LOADING (validation) ###
 
         logger.info(f"Loading data for validation")
         validation_paths = list(sorted(glob.glob(os.path.join(args.test, "*"))))
         logger.info(f"Found {len(validation_paths)} validation files")
-        
+
         # NOTE: it seems we need to have as many test sets as actors
-        required_validation_sets = args.ray_actors or self.available_nodes
+        required_validation_sets = args.lightgbm_ray_actors or self.available_nodes
         if len(validation_paths) == 1 and required_validation_sets > 1:
             logger.info(f"Creating artificial {required_validation_sets} test sets")
             validation_paths = [ validation_paths[0] for _ in range(required_validation_sets) ]
@@ -199,6 +215,8 @@ class LightGBMOnRayTrainingScript(RayScript):
             distributed=True
         )
 
+        ### TRAINING ###
+
         logger.info(f"Training LightGBM with parameters: {lgbm_params}")
         evals_result = {}
         additional_results = {}
@@ -212,26 +230,32 @@ class LightGBMOnRayTrainingScript(RayScript):
             valid_names=[ "valid_0" ],
             verbose_eval=True,
             ray_params=lightgbm_ray.RayParams(
-                num_actors=args.ray_actors or self.available_nodes, # number of VMs
+                num_actors=args.lightgbm_ray_actors or self.available_nodes, # number of VMs
                 #cpus_per_actor=2
             ),
             #callbacks=[callbacks_handler.callback] # TODO: doesn't work with common module
         )
-        logger.info(f"Processing evals_results...")
+
+        ### POST TRAINING ###
+
+        # evals_result contains all learning metrics
+        logger.info(f"Processing evals_result...")
         for eval_set_key in evals_result:
             for metric_key in evals_result[eval_set_key].keys():
                 for step, metric_value in enumerate(evals_result[eval_set_key][metric_key]):
                     metrics_logger.log_metric(f"node_0/{eval_set_key}.{metric_key}", metric_value, step=step)
 
+        # additional_results contains training time and some others
         logger.info(f"Processing additional_results={additional_results}")
         metrics_logger.log_metric("time_training", additional_results.get('training_time_s'))
         metrics_logger.log_metric("total_time", additional_results.get('total_time_s'))
-        metrics_logger.log_metric("time_data_loading", additional_results.get('total_time_s')-additional_results.get('training_time_s'))
+        metrics_logger.log_metric("time_data_loading", additional_results.get('total_time_s')-additional_results.get('training_time_s')) # not sure about this
 
         # record the ray timeline in mlflow
         ray.timeline(filename="./ray-timeline.json")
         metrics_logger.log_artifact("./ray-timeline.json")
 
+        # export the lightgbm model
         if args.export_model:
             logger.info(f"Writing model in {args.export_model}")
             booster.booster_.save_model(args.export_model)
