@@ -26,6 +26,8 @@ lightgbm_training_config:
   # NOTE: this example uses only 1 training (reference)
   # see other config files for creating training variants
   reference:
+    framework: lightgbm_python
+
     # input parameters
     data:
       auto_partitioning: True # inserts partitioning to match expected number of partitions (if nodes*processes > 1)

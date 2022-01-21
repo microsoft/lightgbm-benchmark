@@ -48,7 +48,7 @@ from common.pipelines import (
 # to read that config from a given yaml file + hydra override commands
 
 @dataclass
-class lightgbm_training_config: # pylint: disable=invalid-name
+class lightgbm_training_config: # pragma: no cover
     """ Config object constructed as a dataclass.
 
     NOTE: the name of this class will be used as namespace in your config yaml file.
@@ -71,8 +71,11 @@ class lightgbm_training_config: # pylint: disable=invalid-name
 # load those components from local yaml specifications
 # use COMPONENTS_ROOT as base folder
 
-lightgbm_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
-lightgbm_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
+# lightgbm python api with socket (pip install lightgbm)
+lightgbm_basic_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
+lightgbm_basic_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
+
+# preprocessing/utility modules
 partition_data_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
 lightgbm_data2bin_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
 
@@ -242,7 +245,7 @@ def lightgbm_training_pipeline_function(config,
         # create custom properties and serialize to pass as argument
         variant_custom_properties = {
             'variant_index': variant_index,
-            'framework': "lightgbm",
+            'framework': variant_params.framework,
             'framework_build': variant_params.runtime.build,
         }
         variant_custom_properties.update(benchmark_custom_properties)
@@ -262,40 +265,38 @@ def lightgbm_training_pipeline_function(config,
             else:
                 training_target = config.compute.linux_cpu
 
-        if use_sweep:
-            # sweep training
-            if variant_params.sweep.primary_metric is None:
-                variant_params.sweep.primary_metric=f"node_0/valid_0.{variant_params.training.metric}"
+        # switch between frameworks (work in progress)
+        if variant_params.framework == "lightgbm_python":
+            if use_sweep:
+                lightgbm_train_module = lightgbm_basic_train_sweep_module
+                # make sure there's a metric
+                if variant_params.sweep.primary_metric is None:
+                    variant_params.sweep.primary_metric=f"node_0/valid_0.{variant_params.training.metric}"
+            else:
+                lightgbm_train_module = lightgbm_basic_train_module
+        else:
+            raise NotImplementedError(f"training framework {variant_params.framework} hasn't been implemented yet.")
 
-            lightgbm_train_step = lightgbm_train_sweep_module(
-                train = prepared_train_data,
-                test = prepared_test_data,
-                **training_params
-            )
-            # apply runsettings
-            lightgbm_train_step.runsettings.target=training_target
-            lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
-            lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
+        # configure the training module
+        lightgbm_train_step = lightgbm_train_module(
+            train = prepared_train_data,  # see end of DATA section
+            test = prepared_test_data,  # see end of DATA section
+            **training_params
+        )
+        # apply runsettings
+        lightgbm_train_step.runsettings.target=training_target
+        lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
+        lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
+
+        if use_sweep:
             # apply settings from our custom yaml config
             apply_sweep_settings(lightgbm_train_step, variant_params.sweep)
-
-        else:
-            # regular training, no sweep
-            lightgbm_train_step = lightgbm_train_module(
-                train = prepared_train_data,
-                test = prepared_test_data,
-                **training_params
-            )
-            # apply runsettings
-            lightgbm_train_step.runsettings.target=training_target
-            lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
-            lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
 
         ###############
         ### RUNTIME ###
         ###############
 
-        # # optional: override docker (ex: to test custom builds)
+        # optional: override docker (ex: to test custom builds)
         if 'build' in variant_params.runtime and variant_params.runtime.build:
             custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, variant_params.runtime.build))
             lightgbm_train_step.runsettings.environment.configure(

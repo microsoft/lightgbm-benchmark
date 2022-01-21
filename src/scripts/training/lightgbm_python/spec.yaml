@@ -1,12 +1,12 @@
 $schema: http://azureml/sdk-1-5/DistributedComponent.json
-name: lightgbm_python_train
-version: 1.0.5
-display_name: "LightGBM Training (Python API)"
+name: lightgbm.train.python.basic
+version: 1.0.6
+display_name: "LightGBM Training (Python API Basic)"
 type: DistributedComponent
 description: >-
   **Train a LightGBM Model**
   
-  This script can leverage distributed training using MPI.
+  This script can leverage distributed training using sockets.
   
   Many of the parameters are documented in [LightGBM parameter docs](https://lightgbm.readthedocs.io/en/latest/Parameters.html).
 
@@ -18,7 +18,7 @@ tags:
   git: https://github.com/microsoft/lightgbm-benchmark
   docs: https://microsoft.github.io/lightgbm-benchmark
   framework: lightgbm
-  framework_version: 3.3.0
+  framework_version: 3.3.0-basic
 
 inputs:
   # Inputs
@@ -134,6 +134,13 @@ inputs:
       - gpu
       - cuda
     description: "Device for the tree learning, you can use GPU to achieve the faster learning (to use gpu/cuda you need a specific dockerfile)"
+  multinode_driver:
+    type: Enum
+    default: 'socket'
+    enum:
+      - socket
+      - mpi
+    description: "Communication framework used for multi-node training (socket for lightgbm basic, mpi for lightgbm compiled for mpi)"
   custom_params:
     type: String
     optional: true
@@ -165,6 +172,7 @@ launcher:
     --label_column {inputs.label_column}
     [--group_column {inputs.group_column}]
     --device_type {inputs.device_type}
+    --multinode_driver {inputs.multinode_driver}
     --objective {inputs.objective}
     --metric {inputs.metric}
     [--label_gain {inputs.label_gain}]
@@ -184,7 +192,8 @@ launcher:
 environment:
   docker:
     build:
-      dockerfile: file:default.dockerfile
+      # file path is resolved after additional includes
+      dockerfile: file:./default.dockerfile
   conda:
     userManagedDependencies: true
   os: Linux
