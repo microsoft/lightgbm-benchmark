@@ -34,6 +34,7 @@ from common.tasks import training_task, training_variant
 from common.sweep import SweepParameterParser
 from common.aml import load_dataset_from_data_input_spec
 from common.aml import apply_sweep_settings
+from common.aml import format_run_name
 from common.pipelines import (
     parse_pipeline_config,
     azureml_connect,
@@ -313,6 +314,9 @@ def lightgbm_training_pipeline_function(config,
                 # add more
             ]
         )
+
+        # provide step readable display name
+        lightgbm_train_step.node_name = format_run_name(f"training_{variant.framework}_{variant_index}")
 
         # optional: save output model
         if variant_params.output and variant_params.output.register_model:
