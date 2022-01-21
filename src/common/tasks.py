@@ -133,12 +133,12 @@ class lightgbm_training_output_variant_parameters:
 
 @dataclass
 class training_variant:
-    # three below are mandatory sections of the variant config
+    # below are mandatory sections of the variant config
     framework: str = MISSING
     data: lightgbm_training_data_variant_parameters = MISSING
     training: lightgbm_training_variant_parameters = MISSING
     runtime: lightgbm_training_environment_variant_parameters = MISSING
 
-    # two below are optional
+    # below are optional
     sweep: Optional[sweep_settings] = None
     output:Optional[lightgbm_training_output_variant_parameters] = None
