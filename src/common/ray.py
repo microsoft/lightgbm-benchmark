@@ -16,6 +16,8 @@ import subprocess
 import ray
 import time
 
+from .perf import PerformanceMetricsCollector, PerfReportPlotter
+
 class RayScript(RunnableScript):
     def __init__(self, task, framework, framework_version, metrics_prefix=None):
         """ Generic initialization for all script classes.
@@ -147,6 +149,26 @@ class RayScript(RunnableScript):
         # open mlflow
         self.metrics_logger.open()
 
+        if self.self_is_head:
+            # record properties only from the main node
+            self.metrics_logger.set_properties(
+                task = self.task,
+                framework = self.framework,
+                framework_version = self.framework_version
+            )
+
+            # if provided some custom_properties by the outside orchestrator
+            if args.custom_properties:
+                self.metrics_logger.set_properties_from_json(args.custom_properties)
+
+            # add properties about environment of this script
+            self.metrics_logger.set_platform_properties()
+
+            # enable perf reporting
+            self.perf_report_collector = PerformanceMetricsCollector()
+            self.perf_report_collector.start()
+
+
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
         self.logger.info(f"Finalizing Ray component script...")
@@ -155,6 +177,12 @@ class RayScript(RunnableScript):
         if self.self_is_head:
             self.logger.info(f"At finalization, number of nodes is [nodes={len(ray.nodes())}]")
             ray.shutdown()
+
+        if self.perf_report_collector:
+            self.perf_report_collector.finalize()
+            plotter = PerfReportPlotter(self.metrics_logger)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=0)
+            plotter.report_nodes_perf()
 
         # close mlflow
         self.metrics_logger.close()
