@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
-LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20211111.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.0/20210118.1"
 
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
@@ -26,12 +26,8 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-defaults==1.35.0' \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
-                'mpi4py==3.1.1'
-
-# install lightgbm with mpi
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install 'cmake==3.21.0' && \
-    pip install lightgbm==${lightgbm_version} --install-option=--mpi
+                'mpi4py==3.1.1' \
+                lightgbm==${lightgbm_version}
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH

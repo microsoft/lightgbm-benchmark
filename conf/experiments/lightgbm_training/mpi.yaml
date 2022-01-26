@@ -1,5 +1,5 @@
 # to execute:
-# > python src/pipelines/azureml/lightgbm_training.py --exp-config conf/experiments/lightgbm_training/gpu.yaml
+# > python src/pipelines/azureml/lightgbm_training.py --exp-config conf/experiments/lightgbm_training/mpi.yaml
 
 defaults:
   - aml: custom
@@ -50,7 +50,8 @@ lightgbm_training_config:
       feature_fraction: 1.0
 
       # compute parameters
-      device_type: "gpu"
+      device_type: "cpu"
+      multinode_driver: "mpi"
 
       # you can add anything under custom_params, it will be sent as a dictionary
       # to the lightgbm training module to override its parameters (see lightgbm docs for list)
@@ -61,13 +62,13 @@ lightgbm_training_config:
     # compute parameters
     runtime:
       #target: null # optional: force target for this training job
-      nodes: 1
+      build: "docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile"
+      nodes: 2
       processes: 1
-      build: "docker/lightgbm-v3.3.0/linux_gpu_pip.dockerfile" # relative to lightgbm_python folder
 
     # model registration
     # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
     output:
       register_model: False
       #register_model_prefix: "model"
-      #register_model_suffix: "gpu"
+      #register_model_suffix: null
