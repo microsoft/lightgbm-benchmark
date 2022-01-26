@@ -9,30 +9,89 @@ import logging
 import traceback
 from .components import RunnableScript
 from dataclasses import dataclass
+from typing import Optional
 
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 @dataclass
-class mpi_config_class:
+class multinode_config_class:
     world_size: int = 1
     world_rank: int = 0
-    mpi_available: bool = False
+    multinode_available: bool = False
     main_node: bool = True
+    machines: Optional[str] = None
+    local_listen_port: Optional[int] = None
 
 
-class MPIHandler():
+class MultiNodeDriver:
+    """Handling multinode initialization"""
+    def __init__(self, **kwargs):
+        """Constructor"""
+        self.logger = logging.getLogger(__name__)
+        self._multinode_config = None
+        self._kwargs = kwargs
+
+    def initialize(self):
+        """Initialize the driver"""
+        self.logger.info(f"{self.__class__.__name__}.initialize(): pass.")
+
+    def get_multinode_config(self):
+        """Get internal multinode config"""
+        return self._multinode_config
+
+    def finalize(self):
+        """Finalize/close resources used by the driver"""
+        self.logger.info(f"{self.__class__.__name__}.finalize(): pass.")
+
+
+class MultiNodeSocketDriver(MultiNodeDriver):
+    """Handling multinode initialization for socket"""
+    def initialize(self, **kwargs):
+        """Initialize the driver"""
+        self.logger.info(f"{self.__class__.__name__}.initialize(): discovering nodes from within the job.")
+        if 'AZ_BATCH_NODE_LIST' in os.environ: # if within AzureML
+            self.logger.info("Discovering multinode socket config from inside AzureML.")
+            machines = os.environ.get('AZ_BATCH_NODE_LIST').split(";")
+            local_ip = os.environ.get('AZ_BATCHAI_NODE_IP')
+
+            world_size = len(machines)
+            world_rank = machines.index(local_ip)
+
+            self._multinode_config = multinode_config_class(
+                world_size,
+                world_rank,
+                world_size > 1, # multinode_available
+                (world_rank == 0), # main_node
+                machines = machines,
+                local_listen_port = 12345
+            )
+        else:
+            self.logger.warning("MultiNodeSocketDriver could not discover socker config.")
+            # we can't detect anything not given to us,
+            # let's consider this single node
+            self._multinode_config = multinode_config_class(
+                1, # world_size
+                0, # world_rank
+                False, # multinode_available
+                True, # main_node
+            )
+        
+        self.logger.info(f"Socket discovery obtained config: {self._multinode_config}")
+
+
+class MultiNodeMPIDriver(MultiNodeDriver):
     """Handling MPI initialization in a separate class
     so we can patch/mock it during unit testing of MultiNodeScript"""
-    def __init__(self, mpi_init_mode=None):
+    def __init__(self, mpi_init_mode=None, **kwargs):
         """Constructor"""
+        super().__init__(**kwargs)
         self._mpi_module = None
         self._comm = None
-        self._mpi_config = None
         self._mpi_init_mode = mpi_init_mode
-        self.logger = logging.getLogger(__name__)
 
     @classmethod
     def _mpi_import(cls):
+        # doing our own initialization of MPI to have fine-grain control
         import mpi4py
         mpi4py.rc.initialize = False
         mpi4py.rc.finalize = False
@@ -40,17 +99,17 @@ class MPIHandler():
 
         return MPI
 
-    def initialize(self):
-        # doing our own initialization of MPI to have fine-grain control
+    def initialize(self, **kwargs):
+        """Initialize the driver"""
         self._mpi_module = self._mpi_import()
 
         if self._mpi_init_mode is None:
-            # use simple env vars instead
+            # do not init mpi, but use openmpi env vars to detect mpi config
             self.logger.info(f"no MPI init, using environment variables instead")
             world_size = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
             world_rank = int(os.environ.get("OMPI_COMM_WORLD_RANK", "0"))
 
-            self._mpi_config = mpi_config_class(
+            self._multinode_config = multinode_config_class(
                 world_size, # world_size
                 world_rank, # world_rank
                 (world_size > 1), # mpi_available
@@ -58,7 +117,7 @@ class MPIHandler():
             )
             self.comm = None
         else:
-            # use mpi to detect mpi config
+            # init mpi and use comm to detect mpi config
             self.logger.info(f"Running MPI.Init_thread(required={self._mpi_init_mode})")
             try:
                 self._mpi_module.Init_thread(required=self._mpi_init_mode)
@@ -66,45 +125,34 @@ class MPIHandler():
                 self.logger.warning(f"Exception occured during MPI initialization:\n{traceback.format_exc()}")
 
             self.comm = self._mpi_module.COMM_WORLD
-            self._mpi_config = self.detect_mpi_config()
+            try:
+                self._multinode_config = multinode_config_class(
+                    self.comm.Get_size(), # world_size
+                    self.comm.Get_rank(), # world_rank
+                    (self.comm.Get_size() > 1), # mpi_available
+                    (self.comm.Get_rank() == 0), # main_node
+                )
+                self.logger.info(f"MPI detection results: {self._multinode_config}")
+            except:
+                self._multinode_config = multinode_config_class(
+                    1, # world_size
+                    0, # world_rank
+                    False, # mpi_available
+                    True, # main_node
+                )
+                self.logger.critical(f"MPI detection failed, switching to single node: {self._multinode_config}, see traceback below:\n{traceback.format_exc()}")
 
-        logging.getLogger().info(f"MPI detection results: {self._mpi_config}")
+    def get_multinode_config(self):
+        """Get internal multinode config"""
+        return self._multinode_config
 
     def finalize(self):
+        """Finalize/close resources used by the driver"""
         if self._mpi_module.Is_initialized() and not self._mpi_module.Is_finalized():
             self.logger.info("MPI was initialized, calling MPI.finalize()")
             self._mpi_module.Finalize()
         else:
             self.logger.warning(f"MPIHandler.finalize() was called, but MPI.Is_initialized={self._mpi_module.Is_initialized()} and MPI.Is_finalized={self._mpi_module.Is_finalized()}")
-
-    def mpi_config(self):
-        return self._mpi_config
-
-    def detect_mpi_config(self):
-        """ Detects if we're running in MPI.
-        Args:
-            None
-
-        Returns:
-            mpi_config (namedtuple)
-        """
-        try:
-            mpi_config = mpi_config_class(
-                self.comm.Get_size(), # world_size
-                self.comm.Get_rank(), # world_rank
-                (self.comm.Get_size() > 1), # mpi_available
-                (self.comm.Get_rank() == 0), # main_node
-            )
-        except:
-            mpi_config = mpi_config_class(
-                1, # world_size
-                0, # world_rank
-                False, # mpi_available
-                True, # main_node
-            )
-            logging.getLogger().critical(f"MPI detection failed, switching to single node: {mpi_config}, see traceback below:\n{traceback.format_exc()}")
-
-        return mpi_config
 
 
 class MultiNodeScript(RunnableScript):
@@ -126,25 +174,51 @@ class MultiNodeScript(RunnableScript):
             metrics_prefix = metrics_prefix
         )
 
-        self._mpi_handler = MPIHandler(mpi_init_mode=mpi_init_mode)
-        self._mpi_config = None
+        # keep those for initialization
+        self._mpi_init_mode = mpi_init_mode
 
-    def mpi_config(self):
-        """Getter"""
-        return self._mpi_config
+    @classmethod
+    def get_arg_parser(cls, parser=None):
+        """Adds multinode arguments to a given argument parser.
+
+        Args:
+            parser (argparse.ArgumentParser): an argument parser instance
+
+        Returns:
+            ArgumentParser: the argument parser instance
+
+        Notes:
+            if parser is None, creates a new parser instance
+        """
+        # add generic arguments
+        parser = RunnableScript.get_arg_parser(parser)
+
+        group_runtime = parser.add_argument_group("MultiNode runtime parameters")
+        group_runtime.add_argument("--multinode_driver", type=str, choices=['mpi', 'socket'], default='socket', required=False)
+        group_runtime.add_argument("--multinode_machines", type=str, default='auto', required=False, help="list of machines, use only when running locally, default will use 'auto' to discover")
+        group_runtime.add_argument("--multinode_listen_port", type=str, default=12345, required=False, help="used for socket only, default 12345")
+
+        return parser
 
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing multi node component script...")
 
-        self.logger.info("Initializing MPI.")
-        self._mpi_handler.initialize()
-        self._mpi_config = self._mpi_handler.mpi_config()
+        if args.multinode_driver == 'socket':
+            self.multinode_driver = MultiNodeSocketDriver(machines=args.multinode_machines, listen_port=args.multinode_listen_port)
+        elif args.multinode_driver == 'mpi':
+            self.multinode_driver = MultiNodeMPIDriver(mpi_init_mode=self._mpi_init_mode)
+        else:
+            raise NotImplementedError(f"multinode_driver={args.multinode_driver} is not implemented, use 'socket' or 'mpi'")
+
+        # initialize driver
+        self.multinode_driver.initialize()
+        self.multinode_config = self.multinode_driver.get_multinode_config()
 
         # open mlflow
         self.metrics_logger.open()
         
-        if self._mpi_config.main_node:
+        if self.multinode_config.main_node:
             # record properties only from the main node
             self.metrics_logger.set_properties(
                 task = self.task,
@@ -164,19 +238,21 @@ class MultiNodeScript(RunnableScript):
             self.perf_report_collector = PerformanceMetricsCollector()
             self.perf_report_collector.start()
 
+    def get_multinode_config(self):
+        """Get internal multinode config"""
+        return self.multinode_driver._multinode_config
 
     def finalize_run(self, args):
         """Finalize the run, close what needs to be"""
         self.logger.info("Finalizing multi node component script...")
 
-        # clean exit from mpi
-        self.logger.info("Finalizing MPI.")
-        self._mpi_handler.finalize()
+        # clean exit from driver
+        self.multinode_driver.finalize()
 
         if self.perf_report_collector:
             self.perf_report_collector.finalize()
             plotter = PerfReportPlotter(self.metrics_logger)
-            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self._mpi_config.world_rank)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self.multinode_config.world_rank)
             plotter.report_nodes_perf()
 
         # close mlflow
