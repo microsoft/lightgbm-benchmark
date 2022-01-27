@@ -39,7 +39,7 @@ from common.pipelines import (
     pipeline_submit,
     COMPONENTS_ROOT
 )
-from common.aml import load_dataset_from_data_input_spec
+from common.aml import load_dataset_from_data_input_spec, format_run_name
 
 ### CONFIG DATACLASS ###
 
@@ -193,6 +193,9 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
         # add some comment to the component
         inferencing_step.comment = " -- ".join(variant_comment)
 
+        # provide step readable display name
+        inferencing_step.node_name = format_run_name(f"inferencing_{variant.framework}_{variant_index}")
+
     # return {key: output}'
     return pipeline_outputs
 
@@ -213,7 +216,7 @@ def inferencing_all_tasks(workspace, config):
     Returns:
         None
     """
-    for inferencing_task in config.lightgbm_inferencing_config.tasks:
+    for task_index, inferencing_task in enumerate(config.lightgbm_inferencing_config.tasks):
         data = load_dataset_from_data_input_spec(workspace, inferencing_task.data)
         model = load_dataset_from_data_input_spec(workspace, inferencing_task.model)
 
@@ -237,6 +240,9 @@ def inferencing_all_tasks(workspace, config):
             f"benchmark name: {config.lightgbm_inferencing_config.benchmark_name}",
             # NOTE: add more here?
         ])
+
+        # provide readable subgraph display name
+        inferencing_task_subgraph_step.node_name = f"inferencing_task_{task_index}"
 
 
 ### MAIN BLOCK ###
