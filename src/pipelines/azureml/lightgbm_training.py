@@ -317,7 +317,7 @@ def lightgbm_training_pipeline_function(config,
         )
 
         # provide step readable display name
-        lightgbm_train_step.node_name = format_run_name(f"training_{variant.framework}_{variant_index}")
+        lightgbm_train_step.node_name = format_run_name(f"training_{variant_params.framework}_{variant_index}")
 
         # optional: save output model
         if variant_params.output and variant_params.output.register_model:
