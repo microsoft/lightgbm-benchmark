@@ -138,6 +138,46 @@ def test_metrics_logger_log_metric_non_allowed_chars():
         assert MetricsLogger._remove_non_allowed_chars(test_case['input']) == test_case['expected']
 
 
+@patch('mlflow.log_artifact')
+def test_metrics_logger_log_artifact(mlflow_log_artifact_mock, temporary_dir):
+    """ Tests MetricsLogger().log_artifact() """
+    # create a sample artifact file
+    artifact_path = os.path.join(temporary_dir, "mock_artifact.ext")
+    with open(artifact_path, "w") as o_file:
+        o_file.write("foo\n")
+
+    metrics_logger = MetricsLogger()
+    metrics_logger.open()
+    metrics_logger.log_artifact(artifact_path, artifact_path="foo/")
+    metrics_logger.close()
+
+    mlflow_log_artifact_mock.assert_called_with(
+        artifact_path,
+        artifact_path="foo/"
+    )
+
+
+@patch('mlflow.log_artifacts')
+def test_metrics_logger_log_artifacts(mlflow_log_artifacts_mock, temporary_dir):
+    """ Tests MetricsLogger().log_artifact() """
+    # create a sample artifact folder
+    artifact_dir = os.path.join(temporary_dir, "artifacts", "mock_artifact.ext")
+    os.makedirs(artifact_dir, exist_ok=True)
+
+    with open(os.path.join(artifact_dir, "test.ext"), "w") as o_file:
+        o_file.write("bar\n")
+
+    metrics_logger = MetricsLogger()
+    metrics_logger.open()
+    metrics_logger.log_artifacts(artifact_dir, artifact_path="bar/")
+    metrics_logger.close()
+
+    mlflow_log_artifacts_mock.assert_called_with(
+        artifact_dir,
+        artifact_path="bar/"
+    )
+
+
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_properties(mlflow_set_tags_mock):
     """ Tests MetricsLogger().set_properties() """
