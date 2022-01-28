@@ -38,6 +38,8 @@ from common.pipelines import (
     pipeline_submit,
     COMPONENTS_ROOT
 )
+from common.aml import format_run_name
+
 
 ### CONFIG DATACLASS ###
 
@@ -118,6 +120,15 @@ def data_generation_main_pipeline_function(config):
         )
         # run it on the right compute target
         generate_data_step.runsettings.configure(target=config.compute.linux_cpu)
+
+        # generate a readable run name
+        generate_data_step.node_name = format_run_name("generate_{}_train{}test{}inf{}_feat{}".format(
+            generation_task.task,
+            generation_task.train_samples,
+            generation_task.test_samples,
+            generation_task.inferencing_samples,
+            generation_task.n_features
+        ))
 
         # if config asks to register the outputs automatically...
         if config.data_generation_config.register_outputs:
