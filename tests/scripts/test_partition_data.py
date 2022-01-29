@@ -38,6 +38,7 @@ def test_partition_data_roundrobin(temporary_dir, regression_train_sample):
         "--input", regression_train_sample,
         "--output", partitioned_data_dir,
         "--mode", "roundrobin",
+        "--header", "True",
 
         # regression_train_sample has 100 sample, splitting in 5 x 20
         "--number", "5",
@@ -50,7 +51,7 @@ def test_partition_data_roundrobin(temporary_dir, regression_train_sample):
     verify_partitioned_files(
         partitioned_data_dir,
         expected_file_count=5,
-        expected_file_length=20
+        expected_file_length=21
     )
 
 def test_partition_data_chunk(temporary_dir, regression_train_sample):
@@ -64,6 +65,7 @@ def test_partition_data_chunk(temporary_dir, regression_train_sample):
         "--input", regression_train_sample,
         "--output", partitioned_data_dir,
         "--mode", "chunk",
+        "--header", "True",
 
         # regression_train_sample has 100 sample, splitting in 20 x 5
         "--number", "5",
@@ -76,5 +78,5 @@ def test_partition_data_chunk(temporary_dir, regression_train_sample):
     verify_partitioned_files(
         partitioned_data_dir,
         expected_file_count=20,
-        expected_file_length=5
+        expected_file_length=6
     )

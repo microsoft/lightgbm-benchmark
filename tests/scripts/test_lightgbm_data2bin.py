@@ -24,8 +24,8 @@ def test_lightgbm_data2bin(temporary_dir, regression_train_sample, regression_te
         "--test", regression_test_sample,
         "--output_train", binary_train_data_dir,
         "--output_test", binary_test_data_dir,
-        "--header", "False",
-        "--label_column", "0",
+        "--header", "True",
+        "--label_column", "name:label",
         "--max_bin", "255",
     ]
 
