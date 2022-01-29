@@ -6,6 +6,7 @@ This script contains methods to handle connection to AzureML,
 such as registering Datasets or obtaining a Dataset handler from a given workspace.
 """
 import logging
+import re
 from azureml.core import Datastore, Dataset
 
 
@@ -66,6 +67,7 @@ def load_dataset_from_data_input_spec(workspace, data_input_spec):
 
     return loaded_dataset
 
+
 def apply_sweep_settings(step, sweep_settings_config):
     """Applies the settings to a sweep step based on a config dataclass.
 
@@ -120,3 +122,27 @@ def apply_sweep_settings(step, sweep_settings_config):
             pass
         else:
             raise NotImplementedError(f"sweep settings early_termination policy_type={sweep_settings_config.early_termination.policy_type} is not implemented.")
+
+
+def format_run_name(run_name: str):
+    """Formats a run name to fit with AzureML constraints.
+    
+    Args:
+        run_name (str): string to be formatted.
+
+    Returns:
+        formatted_run_name (str)
+    
+    Notes:
+        Node name must start with a letter,
+        and can only contain letters, numbers,
+        underscores, within 1-255 characters.
+    """
+    # removing all chars not allowed, use underscore instead
+    formatted_run_name = re.sub(r'[^a-zA-Z0-9_]', '_', run_name)
+
+    # cutting to first 255 chars
+    if len(formatted_run_name) > 255:
+        formatted_run_name = formatted_run_name[0:255]
+
+    return formatted_run_name
