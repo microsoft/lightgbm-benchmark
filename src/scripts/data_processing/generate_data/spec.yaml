@@ -109,7 +109,7 @@ outputs:
     type: AnyDirectory
   output_inference:
     type: AnyDirectory
-  output_header:
+  external_header:
     type: AnyDirectory
 
 command: >-
@@ -126,11 +126,11 @@ command: >-
   [--n_redundant {inputs.n_redundant}]
   [--random_state {inputs.random_state}]
   --delimiter {inputs.delimiter}
-  --header {inputs.header}
+  --generate_header {inputs.header}
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}
-  --output_header {outputs.output_header}
+  --external_header {outputs.external_header}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
   [--docs_per_query {inputs.docs_per_query}]

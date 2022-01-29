@@ -76,7 +76,7 @@ class GenerateSyntheticDataScript(RunnableScript):
             "--delimiter", required=False, type=str, choices=['tab', 'comma', 'space'], default='comma'
         )
         group_params.add_argument(
-            "--header", required=False, type=strtobool, default=False, help="generate header for output files"
+            "--generate_header", required=False, type=strtobool, default=False, help="generate header on top of output files (independent from external_header)"
         )
 
         group_o = parser.add_argument_group("Outputs")
@@ -99,10 +99,10 @@ class GenerateSyntheticDataScript(RunnableScript):
             help="Output data location (directory)",
         )
         group_o.add_argument(
-            "--output_header",
+            "--external_header",
             required=False,
             type=str,
-            help="Output header location (directory)",
+            help="Output the header in an external location (directory)",
         )
 
 
@@ -179,6 +179,18 @@ class GenerateSyntheticDataScript(RunnableScript):
         for output_file_path, generator, batches in self.generation_tasks:
             self.logger.info(f"Will generate output {output_file_path} with {batches} batches")
 
+        # generate a fake header
+        if args.generate_header or args.external_header:
+            if args.type == "lambdarank":
+                synthetic_header = (args.delimiter.join([
+                            str(i) for i in range(args.n_features+2) # label + queryid + features
+                ]))
+            else:
+                synthetic_header = (args.delimiter.join([
+                            str(i) for i in range(args.n_features+1) # label + features
+                ]))
+            
+
         partition_count=0
         # generate each data outputs
         for output_file_path, generator, batches in self.generation_tasks:
@@ -186,11 +198,9 @@ class GenerateSyntheticDataScript(RunnableScript):
 
             # create/erase file
             with open(output_file_path, "w") as output_file:
-                if args.header:
+                if args.generate_header:
                     # generate synthetic header
-                    output_file.write(args.delimiter.join([
-                        str(i) for i in range(args.n_features+1)
-                    ]))
+                    output_file.write(synthetic_header)
                     output_file.write("\n")
                 else:
                     output_file.write("")
@@ -221,13 +231,12 @@ class GenerateSyntheticDataScript(RunnableScript):
 
             self.logger.info(f"Finished generating file {output_file_path}.")
         
-        self.logger.info(f"Will create a header file for the generated data")
-        # create a header 
-        if args.output_header:
-            os.makedirs(args.output_header, exist_ok=True)
-            header = [f'Column_{i}' for i in range(data.shape[1])]
-            with open(os.path.join(args.output_header, "header.txt"), 'w') as hf:
-                hf.writelines(args.delimiter.join(header))
+        # create an external header 
+        if args.external_header:
+            self.logger.info(f"Creating an external header file for the generated data")
+            os.makedirs(args.external_header, exist_ok=True)
+            with open(os.path.join(args.external_header, "header.txt"), 'w') as hf:
+                hf.writelines(synthetic_header)
 
 
     def run(self, args, logger, metrics_logger, unknown_args):

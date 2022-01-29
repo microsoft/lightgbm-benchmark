@@ -17,7 +17,7 @@ def test_generate_regression_data(temporary_dir):
     output_train = os.path.join(temporary_dir, task_type, "train")
     output_test = os.path.join(temporary_dir, task_type, "test")
     output_inference = os.path.join(temporary_dir, task_type, "inference")
-    output_header = os.path.join(temporary_dir, task_type, "header")
+    external_header = os.path.join(temporary_dir, task_type, "header")
 
     # create test arguments for the script
     script_args = [
@@ -34,7 +34,7 @@ def test_generate_regression_data(temporary_dir):
         "--output_train", output_train,
         "--output_test", output_test,
         "--output_inference", output_inference,
-        "--output_header", output_header,
+        "--external_header", external_header,
         "--type", task_type,
     ]
     if task_type == "classification":
@@ -79,7 +79,7 @@ def test_generate_regression_data(temporary_dir):
     ), "Script generate.py should NOT generate inference_1.txt under --output dir but DID"
 
     assert os.path.isfile(
-        os.path.join(output_header, "header.txt")
+        os.path.join(external_header, "header.txt")
     ), "Script generate.py should generate inference_0.txt under --output dir but did not"
 
 def test_generate_classification_data(temporary_dir):
@@ -88,7 +88,7 @@ def test_generate_classification_data(temporary_dir):
     output_train = os.path.join(temporary_dir, task_type, "train")
     output_test = os.path.join(temporary_dir, task_type, "test")
     output_inference = os.path.join(temporary_dir, task_type, "inference")
-    output_header = os.path.join(temporary_dir, task_type, "header")
+    external_header = os.path.join(temporary_dir, task_type, "header")
 
     # create test arguments for the script
     script_args = [
@@ -102,7 +102,7 @@ def test_generate_classification_data(temporary_dir):
         "--output_train", output_train,
         "--output_test", output_test,
         "--output_inference", output_inference,
-        "--output_header", output_header,
+        "--external_header", external_header,
         "--type", task_type,
     ]
     if task_type == "classification":
@@ -135,7 +135,7 @@ def test_generate_classification_data(temporary_dir):
     ), "Script generate.py should NOT generate inference_1.txt under --output dir but DID"
 
     assert os.path.isfile(
-        os.path.join(output_header, "header.txt")
+        os.path.join(external_header, "header.txt")
     ), "Script generate.py should generate inference_0.txt under --output dir but did not"
 
 def test_generate_ranking_data(temporary_dir):
@@ -144,7 +144,7 @@ def test_generate_ranking_data(temporary_dir):
     output_train = os.path.join(temporary_dir, task_type, "train")
     output_test = os.path.join(temporary_dir, task_type, "test")
     output_inference = os.path.join(temporary_dir, task_type, "inference")
-    output_header = os.path.join(temporary_dir, task_type, "header")
+    external_header = os.path.join(temporary_dir, task_type, "header")
 
     # create test arguments for the script
     script_args = [
@@ -161,7 +161,7 @@ def test_generate_ranking_data(temporary_dir):
         "--output_train", output_train,
         "--output_test", output_test,
         "--output_inference", output_inference,
-        "--output_header", output_header,
+        "--external_header", external_header,
         "--type", task_type,
     ]
     if task_type == "classification":
@@ -210,5 +210,5 @@ def test_generate_ranking_data(temporary_dir):
     ), "Script generate.py should NOT generate inference_1.txt under --output dir but DID"
 
     assert os.path.isfile(
-        os.path.join(output_header, "header.txt")
+        os.path.join(external_header, "header.txt")
     ), "Script generate.py should generate header.txt under --output dir but did not"
