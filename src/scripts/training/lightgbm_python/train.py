@@ -254,7 +254,7 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
                 lgbm_params,
                 train_data,
                 valid_sets = val_datasets,
-                #callbacks=[callbacks_handler.callback]
+                callbacks=[callbacks_handler.callback]
             )
 
         if args.export_model and multinode_config.main_node:
