@@ -23,6 +23,8 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
     script_args = [
         "train.py",
         "--train", regression_train_sample,
+        "--label_column", "name:label",
+        "--header", "True",
         "--test", regression_test_sample,
         "--export_model", model_dir,
         "--objective", objective_argument,
@@ -57,6 +59,7 @@ def test_lightgbm_python_score(temporary_dir, regression_model_sample, regressio
     script_args = [
         "score.py",
         "--data", regression_inference_sample,
+        "--header", "True",
         "--model", regression_model_sample,
         "--output", predictions_dir
     ]
