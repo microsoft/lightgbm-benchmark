@@ -30,16 +30,8 @@ inputs:
     type: AnyDirectory
     description: Directory to the testing data
     optional: false
-  construct:
-    type: Boolean
-    description: "Use lazy intialization during data loading phase (both train and test datasets)"
-    default: True
 
   # Input Parameters
-  header:
-    type: Boolean
-    default: False
-    description: "Does data have a header? (ex: csv/tsv)"
   label_column:
     type: String
     default: "0"
@@ -160,8 +152,6 @@ launcher:
     python train.py
     --train {inputs.train}
     --test {inputs.test}
-    --construct {inputs.construct}
-    --header {inputs.header}
     --label_column {inputs.label_column}
     [--group_column {inputs.group_column}]
     --device_type {inputs.device_type}
