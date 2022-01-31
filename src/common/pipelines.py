@@ -139,7 +139,8 @@ def azureml_connect(config: DictConfig):
         aml_resource_group=config.aml.resource_group,
         aml_workspace_name=config.aml.workspace_name,
         aml_auth=config.aml.auth,
-        aml_tenant=config.aml.tenant
+        aml_tenant=config.aml.tenant,
+        aml_force=config.aml.force
     )
 
 def pipeline_submit(workspace: Workspace,
