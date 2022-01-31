@@ -113,6 +113,7 @@ def data_generation_main_pipeline_function(config):
             n_label_classes = generation_task.n_label_classes,
             docs_per_query = generation_task.docs_per_query,
             delimiter = generation_task.delimiter,
+            header = generation_task.header,
             random_state = 5,
             verbose = False,
             custom_properties = benchmark_custom_properties
