@@ -31,105 +31,47 @@ class MetricsLogger():
     """
     Class for handling metrics logging in MLFlow.
     """
-    _initialized = False
-
     def __init__(self, session_name=None, metrics_prefix=None):
         self._metrics_prefix = metrics_prefix
         self._session_name = session_name
         self._logger = logging.getLogger(__name__)
-    
+
+    ###############################
+    ### DRIVER SPECIFIC METHODS ###
+    ###############################
+
     def open(self):
-        """Opens the MLFlow session."""
-        if not MetricsLogger._initialized:
-            self._logger.info(f"Initializing MLFLOW [session='{self._session_name}', metrics_prefix={self._metrics_prefix}]")
-            mlflow.start_run()
-            MetricsLogger._initialized = True
+        self._logger.info(f"Initializing {self.__class__.__name__} [session='{self._session_name}', metrics_prefix={self._metrics_prefix}]")
 
     def close(self):
-        """Close the MLFlow session."""
-        if MetricsLogger._initialized:
-            self._logger.info(f"Finalizing MLFLOW [session='{self._session_name}']")
-            mlflow.end_run()
-            MetricsLogger._initialized = False
-        else:
-            self._logger.warning(f"Call to finalize MLFLOW [session='{self._session_name}'] that was never initialized.")
+        self._logger.info(f"Finalizing {self.__class__.__name__} [session='{self._session_name}', metrics_prefix={self._metrics_prefix}]")
+
+    def log_metric(self, key, value, step=None, metric_type=MetricType.ONETIME_METRIC):
+        self._logger.info(f"{self.__class__.__name__}.log_metric({key},{value}, step={step}) [session={self._session_name}]")
+
+    def log_figure(self, figure, artifact_file):
+        self._logger.info(f"{self.__class__.__name__}.log_figure(*figure*, {artifact_file}) [session={self._session_name}]")
+
+    def log_artifact(self, local_path, artifact_path=None):
+        self._logger.info(f"{self.__class__.__name__}.log_artifact({local_path}, {artifact_path}) [session={self._session_name}]")
+
+    def log_artifacts(self, local_dir, artifact_path=None):
+        self._logger.info(f"{self.__class__.__name__}.log_artifacts({local_dir}, {artifact_path}) [session={self._session_name}]")
+
+    def set_properties(self, **kwargs):
+        self._logger.info(f"{self.__class__.__name__}.set_properties({kwargs}) [session={self._session_name}]")
+
+    def log_parameters(self, **kwargs):
+        self._logger.info(f"{self.__class__.__name__}.log_parameters({kwargs}) [session={self._session_name}]")
+
+    ###############################
+    ### GENERIC UTILITY METHODS ###
+    ###############################
 
     @classmethod
     def _remove_non_allowed_chars(cls, name_string):
-        """ Removes chars not allowed for metric keys in mlflow """
+        """ Removes chars not allowed for metric keys """
         return re.sub(r'[^a-zA-Z0-9_\-\.\ \/]', '', name_string)
-
-    def log_metric(self, key, value, step=None, type=MetricType.ONETIME_METRIC):
-        """Logs a metric key/value pair.
-
-        Args:
-            key (str): metric key
-            value (str): metric value
-            step (int): which step to log this metric? (see mlflow.log_metric())
-            type (int): type of the metric
-        """
-        if self._metrics_prefix:
-            key = self._metrics_prefix + key
-
-        key = self._remove_non_allowed_chars(key)
-
-        self._logger.debug(f"mlflow[session={self._session_name}].log_metric({key},{value})")
-        # NOTE: there's a limit to the name of a metric
-        if len(key) > 50:
-            key = key[:50]
-
-        if type == MetricType.PERF_INTERVAL_METRIC:
-            pass # for now, do not process those
-        else:
-            try:
-                mlflow.log_metric(key, value, step=step)
-            except mlflow.exceptions.MlflowException:
-                self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
-
-    def log_figure(self, figure, artifact_file):
-        """Logs a figure using mlflow
-        
-        Args:
-            figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
-            artifact_file (str): name of file to record
-        """
-        try:
-            mlflow.log_figure(figure, artifact_file)
-        except mlflow.exceptions.MlflowException:
-            self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
-
-    def log_artifact(self, local_path, artifact_path=None):
-        """Logs an artifact
-        
-        Args:
-            local_path (str): Path to the file to write.
-            artifact_path (str): If provided, the directory in artifact_uri to write to.
-        """
-        try:
-            mlflow.log_artifact(local_path, artifact_path=artifact_path)
-        except mlflow.exceptions.MlflowException:
-            self._logger.critical(f"Could not log artifact using MLFLOW due to exception:\n{traceback.format_exc()}")
-
-    def log_artifacts(self, local_dir, artifact_path=None):
-        """Logs an artifact
-        
-        Args:
-            local_dir (str): Path to the directory of files to write.
-            artifact_path (str): If provided, the directory in artifact_uri to write to.
-        """
-        try:
-            mlflow.log_artifacts(local_dir, artifact_path=artifact_path)
-        except mlflow.exceptions.MlflowException:
-            self._logger.critical(f"Could not log artifacts using MLFLOW due to exception:\n{traceback.format_exc()}")
-
-    def set_properties(self, **kwargs):
-        """Set properties/tags for the session.
-        
-        Args:
-            kwargs (dict): any keyword argument will be passed as tags to MLFLow
-        """
-        self._logger.debug(f"mlflow[session={self._session_name}].set_tags({kwargs})")
-        mlflow.set_tags(kwargs)
 
     def set_platform_properties(self):
         """ Capture platform sysinfo and record as properties. """
@@ -166,20 +108,6 @@ class MetricsLogger():
             ]
         )
         self.set_properties(**properties_dict)
-
-    def log_parameters(self, **kwargs):
-        """ Logs parameters to MLFlow.
-        
-        Args:
-            kwargs (dict): any keyword arguments will be passed as parameters to MLFlow
-        """
-        self._logger.debug(f"mlflow[session={self._session_name}].log_params({kwargs})")
-        # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
-        for key,value in kwargs.items():
-            if isinstance(value, str) and len(value) > 255:
-                self._logger.warning(f"parameter {key} (str) could not be logged, value length {len(value)} > 255")
-            else:
-                mlflow.log_param(key,value)
 
     def log_time_block(self, metric_name, step=None):
         """ [Proxy] Use in a `with` statement to measure execution time of a code block.
@@ -264,6 +192,211 @@ class MetricsLogger():
             # record in mlflow
             self.log_figure(fig, "prediction_latency_log_histogram.png")
 
+
+class MLFlowMetricsLogger(MetricsLogger):
+    """
+    Class for handling metrics logging in MLFlow.
+    """
+    ###############################
+    ### MLFLOW SPECIFIC METHODS ###
+    ###############################
+    _initialized = False
+
+    def open(self):
+        """Opens the MLFlow session."""
+        if not MLFlowMetricsLogger._initialized:
+            super().open()
+            mlflow.start_run()
+            MLFlowMetricsLogger._initialized = True
+
+    def close(self):
+        """Close the MLFlow session."""
+        if MLFlowMetricsLogger._initialized:
+            super().close()
+            mlflow.end_run()
+            MLFlowMetricsLogger._initialized = False
+        else:
+            self._logger.warning(f"Call to finalize MLFLOW [session='{self._session_name}'] that was never initialized.")
+
+    def log_metric(self, key, value, step=None, metric_type=MetricType.ONETIME_METRIC):
+        """Logs a metric key/value pair.
+
+        Args:
+            key (str): metric key
+            value (str): metric value
+            step (int): which step to log this metric? (see mlflow.log_metric())
+            metric_type (int): type of the metric
+        """
+        super().log_metric(key, value, step=step, metric_type=metric_type)
+        if self._metrics_prefix:
+            key = self._metrics_prefix + key
+
+        key = self._remove_non_allowed_chars(key)
+
+        # NOTE: there's a limit to the name of a metric
+        if len(key) > 50:
+            key = key[:50]
+
+        if type == MetricType.PERF_INTERVAL_METRIC:
+            pass # for now, do not process those
+        else:
+            try:
+                mlflow.log_metric(key, value, step=step)
+            except mlflow.exceptions.MlflowException:
+                self._logger.critical(f"Could not log metric using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+    def log_figure(self, figure, artifact_file):
+        """Logs a figure using mlflow
+        
+        Args:
+            figure (Union[matplotlib.figure.Figure, plotly.graph_objects.Figure]): figure to log
+            artifact_file (str): name of file to record
+        """
+        super().log_figure(figure, artifact_file)
+        try:
+            mlflow.log_figure(figure, artifact_file)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log figure using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+    def log_artifact(self, local_path, artifact_path=None):
+        """Logs an artifact
+        
+        Args:
+            local_path (str): Path to the file to write.
+            artifact_path (str): If provided, the directory in artifact_uri to write to.
+        """
+        super().log_artifact(local_path, artifact_path=artifact_path)
+        try:
+            mlflow.log_artifact(local_path, artifact_path=artifact_path)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log artifact using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+    def log_artifacts(self, local_dir, artifact_path=None):
+        """Logs an artifact
+        
+        Args:
+            local_dir (str): Path to the directory of files to write.
+            artifact_path (str): If provided, the directory in artifact_uri to write to.
+        """
+        super().log_artifacts(local_dir, artifact_path=artifact_path)
+        try:
+            mlflow.log_artifacts(local_dir, artifact_path=artifact_path)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not log artifacts using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+    def set_properties(self, **kwargs):
+        """Set properties/tags for the session.
+        
+        Args:
+            kwargs (dict): any keyword argument will be passed as tags to MLFLow
+        """
+        super().set_properties(**kwargs)
+        try:
+            mlflow.set_tags(kwargs)
+        except mlflow.exceptions.MlflowException:
+            self._logger.critical(f"Could not set properties using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+    def log_parameters(self, **kwargs):
+        """ Logs parameters to MLFlow.
+        
+        Args:
+            kwargs (dict): any keyword arguments will be passed as parameters to MLFlow
+        """
+        super().log_parameters(**kwargs)
+        # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
+        for key,value in kwargs.items():
+            if isinstance(value, str) and len(value) > 255:
+                self._logger.warning(f"parameter {key} (str) could not be logged, value length {len(value)} > 255")
+            else:
+                try:
+                    mlflow.log_param(key,value)
+                except mlflow.exceptions.MlflowException:
+                    self._logger.critical(f"Could not log parameter using MLFLOW due to exception:\n{traceback.format_exc()}")
+
+
+class AzureMLRunMetricsLogger(MetricsLogger):
+    """
+    Class for handling metrics logging using AzureML Run
+    """
+    def __init__(self, session_name=None, metrics_prefix=None):
+        super().__init__(
+            session_name = session_name,
+            metrics_prefix = metrics_prefix
+        )
+        self._aml_run = None
+
+    def open(self):
+        """Opens the AzureML run session."""
+        super().open()
+        try:
+            from azureml.core.run import Run
+            self._aml_run = Run.get_context()
+
+            if "_OfflineRun" in str(type(self._aml_run)):
+                self._logger.warning(f"Running offline, will not report any AzureML metrics")
+                self._aml_run = None
+        except BaseException as e:
+            self._logger.warning(f"Run get_context() failed due to exception: {traceback.format_exc()}".replace("\n", "--"))
+            self._aml_run = None
+
+    def close(self):
+        """Close the AzureML session."""
+        super().close()
+
+        if self._aml_run:
+            self._aml_run.flush()
+        else:
+            self._logger.warning(f"Call to finalize AzureML Run [session='{self._session_name}'] that was never initialized.")
+
+    def log_metric(self, key, value, step=None, metric_type=MetricType.ONETIME_METRIC):
+        """Logs a metric key/value pair.
+
+        Args:
+            key (str): metric key
+            value (str): metric value
+            step (int): which step to log this metric? (see mlflow.log_metric())
+            metric_type (int): type of the metric
+        """
+        super().log_metric(key, value, step=step, metric_type=metric_type)
+        if self._metrics_prefix:
+            key = self._metrics_prefix + key
+
+        key = self._remove_non_allowed_chars(key)
+
+        # NOTE: there's a limit to the name of a metric
+        if len(key) > 50:
+            key = key[:50]
+
+        if type == MetricType.PERF_INTERVAL_METRIC:
+            pass # for now, do not process those
+        else:
+            if self._aml_run:
+                self._aml_run.log_metrics(key, key=value, step=step)
+
+    def set_properties(self, **kwargs):
+        """Set properties/tags for the session.
+        
+        Args:
+            kwargs (dict): any keyword argument will be passed as tags to MLFLow
+        """
+        super().set_properties(**kwargs)
+        if self._aml_run:
+            self._aml_run.add_properties(kwargs)
+
+    def log_parameters(self, **kwargs):
+        """ Logs parameters to MLFlow.
+        
+        Args:
+            kwargs (dict): any keyword arguments will be passed as parameters to MLFlow
+        """
+        super().log_parameters(**kwargs)
+        # NOTE: to avoid mlflow exception when value length is too long (ex: label_gain)
+        for key,value in kwargs.items():
+            if isinstance(value, str) and len(value) > 255:
+                self._logger.warning(f"parameter {key} (str) could not be logged, value length {len(value)} > 255")
+            else:
+                if self._aml_run:
+                    self._aml_run.set_tags({key:value})
 
 ########################
 ### CODE BLOCK TIMER ###

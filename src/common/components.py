@@ -14,7 +14,7 @@ import logging
 import traceback
 from distutils.util import strtobool
 
-from .metrics import MetricsLogger
+from .metrics import MetricsLogger, MLFlowMetricsLogger, AzureMLRunMetricsLogger
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 class RunnableScript():
@@ -39,10 +39,10 @@ class RunnableScript():
 
         self.logger = logging.getLogger(f"{framework}.{task}")
 
-        # initializes reporting of metrics
+        # default metrics logger is just stdout print
         self.metrics_logger = MetricsLogger(
             f"{framework}.{task}",
-            metrics_prefix=metrics_prefix
+            metrics_prefix=self.metrics_prefix
         )
 
         self.perf_report_collector = None
@@ -87,12 +87,35 @@ class RunnableScript():
             type=strtobool,
             help="disable performance metrics (default: False)",
         )
+        group_general.add_argument(
+            "--metrics_driver",
+            required=False,
+            default="mlflow",
+            choices=['mlflow', 'azureml'],
+            type=str,
+            help="which class to use to report metrics mlflow or azureml",
+        )
 
         return parser
 
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing script run...")
+
+        # initializes reporting of metrics
+        if args.metrics_driver == 'mlflow':
+            self.metrics_logger = MLFlowMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        elif args.metrics_driver == 'azureml':
+            self.metrics_logger = AzureMLRunMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        else:
+            # use default metrics_logger (stdout print)
+            pass
 
         # open mlflow
         self.metrics_logger.open()
@@ -155,7 +178,7 @@ class RunnableScript():
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
         console_handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+        formatter = logging.Formatter('SystemLog: %(asctime)s : %(levelname)s : %(name)s : %(message)s')
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
@@ -181,7 +204,7 @@ class RunnableScript():
             # run the actual thing
             script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
         except BaseException as e:
-            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
+            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}".replace('\n','--'))
             script_instance.finalize_run(args)
             raise e
 
