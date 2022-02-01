@@ -371,7 +371,7 @@ class AzureMLRunMetricsLogger(MetricsLogger):
             pass # for now, do not process those
         else:
             if self._aml_run:
-                self._aml_run.log_metrics(key, key=value, step=step)
+                self._aml_run.log_row(key, key=value, step=step)
 
     def set_properties(self, **kwargs):
         """Set properties/tags for the session.
