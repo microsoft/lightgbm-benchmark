@@ -11,6 +11,7 @@ from .components import RunnableScript
 from dataclasses import dataclass
 from typing import Optional
 
+from .metrics import MLFlowMetricsLogger, AzureMLRunMetricsLogger
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 @dataclass
@@ -203,6 +204,21 @@ class MultiNodeScript(RunnableScript):
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing multi node component script...")
+
+        # initializes reporting of metrics
+        if args.metrics_driver == 'mlflow':
+            self.metrics_logger = MLFlowMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        elif args.metrics_driver == 'azureml':
+            self.metrics_logger = AzureMLRunMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        else:
+            # use default metrics_logger (stdout print)
+            pass
 
         if args.multinode_driver == 'socket':
             self.multinode_driver = MultiNodeSocketDriver(machines=args.multinode_machines, listen_port=args.multinode_listen_port)
