@@ -204,7 +204,7 @@ class RunnableScript():
             # run the actual thing
             script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
         except BaseException as e:
-            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}".replace('\n','--'))
+            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
             script_instance.finalize_run(args)
             raise e
 
