@@ -282,9 +282,14 @@ def lightgbm_training_pipeline_function(config,
             if use_sweep:
                 raise NotImplementedError("Sweep on lightgbm_ray component is not implemented.")
             lightgbm_train_module = lightgbm_ray_train_module
-            del training_params['multinode_driver']
-            del training_params['header'] # no such argument in ray training
-            del training_params['construct'] # no such argument in ray training
+
+            # remove arguments that are not in lightgbm_ray component
+            if 'multinode_driver' in training_params:
+                del training_params['multinode_driver']
+            if 'header' in training_params:
+                del training_params['header']
+            if 'construct' in training_params:
+                del training_params['construct']
         else:
             raise NotImplementedError(f"training framework {variant_params.framework} hasn't been implemented yet.")
 
