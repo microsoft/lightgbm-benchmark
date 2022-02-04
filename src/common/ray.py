@@ -97,6 +97,21 @@ class RayScript(RunnableScript):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing Ray component script...")
 
+        # initializes reporting of metrics
+        if args.metrics_driver == 'mlflow':
+            self.metrics_logger = MLFlowMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        elif args.metrics_driver == 'azureml':
+            self.metrics_logger = AzureMLRunMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        else:
+            # use default metrics_logger (stdout print)
+            pass
+
         if args.ray_on_aml:
             # if running on AzureML, get context of cluster from env variables
             self.head_address = os.environ.get("AZ_BATCHAI_JOB_MASTER_NODE_IP")
