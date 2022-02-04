@@ -16,6 +16,7 @@ import subprocess
 import ray
 import time
 
+from .metrics import MetricsLogger, MLFlowMetricsLogger, AzureMLRunMetricsLogger
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 class RayScript(RunnableScript):
