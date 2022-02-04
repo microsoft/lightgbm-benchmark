@@ -200,9 +200,35 @@ class PerfReportPlotter():
         # Currently reporting one metric per node
         for node in self.all_reports:
             # CPU UTILIZATION
+            cpu_avg_utilization = [ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]
             self.metrics_logger.log_metric(
                 "max_t_(cpu_pct_per_cpu_avg)",
-                max([ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]),
+                max(cpu_avg_utilization),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_utilization_pcts",
+                sum(cpu_avg_utilization)/len(cpu_avg_utilization),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_utilization_at100_pcts",
+                sum( [ utilization >= 100.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_utilization_over80_pcts",
+                sum( [ utilization >= 80.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_utilization_over40_pcts",
+                sum( [ utilization >= 40.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_utilization_over20_pcts",
+                sum( [ utilization >= 20.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
                 step=node
             )
             self.metrics_logger.log_metric(
