@@ -6,116 +6,12 @@ import time
 import platform
 import psutil
 
-from common.metrics import MetricsLogger
-
-@patch('mlflow.end_run')
-@patch('mlflow.start_run')
-def test_unique_mlflow_parallel_initialization(mlflow_start_run_mock, mlflow_end_run_mock):
-    """ Tests MetricsLogger() unique initialization of mlflow"""
-    # if open is called twice, we initialize mlflow only once
-    metrics_logger = MetricsLogger()
-    metrics_logger_2 = MetricsLogger()
-    metrics_logger.open()
-    metrics_logger_2.open()
-    metrics_logger.close()
-    metrics_logger_2.close()
-
-    mlflow_start_run_mock.assert_called_once()
-    mlflow_end_run_mock.assert_called_once()
+from common.metrics import MetricsLogger, MLFlowMetricsLogger, AzureMLRunMetricsLogger
 
 
-@patch('mlflow.end_run')
-@patch('mlflow.start_run')
-def test_unique_mlflow_sequence_initialization(mlflow_start_run_mock, mlflow_end_run_mock):
-    """ Tests MetricsLogger() unique initialization of mlflow"""
-    # when open/close multiple times in a sequence, we initialize mlflow each time
-    metrics_logger = MetricsLogger()
-    metrics_logger.open()
-    metrics_logger.close()
-
-    assert mlflow_start_run_mock.call_count == 1
-    assert mlflow_end_run_mock.call_count == 1
-
-    metrics_logger_2 = MetricsLogger()
-    metrics_logger_2.open()
-    metrics_logger_2.close()
-
-    assert mlflow_start_run_mock.call_count == 2
-    assert mlflow_end_run_mock.call_count == 2
-
-
-@patch('mlflow.log_metric')
-def test_metrics_logger_log_metric(mlflow_log_metric_mock):
-    """ Tests MetricsLogger().log_metric() """
-    metrics_logger = MetricsLogger()
-    metrics_logger.open()
-    metrics_logger.log_metric("foo", "bar", step=16)
-    metrics_logger.close()
-
-    mlflow_log_metric_mock.assert_called_with(
-        "foo", "bar", step=16
-    )
-
-
-@patch('mlflow.log_metric')
-def test_metrics_logger_log_metric_with_prefix(mlflow_log_metric_mock):
-    """ Tests MetricsLogger().log_metric() """
-    metrics_logger = MetricsLogger(metrics_prefix="foo/")
-    metrics_logger.open()
-    metrics_logger.log_metric("foo", "bar", step=16)
-    metrics_logger.close()
-
-    mlflow_log_metric_mock.assert_called_with(
-        "foo/foo", "bar", step=16
-    )
-
-
-@patch('mlflow.log_metric')
-def test_mlflow_metrics_logger_log_metric_with_prefix_2sessions(mlflow_log_metric_mock):
-    """ Tests MetricsLogger().log_metric() """
-    # when initializing multiple times, each logger has its own prefix
-    metrics_logger = MetricsLogger(metrics_prefix="foo/")
-    metrics_logger.open()
-
-    metrics_logger_2 = MetricsLogger()
-    metrics_logger_2.open()
-
-    metrics_logger.log_metric("foo", "bar", step=16)
-    mlflow_log_metric_mock.assert_called_with(
-        "foo/foo", "bar", step=16
-    )
-
-    metrics_logger_2.log_metric("foo2", "bar2", step=12)
-    mlflow_log_metric_mock.assert_called_with(
-        "foo2", "bar2", step=12
-    )
-
-    metrics_logger.close()
-    metrics_logger_2.close()
-
-
-@patch('mlflow.log_metric')
-def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
-    """ Tests MetricsLogger().log_metric() """
-    metrics_logger = MetricsLogger()
-    metrics_logger.open()
-
-    metric_key = "x" * 250
-    assert len(metric_key), 250
-
-    short_metric_key = "x" * 50
-    assert len(short_metric_key), 50
-
-    metrics_logger.log_metric(
-        metric_key, "bar", step=15
-    )
-
-    metrics_logger.close()
-
-    mlflow_log_metric_mock.assert_called_with(
-        short_metric_key, "bar", step=15
-    )
-
+###############
+### GENERIC ###
+###############
 
 def test_metrics_logger_log_metric_non_allowed_chars():
     """ Tests MetricsLogger().log_metric() """
@@ -138,15 +34,128 @@ def test_metrics_logger_log_metric_non_allowed_chars():
         assert MetricsLogger._remove_non_allowed_chars(test_case['input']) == test_case['expected']
 
 
+##############
+### MLFLOW ###
+##############
+
+@patch('mlflow.end_run')
+@patch('mlflow.start_run')
+def test_unique_mlflow_parallel_initialization(mlflow_start_run_mock, mlflow_end_run_mock):
+    """ Tests MLFlowMetricsLogger() unique initialization of mlflow"""
+    # if open is called twice, we initialize mlflow only once
+    metrics_logger = MLFlowMetricsLogger()
+    metrics_logger_2 = MLFlowMetricsLogger()
+    metrics_logger.open()
+    metrics_logger_2.open()
+    metrics_logger.close()
+    metrics_logger_2.close()
+
+    mlflow_start_run_mock.assert_called_once()
+    mlflow_end_run_mock.assert_called_once()
+
+
+@patch('mlflow.end_run')
+@patch('mlflow.start_run')
+def test_unique_mlflow_sequence_initialization(mlflow_start_run_mock, mlflow_end_run_mock):
+    """ Tests MLFlowMetricsLogger() unique initialization of mlflow"""
+    # when open/close multiple times in a sequence, we initialize mlflow each time
+    metrics_logger = MLFlowMetricsLogger()
+    metrics_logger.open()
+    metrics_logger.close()
+
+    assert mlflow_start_run_mock.call_count == 1
+    assert mlflow_end_run_mock.call_count == 1
+
+    metrics_logger_2 = MLFlowMetricsLogger()
+    metrics_logger_2.open()
+    metrics_logger_2.close()
+
+    assert mlflow_start_run_mock.call_count == 2
+    assert mlflow_end_run_mock.call_count == 2
+
+
+@patch('mlflow.log_metric')
+def test_metrics_logger_log_metric(mlflow_log_metric_mock):
+    """ Tests MLFlowMetricsLogger().log_metric() """
+    metrics_logger = MLFlowMetricsLogger()
+    metrics_logger.open()
+    metrics_logger.log_metric("foo", "bar", step=16)
+    metrics_logger.close()
+
+    mlflow_log_metric_mock.assert_called_with(
+        "foo", "bar", step=16
+    )
+
+
+@patch('mlflow.log_metric')
+def test_metrics_logger_log_metric_with_prefix(mlflow_log_metric_mock):
+    """ Tests MLFlowMetricsLogger().log_metric() """
+    metrics_logger = MLFlowMetricsLogger(metrics_prefix="foo/")
+    metrics_logger.open()
+    metrics_logger.log_metric("foo", "bar", step=16)
+    metrics_logger.close()
+
+    mlflow_log_metric_mock.assert_called_with(
+        "foo/foo", "bar", step=16
+    )
+
+
+@patch('mlflow.log_metric')
+def test_mlflow_metrics_logger_log_metric_with_prefix_2sessions(mlflow_log_metric_mock):
+    """ Tests MLFlowMetricsLogger().log_metric() """
+    # when initializing multiple times, each logger has its own prefix
+    metrics_logger = MLFlowMetricsLogger(metrics_prefix="foo/")
+    metrics_logger.open()
+
+    metrics_logger_2 = MLFlowMetricsLogger()
+    metrics_logger_2.open()
+
+    metrics_logger.log_metric("foo", "bar", step=16)
+    mlflow_log_metric_mock.assert_called_with(
+        "foo/foo", "bar", step=16
+    )
+
+    metrics_logger_2.log_metric("foo2", "bar2", step=12)
+    mlflow_log_metric_mock.assert_called_with(
+        "foo2", "bar2", step=12
+    )
+
+    metrics_logger.close()
+    metrics_logger_2.close()
+
+
+@patch('mlflow.log_metric')
+def test_metrics_logger_log_metric_too_long(mlflow_log_metric_mock):
+    """ Tests MLFlowMetricsLogger().log_metric() """
+    metrics_logger = MLFlowMetricsLogger()
+    metrics_logger.open()
+
+    metric_key = "x" * 250
+    assert len(metric_key), 250
+
+    short_metric_key = "x" * 50
+    assert len(short_metric_key), 50
+
+    metrics_logger.log_metric(
+        metric_key, "bar", step=15
+    )
+
+    metrics_logger.close()
+
+    mlflow_log_metric_mock.assert_called_with(
+        short_metric_key, "bar", step=15
+    )
+
+
 @patch('mlflow.log_artifact')
 def test_metrics_logger_log_artifact(mlflow_log_artifact_mock, temporary_dir):
-    """ Tests MetricsLogger().log_artifact() """
+    """ Tests MLFlowMetricsLogger().log_artifact() """
     # create a sample artifact file
     artifact_path = os.path.join(temporary_dir, "mock_artifact.ext")
     with open(artifact_path, "w") as o_file:
         o_file.write("foo\n")
 
-    metrics_logger = MetricsLogger()
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
     metrics_logger.log_artifact(artifact_path, artifact_path="foo/")
     metrics_logger.close()
@@ -159,7 +168,7 @@ def test_metrics_logger_log_artifact(mlflow_log_artifact_mock, temporary_dir):
 
 @patch('mlflow.log_artifacts')
 def test_metrics_logger_log_artifacts(mlflow_log_artifacts_mock, temporary_dir):
-    """ Tests MetricsLogger().log_artifact() """
+    """ Tests MLFlowMetricsLogger().log_artifact() """
     # create a sample artifact folder
     artifact_dir = os.path.join(temporary_dir, "artifacts", "mock_artifact.ext")
     os.makedirs(artifact_dir, exist_ok=True)
@@ -167,7 +176,7 @@ def test_metrics_logger_log_artifacts(mlflow_log_artifacts_mock, temporary_dir):
     with open(os.path.join(artifact_dir, "test.ext"), "w") as o_file:
         o_file.write("bar\n")
 
-    metrics_logger = MetricsLogger()
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
     metrics_logger.log_artifacts(artifact_dir, artifact_path="bar/")
     metrics_logger.close()
@@ -180,8 +189,8 @@ def test_metrics_logger_log_artifacts(mlflow_log_artifacts_mock, temporary_dir):
 
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_properties(mlflow_set_tags_mock):
-    """ Tests MetricsLogger().set_properties() """
-    metrics_logger = MetricsLogger()
+    """ Tests MLFlowMetricsLogger().set_properties() """
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
     metrics_logger.set_properties(
         key1 = "foo",
@@ -196,8 +205,8 @@ def test_metrics_logger_set_properties(mlflow_set_tags_mock):
 
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
-    """ Tests MetricsLogger().set_properties() """
-    metrics_logger = MetricsLogger()
+    """ Tests MLFlowMetricsLogger().set_properties() """
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
 
     platform_properties = {
@@ -221,8 +230,8 @@ def test_metrics_logger_set_platform_properties(mlflow_set_tags_mock):
 
 @patch('mlflow.set_tags')
 def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
-    """ Tests MetricsLogger().set_properties_from_json() """
-    metrics_logger = MetricsLogger()
+    """ Tests MLFlowMetricsLogger().set_properties_from_json() """
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
 
     metrics_logger.set_properties_from_json(
@@ -252,8 +261,8 @@ def test_metrics_logger_set_properties_from_json(mlflow_set_tags_mock):
 
 @patch('mlflow.log_param')
 def test_metrics_logger_log_parameters(mlflow_log_param_mock):
-    """ Tests MetricsLogger().log_parameters() """
-    metrics_logger = MetricsLogger()
+    """ Tests MLFlowMetricsLogger().log_parameters() """
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
 
     metrics_logger.log_parameters(
@@ -275,8 +284,8 @@ def test_metrics_logger_log_parameters(mlflow_log_param_mock):
 
 @patch('mlflow.log_metric')
 def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
-    """ Tests MetricsLogger().log_time_block() """
-    metrics_logger = MetricsLogger(metrics_prefix="foo_time_block/")
+    """ Tests MLFlowMetricsLogger().log_time_block() """
+    metrics_logger = MLFlowMetricsLogger(metrics_prefix="foo_time_block/")
     metrics_logger.open()
 
     with metrics_logger.log_time_block("foo_metric", step=2):
@@ -297,8 +306,8 @@ def test_metrics_logger_log_time_block(mlflow_log_metric_mock):
 @patch('mlflow.log_figure')
 @patch('mlflow.log_metric')
 def test_log_inferencing_latencies(mlflow_log_metric_mock, mlflow_log_figure_mock):
-    """ Tests MetricsLogger().log_inferencing_larencies() """
-    metrics_logger = MetricsLogger()
+    """ Tests MLFlowMetricsLogger().log_inferencing_larencies() """
+    metrics_logger = MLFlowMetricsLogger()
     metrics_logger.open()
 
     test_latencies = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 5.0]
