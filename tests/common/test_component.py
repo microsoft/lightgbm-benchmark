@@ -45,8 +45,8 @@ def assert_runnable_script_metrics(script_instance: SingleNodeScript, user_metri
     # now let's test all metrics
     metrics_calls = mlflow_log_metric_mock.call_args_list
 
-    # N user metric + 11 performance metrics
-    assert len(metrics_calls) == (11 + len(user_metrics))
+    # N user metric + 18 performance metrics
+    assert len(metrics_calls) == (18 + len(user_metrics))
 
     # user metric testing
     assert isinstance(user_metrics, list)
@@ -64,8 +64,15 @@ def assert_runnable_script_metrics(script_instance: SingleNodeScript, user_metri
     # perf metrics
     perf_metrics_call_args = [
         "max_t_(cpu_pct_per_cpu_avg)",
+        "cpu_avg_utilization_pct",
+        "cpu_avg_utilization_at100_pct",
+        "cpu_avg_utilization_over80_pct",
+        "cpu_avg_utilization_over40_pct",
+        "cpu_avg_utilization_over20_pct",
         "max_t_(cpu_pct_per_cpu_min)",
         "max_t_(cpu_pct_per_cpu_max)",
+        "node_cpu_hours",
+        "node_unused_cpu_hours",
         "max_t_(mem_percent)",
         "max_t_(disk_usage_percent)",
         "max_t_(disk_io_read_mb)",
