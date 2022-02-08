@@ -259,47 +259,9 @@ class RayScript(RunnableScript):
     ### SPECIFIC MAIN METHOD ###
     ############################
 
-    @classmethod
-    def main(cls, cli_args=None):
-        """ Component main function, it is not recommended to override this method.
-        It parses arguments and executes run() with the right arguments.
-
-        Args:
-            cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
-        """
-        # initialize root logger
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-        console_handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-        # construct arg parser
-        parser = cls.get_arg_parser()
-
-        # if argument parsing fails, or if unknown arguments, will except
-        args, unknown_args = parser.parse_known_args(cli_args)
-        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
-
-        # create script instance, initialize mlflow
-        script_instance = cls()
-        script_instance.initialize_run(args)
-
-        # catch run function exceptions to properly finalize run (kill/join threads)
-        try:
-            # run the actual run method ONLY ON HEAD
-            if script_instance.self_is_head:
-                script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
-            else:
-                script_instance.logger.warning("This is not HEAD node, exiting script now")
-        except BaseException as e:
-            logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
-            script_instance.finalize_run(args)
-            raise e
-
-        # close mlflow
-        script_instance.finalize_run(args)
-
-        # return for unit tests
-        return script_instance
+    def _main_run_hook(self, args, unknown_args):
+        """Run function called from main()"""
+        if script_instance.self_is_head:
+            self.run(args, self.logger, self.metrics_logger, unknown_args=unknown_args)
+        else:
+            self.logger.warning("This is not HEAD node, exiting script now")
