@@ -33,6 +33,7 @@ COMPONENT_SPEC_FILES = [
     "data_processing/partition_data/spec.yaml",
 
     "training/lightgbm_python/spec.yaml",
+    "training/lightgbm_ray/spec.yaml",
 
     "model_transformation/treelite_compile/spec.yaml",
 
