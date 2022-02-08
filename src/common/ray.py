@@ -39,10 +39,58 @@ class RayScript(MultiNodeClusterSyncSetupScript):
         self.head_port = 6379
         self.redis_password = None
 
+    @classmethod
+    def get_arg_parser(cls, parser=None):
+        """Adds component/module arguments to a given argument parser.
+        Args:
+            parser (argparse.ArgumentParser): an argument parser instance
+        Returns:
+            ArgumentParser: the argument parser instance
+        Notes:
+            if parser is None, creates a new parser instance
+        """
+        # add generic arguments
+        parser = MultiNodeClusterSyncSetupScript.get_arg_parser(parser)
+
+        # add generic arguments here
+        group_args = parser.add_argument_group(f"Ray setup arguments [{__name__}:{cls.__name__}]")
+        group_args.add_argument(
+            "--ray_head_addr",
+            required=False,
+            default=None,
+            type=str,
+            help="address of ray cluster (if running this script locally)",
+        )
+        group_args.add_argument(
+            "--ray_head_port",
+            required=False,
+            default=6379,
+            type=int,
+            help="port of ray cluster (if running this script locally)",
+        )
+        group_args.add_argument(
+            "--ray_redis_password",
+            required=False,
+            default=None,
+            type=str,
+            help="redis password of ray cluster (if running this script locally)",
+        )
+
+        return parser
 
     #####################
     ### SETUP METHODS ###
     #####################
+
+    def setup_local(self, args):
+        """Setup method if custom_sync_setup=False"""
+        self.logger.info(f"{self.__class__.__name__}.setup_local() called.")
+
+        # create setup config
+        self.head_address = args.ray_head_addr
+        self.head_port = args.ray_head_port
+        self.redis_password = args.ray_redis_password
+
 
     def setup_head_node(self):
         """Setup to run only on head node"""
@@ -108,7 +156,13 @@ class RayScript(MultiNodeClusterSyncSetupScript):
         # call run() only on main node
         if self.multinode_config.main_node:
             # initialize ray lib
-            ray.init(address="auto", _redis_password=self.redis_password)
+            if self.head_address is None:
+                ray.init()
+            else:
+                ray.init(
+                    address="{self.head_address}:{self.head_port}",
+                    _redis_password=self.redis_password
+                )
 
             # making absolutely sure all nodes are there...
             for i in range(60):

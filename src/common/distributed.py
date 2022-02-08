@@ -13,6 +13,7 @@ import time
 from .components import RunnableScript
 from dataclasses import dataclass
 from typing import Optional
+from distutils.util import strtobool
 
 from .metrics import MLFlowMetricsLogger, AzureMLRunMetricsLogger
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
@@ -307,6 +308,31 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
         self._setup_config = {}
 
 
+    @classmethod
+    def get_arg_parser(cls, parser=None):
+        """Adds component/module arguments to a given argument parser.
+        Args:
+            parser (argparse.ArgumentParser): an argument parser instance
+        Returns:
+            ArgumentParser: the argument parser instance
+        Notes:
+            if parser is None, creates a new parser instance
+        """
+        # add generic arguments
+        parser = RunnableScript.get_arg_parser(parser)
+
+        # add generic arguments here
+        group_args = parser.add_argument_group(f"Cluster auto setup arguments [{__name__}:{cls.__name__}]")
+        group_args.add_argument(
+            "--cluster_auto_setup",
+            required=False,
+            default=False,
+            type=strtobool,
+            help="Runs the components setup/teardown methods and sync using MPI.",
+        )
+
+        return parser
+
     def run_cli_command(self, cli_command, timeout=60):
         """Runs subprocess for a cli setup command"""
         self.logger.info(f"Launching cli with command: {cli_command}")
@@ -338,6 +364,10 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
         return self._setup_config.get(key, default_value)
 
     # For specific setups, override methods below
+
+    def setup_local(self, args):
+        """Setup method if custom_sync_setup=False"""
+        self.logger.info(f"{self.__class__.__name__}.setup_local() called.")
 
     def setup_head_node(self):
         """Setup to run only on head node"""
@@ -433,25 +463,29 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
         self.multinode_driver.initialize()
         self.multinode_config = self.multinode_driver.get_multinode_config()
 
-        # initialize setup accross nodes
-        if self.multinode_config.main_node:
-            # run setup on head node
-            self.setup_head_node()
+        if args.cluster_auto_setup:
+            # initialize setup accross nodes
+            if self.multinode_config.main_node:
+                # run setup on head node
+                self.setup_head_node()
 
-            # send cluster config to all other nodes
-            self.broadcast_config_from_head_to_cluster_nodes()
+                # send cluster config to all other nodes
+                self.broadcast_config_from_head_to_cluster_nodes()
 
-            # then wait for all nodes to finish setup
-            self.wait_on_nodes_setup_ready()
+                # then wait for all nodes to finish setup
+                self.wait_on_nodes_setup_ready()
+            else:
+                # get cluster setup from head node using mpi
+                self.listen_cluster_setup_from_head_node()
+
+                # run setup on cluster node
+                self.setup_cluster_node()
+
+                # then report that setup is complete
+                self.report_node_setup_complete()
         else:
-            # get cluster setup from head node using mpi
-            self.listen_cluster_setup_from_head_node()
-
-            # run setup on cluster node
-            self.setup_cluster_node()
-
-            # then report that setup is complete
-            self.report_node_setup_complete()
+            # run custom method for setup
+            self.setup_local(args)
 
         # open mlflow
         self.metrics_logger.open()
@@ -490,24 +524,25 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
         # close mlflow
         self.metrics_logger.close()
 
-        # properly teardown all nodes
-        if self.multinode_config.main_node:
-            # run teardown on head node
-            self.head_node_teardown()
+        if args.cluster_auto_setup:
+            # properly teardown all nodes
+            if self.multinode_config.main_node:
+                # run teardown on head node
+                self.head_node_teardown()
 
-            # send signal to teardown to each node
-            self.broadcast_shutdown_signal()
-        else:
-            # wait for teardown signal from head node
-            while True:
-                time.sleep(10)
-                self.logger.info(f"Waiting for teardown signal from HEAD node...")
+                # send signal to teardown to each node
+                self.broadcast_shutdown_signal()
+            else:
+                # wait for teardown signal from head node
+                while True:
+                    time.sleep(10)
+                    self.logger.info(f"Waiting for teardown signal from HEAD node...")
 
-                if self.non_block_wait_for_shutdown():
-                    break
+                    if self.non_block_wait_for_shutdown():
+                        break
 
-            # run teardown on cluster
-            self.cluster_node_teardown()
+                # run teardown on cluster
+                self.cluster_node_teardown()
 
         # clean exit from driver
         self.multinode_driver.finalize()

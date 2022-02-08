@@ -12,7 +12,7 @@ from scripts.training.lightgbm_ray import train
 
 # IMPORTANT: see conftest.py for fixtures
 
-def test_lightgbm_python_train(temporary_dir, regression_train_sample, regression_test_sample):
+def test_lightgbm_ray_train(temporary_dir, regression_train_sample, regression_test_sample):
     """Tests src/scripts/training/lightgbm_ray/train.py"""
     model_dir = os.path.join(temporary_dir, "model")
 
@@ -35,7 +35,8 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
         "--learning_rate", "0.3",
         "--max_bin", "16",
         "--feature_fraction", "0.15",
-        "--device_type", "cpu"
+        "--device_type", "cpu",
+        "--cluster_sync_setup", "False"
     ]
 
     # replaces sys.argv with test arguments and run main
