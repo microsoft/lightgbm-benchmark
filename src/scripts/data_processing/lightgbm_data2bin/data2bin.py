@@ -49,7 +49,7 @@ class LightGBMData2BinScript(RunnableScript):
         # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
-        group_i = parser.add_argument_group("Input Data")
+        group_i = parser.add_argument_group(f"Input Data [{__name__}:{cls.__name__}]")
         group_i.add_argument("--train",
             required=True, type=input_file_path, help="Training data location (file path or dir path with unique file)")
         group_i.add_argument("--test",
@@ -58,14 +58,14 @@ class LightGBMData2BinScript(RunnableScript):
         group_i.add_argument("--label_column", required=False, default="0", type=str)
         group_i.add_argument("--group_column", required=False, default=None, type=str)
 
-        group_o = parser.add_argument_group("Outputs")
+        group_o = parser.add_argument_group(f"Outputs [{__name__}:{cls.__name__}]")
         group_o.add_argument("--output_train",
             required=False, type=str, help="export binary train data (folder)")
         group_o.add_argument("--output_test",
             required=False, type=str, help="export binary test data (folder)")
         
         # learner params
-        group_lgbm = parser.add_argument_group("LightGBM Dataset parameters")
+        group_lgbm = parser.add_argument_group(f"LightGBM Dataset parameters [{__name__}:{cls.__name__}]")
         group_lgbm.add_argument("--max_bin", required=True, type=int)
         group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 

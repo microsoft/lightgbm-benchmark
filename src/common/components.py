@@ -65,7 +65,7 @@ class RunnableScript():
             parser = argparse.ArgumentParser()
 
         # add generic arguments here
-        group_general = parser.add_argument_group("General parameters")
+        group_general = parser.add_argument_group(f"General parameters [{__name__}:{cls.__name__}]")
         group_general.add_argument(
             "--verbose",
             required=False,
