@@ -165,7 +165,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         metrics_logger.log_parameters(**lgbm_params)
 
         # get expected number of actors
-        num_actors = args.lightgbm_ray_actors or self.available_nodes
+        num_actors = args.lightgbm_ray_actors or self.multinode_config.world_size
 
         ### DATA LOADING (train) ###
 
@@ -200,7 +200,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         logger.info(f"Found {len(validation_paths)} validation files")
 
         # NOTE: it seems we need to have as many test sets as actors
-        required_validation_sets = args.lightgbm_ray_actors or self.available_nodes
+        required_validation_sets = args.lightgbm_ray_actors or self.multinode_config.world_size
         if len(validation_paths) == 1 and required_validation_sets > 1:
             logger.info(f"Creating artificial {required_validation_sets} test sets")
             validation_paths = [ validation_paths[0] for _ in range(required_validation_sets) ]
@@ -232,7 +232,7 @@ class LightGBMOnRayTrainingScript(RayScript):
                 valid_names=[ "valid_0" ],
                 verbose_eval=True,
                 ray_params=lightgbm_ray.RayParams(
-                    num_actors=args.lightgbm_ray_actors or self.available_nodes, # number of VMs
+                    num_actors=args.lightgbm_ray_actors or self.multinode_config.world_size, # number of VMs
                     #cpus_per_actor=2
                 ),
                 #callbacks=[callbacks_handler.callback] # TODO: doesn't work with common module

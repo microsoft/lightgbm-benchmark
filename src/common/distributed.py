@@ -119,7 +119,7 @@ class MultiNodeMPIDriver(MultiNodeDriver):
                 (world_size > 1), # mpi_available
                 (world_rank == 0), # main_node
             )
-            self.comm = None
+            self._comm = None
         else:
             # init mpi and use comm to detect mpi config
             self.logger.info(f"Running MPI.Init_thread(required={self._mpi_init_mode})")
@@ -128,13 +128,13 @@ class MultiNodeMPIDriver(MultiNodeDriver):
             except self._mpi_module.Exception:
                 self.logger.warning(f"Exception occured during MPI initialization:\n{traceback.format_exc()}")
 
-            self.comm = self._mpi_module.COMM_WORLD
+            self._comm = self._mpi_module.COMM_WORLD
             try:
                 self._multinode_config = multinode_config_class(
-                    self.comm.Get_size(), # world_size
-                    self.comm.Get_rank(), # world_rank
-                    (self.comm.Get_size() > 1), # mpi_available
-                    (self.comm.Get_rank() == 0), # main_node
+                    self._comm.Get_size(), # world_size
+                    self._comm.Get_rank(), # world_rank
+                    (self._comm.Get_size() > 1), # mpi_available
+                    (self._comm.Get_rank() == 0), # main_node
                 )
                 self.logger.info(f"MPI detection results: {self._multinode_config}")
             except:
@@ -445,7 +445,7 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
             self.wait_on_nodes_setup_ready()
         else:
             # get cluster setup from head node using mpi
-            self.listen_cluster_setup()
+            self.listen_cluster_setup_from_head_node()
 
             # run setup on cluster node
             self.setup_cluster_node()

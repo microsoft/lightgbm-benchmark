@@ -8,6 +8,7 @@ import os
 import logging
 import traceback
 import uuid
+import time
 
 import ray
 
@@ -69,6 +70,15 @@ class RayScript(MultiNodeClusterSyncSetupScript):
 
         # initialize ray lib
         ray.init(address="auto", _redis_password=self.redis_password)
+
+        # making absolutely sure all nodes are there...
+        for i in range(60):
+            self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{self.multinode_config.world_size}]")
+            if (len(ray.nodes()) >= self.multinode_config.world_size):
+                break
+            time.sleep(1)
+        else:
+            raise Exception("Could not reach maximum number of nodes before 60 seconds.")
 
     def setup_cluster_node(self):
         """Setup to run only on non-head cluster nodes"""
