@@ -265,39 +265,39 @@ class PerfReportPlotter():
 
             # DISK
             self.metrics_logger.log_metric(
-                "max_t_(disk_usage_percent)",
+                "max_t_disk_usage_percent",
                 max([ report["disk_usage_percent"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(disk_io_read_mb)",
+                "total_disk_io_read_mb",
                 max([ report["disk_io_read_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(disk_io_write_mb)",
+                "total_disk_io_write_mb",
                 max([ report["disk_io_write_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
 
             # NET I/O
             self.metrics_logger.log_metric(
-                "max_t_(net_io_lo_sent_mb)",
+                "total_net_io_lo_sent_mb",
                 max([ report["net_io_lo_sent_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(net_io_ext_sent_mb)",
+                "total_net_io_ext_sent_mb",
                 max([ report["net_io_ext_sent_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(net_io_lo_recv_mb)",
+                "total_net_io_lo_recv_mb",
                 max([ report["net_io_lo_recv_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(net_io_ext_recv_mb)",
+                "total_net_io_ext_recv_mb",
                 max([ report["net_io_ext_recv_mb"] for report in self.all_reports[node] ]),
                 step=node
             )

@@ -75,12 +75,12 @@ def assert_runnable_script_metrics(script_instance: SingleNodeScript, user_metri
         "node_unused_cpu_hours",
         "max_t_(mem_percent)",
         "max_t_(disk_usage_percent)",
-        "max_t_(disk_io_read_mb)",
-        "max_t_(disk_io_write_mb)",
-        "max_t_(net_io_lo_sent_mb)",
-        "max_t_(net_io_ext_sent_mb)",
-        "max_t_(net_io_lo_recv_mb)",
-        "max_t_(net_io_ext_recv_mb)",
+        "total_disk_io_read_mb",
+        "total_disk_io_write_mb",
+        "total_net_io_lo_sent_mb",
+        "total_net_io_ext_sent_mb",
+        "total_net_io_lo_recv_mb",
+        "total_net_io_ext_recv_mb",
     ]
     for index, metric_key in enumerate(perf_metrics_call_args):
         assert metrics_calls[index+1].args[0] == MetricsLogger._remove_non_allowed_chars(metric_key)

@@ -16,11 +16,11 @@ The list of available metrics is detailed below:
 | `node_unused_cpu_hours` | One value per node | `time * #cpus * (1 - cpu_avg_utilization_pct)` |
 | `max_t_mem_percent` | One value per node | Maximum value taken by **memory utilization** over the entire job time. |
 | `max_t_disk_usage_percent` | One value per node | Maximum value taken by **disk usage** over the entire job time. |
-| `disk_io_read_mb` | One value per node | Total disk **data read** in MB (max value at the end of job). |
-| `disk_io_write_mb` | One value per node | Total disk **data write** in MB (max value at the end of job). |
-| `net_io_lo_sent_mb` | One value per node | Total net data **sent on loopback** device (max value at the end of job). |
-| `net_io_ext_sent_mb` | One value per node | Total net data **sent on external** device (max value at the end of job). |
-| `net_io_lo_recv_mb` | One value per node | Total net data **received on loopback** device (max value at the end of job). |
-| `net_io_ext_recv_mb` | One value per node | Total net data **received on external** device (max value at the end of job). |
+| `total_disk_io_read_mb` | One value per node | Total disk **data read** in MB (max value at the end of job). |
+| `total_disk_io_write_mb` | One value per node | Total disk **data write** in MB (max value at the end of job). |
+| `total_net_io_lo_sent_mb` | One value per node | Total net data **sent on loopback** device (max value at the end of job). |
+| `total_net_io_ext_sent_mb` | One value per node | Total net data **sent on external** device (max value at the end of job). |
+| `total_net_io_lo_recv_mb` | One value per node | Total net data **received on loopback** device (max value at the end of job). |
+| `total_net_io_ext_recv_mb` | One value per node | Total net data **received on external** device (max value at the end of job). |
 
 ::: src.common.perf
