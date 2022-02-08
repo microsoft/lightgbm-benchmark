@@ -36,7 +36,7 @@ def test_lightgbm_ray_train(temporary_dir, regression_train_sample, regression_t
         "--max_bin", "16",
         "--feature_fraction", "0.15",
         "--device_type", "cpu",
-        "--cluster_sync_setup", "False"
+        "--cluster_auto_setup", "False"
     ]
 
     # replaces sys.argv with test arguments and run main
