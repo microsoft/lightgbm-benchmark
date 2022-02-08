@@ -261,7 +261,7 @@ class RayScript(RunnableScript):
 
     def _main_run_hook(self, args, unknown_args):
         """Run function called from main()"""
-        if script_instance.self_is_head:
+        if self.self_is_head:
             self.run(args, self.logger, self.metrics_logger, unknown_args=unknown_args)
         else:
             self.logger.warning("This is not HEAD node, exiting script now")
