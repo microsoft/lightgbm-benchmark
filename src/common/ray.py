@@ -68,18 +68,6 @@ class RayScript(MultiNodeClusterSyncSetupScript):
         ]
         self.run_cli_command(ray_setup_command)
 
-        # initialize ray lib
-        ray.init(address="auto", _redis_password=self.redis_password)
-
-        # making absolutely sure all nodes are there...
-        for i in range(60):
-            self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{self.multinode_config.world_size}]")
-            if (len(ray.nodes()) >= self.multinode_config.world_size):
-                break
-            time.sleep(1)
-        else:
-            raise Exception("Could not reach maximum number of nodes before 60 seconds.")
-
     def setup_cluster_node(self):
         """Setup to run only on non-head cluster nodes"""
         super().setup_head_node()
@@ -119,6 +107,19 @@ class RayScript(MultiNodeClusterSyncSetupScript):
         """Run function called from main()"""
         # call run() only on main node
         if self.multinode_config.main_node:
+            # initialize ray lib
+            ray.init(address="auto", _redis_password=self.redis_password)
+
+            # making absolutely sure all nodes are there...
+            for i in range(60):
+                self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{self.multinode_config.world_size}]")
+                if (len(ray.nodes()) >= self.multinode_config.world_size):
+                    break
+                time.sleep(1)
+            else:
+                raise Exception("Could not reach maximum number of nodes before 60 seconds.")
+
             self.run(args, self.logger, self.metrics_logger, unknown_args=unknown_args)
         else:
+            self.logger.info("Running on cluster node, run() is skipped.")
             return
