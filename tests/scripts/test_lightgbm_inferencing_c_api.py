@@ -58,4 +58,4 @@ PROPRETY foo2=bar2
     metric_calls = mlflow_log_metric_mock.call_args_list
     # 32 = 18 perf metrics + 13 inference metrics + 1 custom (foo)
     assert mlflow_log_metric_mock.call_count == 32
-    assert len(metric_calls) == 23
+    assert len(metric_calls) == 32
