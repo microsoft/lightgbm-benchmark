@@ -34,6 +34,7 @@ nav:
         - io.py: references/common/io.md
         - lightgbm_utils.py: references/common/lightgbm_utils.md
         - metrics.py: references/common/metrics.md
+        - perf.py: references/common/perf.md
         - tasks.py: references/common/tasks.md
     - src/scripts/:
         - sample/sample.py: references/scripts/sample/sample.md
