@@ -76,6 +76,9 @@ class lightgbm_training_config: # pragma: no cover
 lightgbm_basic_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
 lightgbm_basic_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
 
+# lightgbm ray api
+lightgbm_ray_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_ray", "spec.yaml"))
+
 # preprocessing/utility modules
 partition_data_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
 lightgbm_data2bin_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
@@ -275,6 +278,18 @@ def lightgbm_training_pipeline_function(config,
                     variant_params.sweep.primary_metric=f"node_0/valid_0.{variant_params.training.metric}"
             else:
                 lightgbm_train_module = lightgbm_basic_train_module
+        elif variant_params.framework == "lightgbm_ray":
+            if use_sweep:
+                raise NotImplementedError("Sweep on lightgbm_ray component is not implemented.")
+            lightgbm_train_module = lightgbm_ray_train_module
+
+            # remove arguments that are not in lightgbm_ray component
+            if 'multinode_driver' in training_params:
+                del training_params['multinode_driver']
+            if 'header' in training_params:
+                del training_params['header']
+            if 'construct' in training_params:
+                del training_params['construct']
         else:
             raise NotImplementedError(f"training framework {variant_params.framework} hasn't been implemented yet.")
 
