@@ -70,7 +70,7 @@ class PerformanceReportingThread(threading.Thread):
         # DISK UTILIZAITON
         perf_report["disk_usage_percent"] = psutil.disk_usage('/').percent
         perf_report["disk_io_read_mb"] = (psutil.disk_io_counters(perdisk=False).read_bytes / (1024 * 1024))
-        perf_report["disk_io_write_mb"] = (psutil.disk_io_counters(perdisk=False).write_count / (1024 * 1024))
+        perf_report["disk_io_write_mb"] = (psutil.disk_io_counters(perdisk=False).write_bytes / (1024 * 1024))
 
         # NET I/O SEND/RECV
         net_io_counters = psutil.net_io_counters(pernic=True)
