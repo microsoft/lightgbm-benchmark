@@ -7,6 +7,9 @@ LightGBM/Python training script
 import os
 import logging
 import traceback
+import subprocess
+import uuid
+import time
 from .components import RunnableScript
 from dataclasses import dataclass
 from typing import Optional
@@ -273,3 +276,238 @@ class MultiNodeScript(RunnableScript):
 
         # close mlflow
         self.metrics_logger.close()
+
+
+class MultiNodeClusterSyncSetupScript(RunnableScript):
+    # not even sure we need tags, but let's do it
+    COMM_TAG_CLUSTER_SETUP = 42
+    COMM_TAG_SETUP_FINISHED = 43
+    COMM_TAG_CLUSTER_SHUTDOWN = 44
+
+    def __init__(self, task, framework, framework_version, metrics_prefix=None, mpi_init_mode=3):
+        """ Generic initialization for all script classes.
+
+        Args:
+            task (str): name of task in the pipeline/benchmark (ex: train, score)
+            framework (str): name of ML framework
+            framework_version (str): a version of this framework
+            metrics_prefix (str): any prefix to add to this scripts metrics
+            mpi_init_mode (int): mode to initialize MPI (default: THREAD)
+        """
+        # just use the regular init
+        super().__init__(
+            task = task,
+            framework = framework,
+            framework_version = framework_version,
+            metrics_prefix = metrics_prefix
+        )
+
+        # keep those for initialization
+        self._mpi_init_mode = mpi_init_mode
+        self._setup_config = {}
+
+
+    def run_cli_command(self, cli_command, timeout=60):
+        """Runs subprocess for a cli setup command"""
+        self.logger.info(f"Launching cli with command: {cli_command}")
+        cli_command_call = subprocess.run(
+            cli_command,
+            # stdout=PIPE,
+            # stderr=PIPE,
+            universal_newlines=True,
+            check=False,  # will not raise an exception if subprocess fails (so we capture with .returncode)
+            timeout=timeout,  # TODO: more than a minute would be weird?
+            # env=custom_env
+        )
+        self.logger.info(f"return code: {cli_command_call.returncode}")
+
+        if cli_command_call.returncode != 0:
+            raise RuntimeError("Cli command returned code != 0")
+
+        return cli_command_call.returncode
+
+
+    #####################
+    ### SETUP METHODS ###
+    #####################
+
+    def setup_config_add_key(self, key, value):
+        self._setup_config[key] = value
+
+    def setup_config_get_key(self, key, default_value=None):
+        return self._setup_config.get(key, default_value)
+
+    # For specific setups, override methods below
+
+    def setup_head_node(self):
+        """Setup to run only on head node"""
+        self.logger.info(f"{self.__class__.__name__}.setup_head_node() called to set up HEAD node.")
+        self.setup_config_add_key("_session_id", str(uuid.uuid4()))
+
+    def setup_cluster_node(self):
+        """Setup to run only on non-head cluster nodes"""
+        self.logger.info(f"{self.__class__.__name__}.setup_cluster_node() called to set up cluster node.")
+
+    def head_node_teardown(self):
+        """Un-setup a cluster node"""
+        self.logger.info(f"{self.__class__.__name__}.head_node_teardown() called to teardown a HEAD node.")
+
+    def cluster_node_teardown(self):
+        """Un-setup a cluster node"""
+        self.logger.info(f"{self.__class__.__name__}.cluster_node_teardown() called to teardown a cluster node.")
+
+
+    ################
+    ### MPI COMM ###
+    ################
+
+    def broadcast_config_from_head_to_cluster_nodes(self):
+        """[HEAD only] Sends the cluster setup params to each non-head node"""
+        self.logger.info(f"Sending cluster setup from head node to cluster nodes: {self._setup_config}")
+        for i in range(1, self.multinode_config.world_size):
+            self.multinode_driver._comm.send(
+                self._setup_config, i, tag=MultiNodeClusterSyncSetupScript.COMM_TAG_CLUSTER_SETUP
+            )
+
+    def listen_cluster_setup_from_head_node(self):
+        """[NODE only] Waits for head node to send cluster setup params"""
+        self._setup_config = self.multinode_driver._comm.recv(
+            source=0, tag=MultiNodeClusterSyncSetupScript.COMM_TAG_CLUSTER_SETUP
+        )
+        self.logger.info(f"Obtained cluster setup from head node: {self._setup_config}")
+
+
+    def wait_on_nodes_setup_ready(self):
+        """[HEAD only] Waits for each node to report completion of their setup"""
+        self.logger.info("Checking setup status from each node...")
+
+        # loop on each node in the world and wait for status
+        for i in range(1, self.multinode_config.world_size):
+            status = self.multinode_driver._comm.recv(source=i, tag=MultiNodeClusterSyncSetupScript.COMM_TAG_SETUP_FINISHED)
+            self.logger.info(f"Node #{i}: {status}")
+
+            if status != "OK":
+                raise RuntimeError(f"Node #{i} failed to setup.")
+
+    def report_node_setup_complete(self):
+        """[NODE only] Report to head that this node setup is complete"""
+        self.logger.info("Reporting status OK to head node.")
+        self.multinode_driver._comm.send("OK", 0, tag=MultiNodeClusterSyncSetupScript.COMM_TAG_SETUP_FINISHED)
+
+    def broadcast_shutdown_signal(self):
+        """[HEAD only] Sends message to shutdown to all nodes"""
+        for i in range(1, self.multinode_config.world_size):
+            self.logger.info(f"Broadcasting shutdown message to node #{i}")
+            self.multinode_driver._comm.send("SHUTDOWN", i, tag=MultiNodeClusterSyncSetupScript.COMM_TAG_CLUSTER_SHUTDOWN)
+
+    def non_block_wait_for_shutdown(self):
+        """[NODE only] Checks if head node has sent shutdown message"""
+        return self.multinode_driver._comm.iprobe(source=0, tag=MultiNodeClusterSyncSetupScript.COMM_TAG_CLUSTER_SHUTDOWN)
+
+
+    ######################
+    ### SCRIPT METHODS ###
+    ######################
+
+    def initialize_run(self, args):
+        """Initialize the component run, opens/setups what needs to be"""
+        self.logger.info(f"Initializing {self.__class__.__name__} run...")
+
+        # initializes reporting of metrics
+        if args.metrics_driver == 'mlflow':
+            self.metrics_logger = MLFlowMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        elif args.metrics_driver == 'azureml':
+            self.metrics_logger = AzureMLRunMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        else:
+            # use default metrics_logger (stdout print)
+            pass
+
+        # initialize mpi comm
+        self.multinode_driver = MultiNodeMPIDriver(mpi_init_mode=self._mpi_init_mode)
+        self.multinode_driver.initialize()
+        self.multinode_config = self.multinode_driver.get_multinode_config()
+
+        # initialize setup accross nodes
+        if self.multinode_config.main_node:
+            # run setup on head node
+            self.setup_head_node()
+
+            # send cluster config to all other nodes
+            self.broadcast_config_from_head_to_cluster_nodes()
+
+            # then wait for all nodes to finish setup
+            self.wait_on_nodes_setup_ready()
+        else:
+            # get cluster setup from head node using mpi
+            self.listen_cluster_setup()
+
+            # run setup on cluster node
+            self.setup_cluster_node()
+
+            # then report that setup is complete
+            self.report_node_setup_complete()
+
+        # open mlflow
+        self.metrics_logger.open()
+
+        if self.multinode_config.main_node:
+            # record properties only from the main node
+            self.metrics_logger.set_properties(
+                task = self.task,
+                framework = self.framework,
+                framework_version = self.framework_version
+            )
+
+            # if provided some custom_properties by the outside orchestrator
+            if args.custom_properties:
+                self.metrics_logger.set_properties_from_json(args.custom_properties)
+
+            # add properties about environment of this script
+            self.metrics_logger.set_platform_properties()
+
+        # enable perf reporting
+        if not args.disable_perf_metrics:
+            self.perf_report_collector = PerformanceMetricsCollector()
+            self.perf_report_collector.start()
+
+
+    def finalize_run(self, args):
+        """Finalize the run, close what needs to be"""
+        self.logger.info(f"Finalizing {self.__class__.__name__} run...")
+
+        if self.perf_report_collector:
+            self.perf_report_collector.finalize()
+            plotter = PerfReportPlotter(self.metrics_logger)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self.multinode_config.world_rank)
+            plotter.report_nodes_perf()
+
+        # close mlflow
+        self.metrics_logger.close()
+
+        # properly teardown all nodes
+        if self.multinode_config.main_node:
+            # run teardown on head node
+            self.head_node_teardown()
+
+            # send signal to teardown to each node
+            self.broadcast_shutdown_signal()
+        else:
+            # wait for teardown signal from head node
+            while True:
+                time.sleep(10)
+                self.logger.info(f"Waiting for teardown signal from HEAD node...")
+
+                if self.non_block_wait_for_shutdown():
+                    break
+
+            # run teardown on cluster
+            self.cluster_node_teardown()
+
+        # clean exit from driver
+        self.multinode_driver.finalize()

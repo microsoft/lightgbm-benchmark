@@ -166,14 +166,12 @@ class RunnableScript():
         self.metrics_logger.close()
 
 
-    @classmethod
-    def main(cls, cli_args=None):
-        """ Component main function, it is not recommended to override this method.
-        It parses arguments and executes run() with the right arguments.
+    ####################
+    ### MAIN METHODS ###
+    ####################
 
-        Args:
-            cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
-        """
+    @classmethod
+    def initialize_root_logger(cls):
         # initialize root logger
         logger = logging.getLogger()
         logger.setLevel(logging.INFO)
@@ -181,6 +179,12 @@ class RunnableScript():
         formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
+
+        return logger
+
+    @classmethod
+    def parse_class_arguments(cls, cli_args=None):
+        logger = logging.getLogger()
 
         # show the command used to run
         if cli_args:
@@ -195,14 +199,31 @@ class RunnableScript():
         args, unknown_args = parser.parse_known_args(cli_args)
         logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
+        return args, unknown_args
+
+    def _main_run_hook(self, args, unknown_args):
+        """Run function called from main()"""
+        self.run(args, self.logger, self.metrics_logger, unknown_args=unknown_args)
+
+    @classmethod
+    def main(cls, cli_args=None):
+        """ Component main function, it is not recommended to override this method.
+        It parses arguments and executes run() with the right arguments.
+
+        Args:
+            cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
+        """
+        cls.initialize_root_logger()
+        args, unknown_args = cls.parse_class_arguments(cli_args)
+
         # create script instance, initialize mlflow
         script_instance = cls()
         script_instance.initialize_run(args)
 
         # catch run function exceptions to properly finalize run (kill/join threads)
         try:
-            # run the actual thing
-            script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
+            # run the class run method (passthrough)
+            script_instance._main_run_hook(args, unknown_args)
         except BaseException as e:
             logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
             script_instance.finalize_run(args)
