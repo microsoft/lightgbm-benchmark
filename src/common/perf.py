@@ -70,7 +70,7 @@ class PerformanceReportingThread(threading.Thread):
         # DISK UTILIZAITON
         perf_report["disk_usage_percent"] = psutil.disk_usage('/').percent
         perf_report["disk_io_read_mb"] = (psutil.disk_io_counters(perdisk=False).read_bytes / (1024 * 1024))
-        perf_report["disk_io_write_mb"] = (psutil.disk_io_counters(perdisk=False).write_count / (1024 * 1024))
+        perf_report["disk_io_write_mb"] = (psutil.disk_io_counters(perdisk=False).write_bytes / (1024 * 1024))
 
         # NET I/O SEND/RECV
         net_io_counters = psutil.net_io_counters(pernic=True)
@@ -200,9 +200,36 @@ class PerfReportPlotter():
         # Currently reporting one metric per node
         for node in self.all_reports:
             # CPU UTILIZATION
+            cpu_avg_utilization = [ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]
+
             self.metrics_logger.log_metric(
                 "max_t_(cpu_pct_per_cpu_avg)",
-                max([ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]),
+                max(cpu_avg_utilization),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_avg_utilization_pct",
+                sum(cpu_avg_utilization)/len(cpu_avg_utilization),
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_avg_utilization_at100_pct",
+                sum( [ utilization >= 100.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_avg_utilization_over80_pct",
+                sum( [ utilization >= 80.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_avg_utilization_over40_pct",
+                sum( [ utilization >= 40.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "cpu_avg_utilization_over20_pct",
+                sum( [ utilization >= 20.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
                 step=node
             )
             self.metrics_logger.log_metric(
@@ -216,6 +243,19 @@ class PerfReportPlotter():
                 step=node
             )
 
+            # "CPU HOURS"
+            job_internal_cpu_hours = (time.time() - self.all_reports[node][0]["timestamp"]) * psutil.cpu_count() / 60 / 60
+            self.metrics_logger.log_metric(
+                "node_cpu_hours",
+                job_internal_cpu_hours,
+                step=node
+            )
+            self.metrics_logger.log_metric(
+                "node_unused_cpu_hours",
+                job_internal_cpu_hours * (100.0 - sum(cpu_avg_utilization)/len(cpu_avg_utilization)) / 100.0,
+                step=node
+            )
+
             # MEM
             self.metrics_logger.log_metric(
                 "max_t_(mem_percent)",
@@ -225,39 +265,39 @@ class PerfReportPlotter():
 
             # DISK
             self.metrics_logger.log_metric(
-                "max_t_(disk_usage_percent)",
+                "max_t_disk_usage_percent",
                 max([ report["disk_usage_percent"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(disk_io_read_mb)",
+                "total_disk_io_read_mb",
                 max([ report["disk_io_read_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(disk_io_write_mb)",
+                "total_disk_io_write_mb",
                 max([ report["disk_io_write_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
 
             # NET I/O
             self.metrics_logger.log_metric(
-                "max_t_(net_io_lo_sent_mb)",
+                "total_net_io_lo_sent_mb",
                 max([ report["net_io_lo_sent_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(net_io_ext_sent_mb)",
+                "total_net_io_ext_sent_mb",
                 max([ report["net_io_ext_sent_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(net_io_lo_recv_mb)",
+                "total_net_io_lo_recv_mb",
                 max([ report["net_io_lo_recv_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
             self.metrics_logger.log_metric(
-                "max_t_(net_io_ext_recv_mb)",
+                "total_net_io_ext_recv_mb",
                 max([ report["net_io_ext_recv_mb"] for report in self.all_reports[node] ]),
                 step=node
             )
