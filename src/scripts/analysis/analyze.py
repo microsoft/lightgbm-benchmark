@@ -46,14 +46,14 @@ def get_arg_parser(parser=None):
     if parser is None:
         parser = argparse.ArgumentParser(__doc__)
 
-    group_exp = parser.add_argument_group(f"MLFlow Experiment [{__name__}:{cls.__name__}]")
+    group_exp = parser.add_argument_group("MLFlow Experiment")
     group_exp.add_argument("--experiment-id", dest="experiment_id",
         required=True, type=str)
     group_exp.add_argument("--benchmark-id", dest="benchmark_id",
         required=True, type=str)
     group_aml = parser.add_argument("--mlflow-target", dest="mlflow_target", required=False, type=str, choices=['azureml', 'local'], default='local')
 
-    group_data = parser.add_argument_group(f"Data operations [{__name__}:{cls.__name__}]")
+    group_data = parser.add_argument_group("Data operations")
     group_data.add_argument("--data-load", dest="data_load",
         required=False, default=None, type=str, help="path to file export benchmark data"
     )
@@ -61,7 +61,7 @@ def get_arg_parser(parser=None):
         required=False, default=None, type=str, help="path to file read benchmark data"
     )
 
-    group_analysis = parser.add_argument_group(f"Analysis parameters [{__name__}:{cls.__name__}]")
+    group_analysis = parser.add_argument_group("Analysis parameters")
     group_analysis.add_argument(
         "--template",
         required=True,
