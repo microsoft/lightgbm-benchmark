@@ -85,7 +85,7 @@ class RayScript(MultiNodeClusterSyncSetupScript):
             f"--address={self.head_address}:{self.head_port}",
             f"--redis-password={self.redis_password}",
         ]
-        self.run_cli_command(ray_setup_command, timeout=None)
+        self.run_cli_command(ray_setup_command)
 
     def head_node_teardown(self):
         """Un-setup a cluster node"""
@@ -93,12 +93,12 @@ class RayScript(MultiNodeClusterSyncSetupScript):
 
         ray.shutdown()
 
-        self.run_cli_command(["ray", "stop", "--force", "-v"], timeout=60)
+        self.run_cli_command(["ray", "stop", "--force", "-v"])
 
     def cluster_node_teardown(self):
         """Un-setup a cluster node"""
         super().cluster_node_teardown()
-        self.run_cli_command(["ray", "stop", "--force", "-v"], timeout=60)
+        self.run_cli_command(["ray", "stop", "--force", "-v"])
 
 
     ############################
