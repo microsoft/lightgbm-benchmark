@@ -515,15 +515,6 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
         """Finalize the run, close what needs to be"""
         self.logger.info(f"Finalizing {self.__class__.__name__} run...")
 
-        if self.perf_report_collector:
-            self.perf_report_collector.finalize()
-            plotter = PerfReportPlotter(self.metrics_logger)
-            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self.multinode_config.world_rank)
-            plotter.report_nodes_perf()
-
-        # close mlflow
-        self.metrics_logger.close()
-
         if args.cluster_auto_setup:
             # properly teardown all nodes
             if self.multinode_config.main_node:
@@ -543,6 +534,15 @@ class MultiNodeClusterSyncSetupScript(RunnableScript):
 
                 # run teardown on cluster
                 self.cluster_node_teardown()
+
+        if self.perf_report_collector:
+            self.perf_report_collector.finalize()
+            plotter = PerfReportPlotter(self.metrics_logger)
+            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=self.multinode_config.world_rank)
+            plotter.report_nodes_perf()
+
+        # close mlflow
+        self.metrics_logger.close()
 
         # clean exit from driver
         self.multinode_driver.finalize()
