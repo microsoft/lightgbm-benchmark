@@ -194,7 +194,7 @@ class MultiNodeScript(RunnableScript):
         # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
-        group_runtime = parser.add_argument_group("MultiNode runtime parameters")
+        group_runtime = parser.add_argument_group(f"MultiNode runtime parameters [{__name__}:{cls.__name__}]")
         group_runtime.add_argument("--multinode_driver", type=str, choices=['mpi', 'socket'], default='socket', required=False)
         group_runtime.add_argument("--multinode_machines", type=str, default='auto', required=False, help="list of machines, use only when running locally, default will use 'auto' to discover")
         group_runtime.add_argument("--multinode_listen_port", type=str, default=12345, required=False, help="used for socket only, default 12345")

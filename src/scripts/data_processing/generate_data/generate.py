@@ -54,7 +54,7 @@ class GenerateSyntheticDataScript(RunnableScript):
         parser = RunnableScript.get_arg_parser(parser)
 
         # add arguments that are specific to the script
-        group_params = parser.add_argument_group("Synthesis params")
+        group_params = parser.add_argument_group(f"Data generation params [{__name__}:{cls.__name__}]")
         group_params.add_argument(
             "--type", required=True, type=str, choices=["classification", "regression", "lambdarank"]
         )

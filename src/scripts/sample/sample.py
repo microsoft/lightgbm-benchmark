@@ -86,7 +86,7 @@ class SampleScript(RunnableScript):
 
         # add arguments that are specific to your script
         # here's a couple examples
-        group_i = parser.add_argument_group("I/O Arguments")
+        group_i = parser.add_argument_group(f"I/O Arguments [{__name__}:{cls.__name__}]")
         group_i.add_argument(
             "--data",
             required=True,
