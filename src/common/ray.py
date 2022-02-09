@@ -106,6 +106,9 @@ class RayScript(MultiNodeClusterSyncSetupScript):
         self.setup_config_add_key("head_port", self.head_port)
         self.setup_config_add_key("redis_password", self.redis_password)
 
+        # on head node, init should use "auto"
+        self.head_address = "auto"
+
         # run ray cli
         ray_setup_command = [
             "ray",
@@ -157,10 +160,18 @@ class RayScript(MultiNodeClusterSyncSetupScript):
         if self.multinode_config.main_node:
             # initialize ray lib
             if self.head_address is None:
+                # purely local without a ray cluster
                 ray.init()
-            else:
+            elif self.head_address == "auto":
+                # run from within cluster_auto_setup
                 ray.init(
-                    address="{self.head_address}:{self.head_port}",
+                    address="auto",
+                    _redis_password=self.redis_password
+                )
+            else:
+                # custom cluster url
+                ray.init(
+                    address=f"{self.head_address}:{self.head_port}",
                     _redis_password=self.redis_password
                 )
 
