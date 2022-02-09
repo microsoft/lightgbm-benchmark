@@ -186,7 +186,7 @@ launcher:
     --export_model {outputs.model}
     --verbose {inputs.verbose}
     [--custom_properties {inputs.custom_properties}]
-    --ray_on_aml True
+    --cluster_auto_setup True
 
 environment:
   docker:
