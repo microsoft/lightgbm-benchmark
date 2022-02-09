@@ -84,7 +84,7 @@ def get_arg_parser(parser=None):
         help="set True to show DEBUG logs",
     )
 
-    group_aml = parser.add_argument_group(f"AzureML Connect (if using --mlflow-target azureml) [{__name__}:{cls.__name__}]")
+    group_aml = parser.add_argument_group("AzureML Connect (if using --mlflow-target azureml)")
     add_cli_args(group_aml)
 
     return parser
