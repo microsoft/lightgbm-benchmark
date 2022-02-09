@@ -53,7 +53,7 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
         # add generic arguments
         parser = MultiNodeScript.get_arg_parser(parser)
 
-        group_i = parser.add_argument_group("Input Data")
+        group_i = parser.add_argument_group(f"Input Data [{__name__}:{cls.__name__}]")
         group_i.add_argument("--train",
             required=True, type=str, help="Training data location (file or dir path)")
         group_i.add_argument("--test",
@@ -64,12 +64,12 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
         group_i.add_argument("--label_column", required=False, default="0", type=str)
         group_i.add_argument("--group_column", required=False, default=None, type=str)
 
-        group_o = parser.add_argument_group("Outputs")
+        group_o = parser.add_argument_group(f"Outputs [{__name__}:{cls.__name__}]")
         group_o.add_argument("--export_model",
             required=False, type=str, help="Export the model in this location (file path)")
         
         # learner params
-        group_lgbm = parser.add_argument_group("LightGBM learning parameters")
+        group_lgbm = parser.add_argument_group(f"LightGBM learning parameters [{__name__}:{cls.__name__}]")
         group_lgbm.add_argument("--objective", required=True, type=str)
         group_lgbm.add_argument("--metric", required=True, type=str)
         group_lgbm.add_argument("--boosting_type", required=True, type=str)

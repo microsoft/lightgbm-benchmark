@@ -54,7 +54,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         # add generic arguments
         parser = RayScript.get_arg_parser(parser)
 
-        group_i = parser.add_argument_group("Input Data")
+        group_i = parser.add_argument_group(f"Input Data [{__name__}:{cls.__name__}]")
         group_i.add_argument("--train",
             required=True, type=str, help="Training data location (file or dir path)")
         group_i.add_argument("--train_data_format",
@@ -67,12 +67,12 @@ class LightGBMOnRayTrainingScript(RayScript):
         group_i.add_argument("--label_column", required=True, type=str)
         group_i.add_argument("--group_column", required=False, default=None, type=str)
 
-        group_o = parser.add_argument_group("Outputs")
+        group_o = parser.add_argument_group(f"Outputs [{__name__}:{cls.__name__}]")
         group_o.add_argument("--export_model",
             required=False, type=str, help="Export the model in this location (file path)")
         
         # learner params
-        group_lgbm = parser.add_argument_group("LightGBM learning parameters")
+        group_lgbm = parser.add_argument_group(f"LightGBM learning parameters [{__name__}:{cls.__name__}]")
         group_lgbm.add_argument("--objective", required=True, type=str)
         group_lgbm.add_argument("--metric", required=True, type=str)
         group_lgbm.add_argument("--boosting_type", required=True, type=str)
@@ -87,7 +87,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         group_lgbm.add_argument("--device_type", required=False, type=str, default="cpu")
         group_lgbm.add_argument("--custom_params", required=False, type=str, default=None)
 
-        group_lgbm = parser.add_argument_group("LightGBM/Ray runsettings")
+        group_lgbm = parser.add_argument_group(f"LightGBM/Ray runsettings [{__name__}:{cls.__name__}]")
         group_lgbm.add_argument("--lightgbm_ray_actors", required=False, default=None, type=int, help="number of actors (default: count available nodes, or 1)")
         group_lgbm.add_argument("--ray_data_distributed", required=False, default=True, type=strtobool, help="is data pre-partitioned (True) or should ray distribute it (False)")
 
