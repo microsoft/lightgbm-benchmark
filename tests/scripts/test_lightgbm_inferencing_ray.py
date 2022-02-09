@@ -20,7 +20,8 @@ def test_lightgbm_ray_score(temporary_dir, regression_model_sample, regression_i
         "score.py",
         "--data", regression_inference_sample,
         "--model", regression_model_sample,
-        "--output", predictions_dir
+        "--output", predictions_dir, 
+        "--cluster_auto_setup", "False"
     ]
 
     # replaces sys.argv with test arguments and run main
