@@ -9,6 +9,7 @@ import logging
 import threading
 import time
 import psutil
+import numpy as np
 
 
 class PerformanceReportingThread(threading.Thread):
@@ -187,6 +188,9 @@ class PerformanceMetricsCollector():
 
 
 class PerfReportPlotter():
+    PERF_DISK_NET_PLOT_BINS = 50
+    PERF_DISK_NET_PLOT_FIGSIZE = (16,12)
+
     """Once collected all perf reports from all nodes"""
     def __init__(self, metrics_logger):
         self.all_reports = {}
@@ -197,107 +201,218 @@ class PerfReportPlotter():
         self.all_reports[node] = perf_reports
 
     def report_nodes_perf(self):
+        """Report performance via metrics/plots for all nodes (loop)"""
         # Currently reporting one metric per node
         for node in self.all_reports:
-            # CPU UTILIZATION
-            cpu_avg_utilization = [ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]
+            self.report_node_perf(node)
 
-            self.metrics_logger.log_metric(
-                "max_t_(cpu_pct_per_cpu_avg)",
-                max(cpu_avg_utilization),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "cpu_avg_utilization_pct",
-                sum(cpu_avg_utilization)/len(cpu_avg_utilization),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "cpu_avg_utilization_at100_pct",
-                sum( [ utilization >= 100.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "cpu_avg_utilization_over80_pct",
-                sum( [ utilization >= 80.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "cpu_avg_utilization_over40_pct",
-                sum( [ utilization >= 40.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "cpu_avg_utilization_over20_pct",
-                sum( [ utilization >= 20.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "max_t_(cpu_pct_per_cpu_min)",
-                max([ report["cpu_pct_per_cpu_min"] for report in self.all_reports[node] ]),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "max_t_(cpu_pct_per_cpu_max)",
-                max([ report["cpu_pct_per_cpu_max"] for report in self.all_reports[node] ]),
-                step=node
-            )
+    def diff_at_partitions(self, a, p, t):
+        """Compute the difference end-begin for all partitions in an array.
 
-            # "CPU HOURS"
-            job_internal_cpu_hours = (time.time() - self.all_reports[node][0]["timestamp"]) * psutil.cpu_count() / 60 / 60
-            self.metrics_logger.log_metric(
-                "node_cpu_hours",
-                job_internal_cpu_hours,
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "node_unused_cpu_hours",
-                job_internal_cpu_hours * (100.0 - sum(cpu_avg_utilization)/len(cpu_avg_utilization)) / 100.0,
-                step=node
-            )
+        Args:
+            a (np.array): a np array of increasing values
+            p (int): a given number of partitions
+            t (np.array): np array of timestamps for a
+        
+        Returns:
+            diff_part (np.array): dimension p
+        """
+        if len(a) > (2*p):
+            partitioned_diff = []
+            partitioned_time = []
+            index_partitions = np.array_split(np.arange(len(a)), p)
+            print(f"i={index_partitions}")
+            for part in index_partitions:
+                partitioned_diff.append(a[part[-1]] - a[part[0]]) # diff between last and first value of partition
+                partitioned_time.append(t[part[0]])
+            return np.array(partitioned_diff), np.array(partitioned_time)
+        else:
+            return np.ediff1d(a), t[1::]
 
-            # MEM
-            self.metrics_logger.log_metric(
-                "max_t_(mem_percent)",
-                max([ report["mem_percent"] for report in self.all_reports[node] ]),
-                step=node
-            )
+    def report_node_perf(self, node):
+        """Report performance via metrics/plots for one given node"""
+        # CPU UTILIZATION
+        cpu_avg_utilization = [ report["cpu_pct_per_cpu_avg"] for report in self.all_reports[node] ]
+        self.metrics_logger.log_metric(
+            "max_t_(cpu_pct_per_cpu_avg)",
+            max(cpu_avg_utilization),
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "cpu_avg_utilization_pct",
+            sum(cpu_avg_utilization)/len(cpu_avg_utilization),
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "cpu_avg_utilization_at100_pct",
+            sum( [ utilization >= 100.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "cpu_avg_utilization_over80_pct",
+            sum( [ utilization >= 80.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "cpu_avg_utilization_over40_pct",
+            sum( [ utilization >= 40.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "cpu_avg_utilization_over20_pct",
+            sum( [ utilization >= 20.0 for utilization in cpu_avg_utilization])/len(cpu_avg_utilization)*100.0,
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "max_t_(cpu_pct_per_cpu_min)",
+            max([ report["cpu_pct_per_cpu_min"] for report in self.all_reports[node] ]),
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "max_t_(cpu_pct_per_cpu_max)",
+            max([ report["cpu_pct_per_cpu_max"] for report in self.all_reports[node] ]),
+            step=node
+        )
 
-            # DISK
-            self.metrics_logger.log_metric(
-                "max_t_disk_usage_percent",
-                max([ report["disk_usage_percent"] for report in self.all_reports[node] ]),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "total_disk_io_read_mb",
-                max([ report["disk_io_read_mb"] for report in self.all_reports[node] ]),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "total_disk_io_write_mb",
-                max([ report["disk_io_write_mb"] for report in self.all_reports[node] ]),
-                step=node
-            )
+        # "CPU HOURS"
+        job_internal_cpu_hours = (time.time() - self.all_reports[node][0]["timestamp"]) * psutil.cpu_count() / 60 / 60
+        self.metrics_logger.log_metric(
+            "node_cpu_hours",
+            job_internal_cpu_hours,
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "node_unused_cpu_hours",
+            job_internal_cpu_hours * (100.0 - sum(cpu_avg_utilization)/len(cpu_avg_utilization)) / 100.0,
+            step=node
+        )
 
-            # NET I/O
-            self.metrics_logger.log_metric(
-                "total_net_io_lo_sent_mb",
-                max([ report["net_io_lo_sent_mb"] for report in self.all_reports[node] ]),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "total_net_io_ext_sent_mb",
-                max([ report["net_io_ext_sent_mb"] for report in self.all_reports[node] ]),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "total_net_io_lo_recv_mb",
-                max([ report["net_io_lo_recv_mb"] for report in self.all_reports[node] ]),
-                step=node
-            )
-            self.metrics_logger.log_metric(
-                "total_net_io_ext_recv_mb",
-                max([ report["net_io_ext_recv_mb"] for report in self.all_reports[node] ]),
-                step=node
-            )
+        # MEM
+        mem_utilization = [ report["mem_percent"] for report in self.all_reports[node] ]
+        self.metrics_logger.log_metric(
+            "max_t_(mem_percent)",
+            max([ report["mem_percent"] for report in self.all_reports[node] ]),
+            step=node
+        )
+
+        # DISK
+        self.metrics_logger.log_metric(
+            "max_t_disk_usage_percent",
+            max([ report["disk_usage_percent"] for report in self.all_reports[node] ]),
+            step=node
+        )
+
+        disk_io_read = np.array([ report["disk_io_read_mb"] for report in self.all_reports[node] ])
+        self.metrics_logger.log_metric(
+            "total_disk_io_read_mb",
+            np.max(disk_io_read),
+            step=node
+        )
+        disk_io_write = np.array([ report["disk_io_write_mb"] for report in self.all_reports[node] ])
+        self.metrics_logger.log_metric(
+            "total_disk_io_write_mb",
+            np.max(disk_io_write),
+            step=node
+        )
+
+        # NET I/O
+        self.metrics_logger.log_metric(
+            "total_net_io_lo_sent_mb",
+            max([ report["net_io_lo_sent_mb"] for report in self.all_reports[node] ]),
+            step=node
+        )
+        net_io_ext_sent = np.array([ report["net_io_ext_sent_mb"] for report in self.all_reports[node] ])
+        self.metrics_logger.log_metric(
+            "total_net_io_ext_sent_mb",
+            np.max(net_io_ext_sent),
+            step=node
+        )
+        self.metrics_logger.log_metric(
+            "total_net_io_lo_recv_mb",
+            max([ report["net_io_lo_recv_mb"] for report in self.all_reports[node] ]),
+            step=node
+        )
+        net_io_ext_recv = np.array([ report["net_io_ext_recv_mb"] for report in self.all_reports[node] ])
+        self.metrics_logger.log_metric(
+            "total_net_io_ext_recv_mb",
+            np.max(net_io_ext_recv),
+            step=node
+        )
+
+        # then plot everything
+        timestamps = np.array([ report["timestamp"] for report in self.all_reports[node] ])
+        self.plot_all_perf(node, timestamps, disk_io_read, disk_io_write, net_io_ext_sent, net_io_ext_recv, cpu_avg_utilization, mem_utilization)
+
+    def plot_all_perf(self, node, timestamps, disk_io_read, disk_io_write, net_io_ext_sent, net_io_ext_recv, cpu_utilization, mem_utilization):
+        """Plots mem/cpy/disk/net using matplotlib.
+        
+        Args:
+            node (int): node id
+            timestamps (np.array): timestamps for all following arrays
+            disk_io_read (np.array): disk read cumulative sum (increasing)
+            disk_io_write (np.array): disk write cumulative sum (increasing)
+            net_io_ext_sent (np.array): net sent cumulative sum (increasing)
+            net_io_ext_recv (np.array): net recv cumulative sum (increasing)
+            cpu_utilization (np.array): cpu utilization
+            mem_utilization (np.array): mem utilization
+        
+        Returns:
+            None
+        
+        NOTE: we're expecting all arrays to have same length.
+        """
+        timestamps = timestamps - timestamps[0]
+        disk_io_read = disk_io_read - disk_io_read[0] # cumsum starting at 0
+        disk_io_write = disk_io_write - disk_io_write[0] # cumsum starting at 0
+        net_io_ext_sent = net_io_ext_sent - net_io_ext_sent[0] # cumsum starting at 0
+        net_io_ext_recv = net_io_ext_recv - net_io_ext_recv[0] # cumsum starting at 0
+
+        # import matploblib just-in-time
+        import matplotlib.pyplot as plt
+        #plt.switch_backend('agg')
+
+        # show the distribution prediction latencies
+        fig, ax = plt.subplots(nrows=1, ncols=1, sharex=False, figsize=(16,8))
+        
+        #ax = axes[0]
+        ax.set_xlabel('job time')
+        ax.set_ylabel('mb')
+
+        reduced_disk_io_read, reduced_timestamps = self.diff_at_partitions(disk_io_read, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
+        reduced_disk_io_write, _ = self.diff_at_partitions(disk_io_write, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
+        reduced_net_io_ext_sent, _ = self.diff_at_partitions(net_io_ext_sent, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
+        reduced_net_io_ext_recv, _ = self.diff_at_partitions(net_io_ext_recv, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
+
+        # identify a good normalization value for disk+io plots
+        max_disk_net_normalization_value = max(
+            max(reduced_disk_io_read),
+            max(reduced_disk_io_write),
+            max(reduced_net_io_ext_sent),
+            max(reduced_net_io_ext_recv),
+        ) * 1.05 # 5% more to keep some visual margin on the plot
+
+        width = max(reduced_timestamps) / len(reduced_timestamps) / 5
+        ax.bar(reduced_timestamps, reduced_disk_io_read, width=width, label=f"disk read", color="springgreen")
+        ax.bar(reduced_timestamps + width, reduced_disk_io_write, width=width, label=f"disk write", color="darkgreen")
+        ax.bar(reduced_timestamps + 2*width, reduced_net_io_ext_sent, width=width, label=f"net recv", color="hotpink")
+        ax.bar(reduced_timestamps + 3*width, reduced_net_io_ext_recv, width=width, label=f"net sent", color="purple")
+        ax.set_ylim([0.0, max_disk_net_normalization_value])
+        ax.legend(loc='upper left')
+
+        ax2 = ax.twinx()
+        #ax2 = axes[1]
+        ax2.set_ylabel('%')
+        ax2.plot(timestamps, cpu_utilization, label="cpu", color="r")
+        ax2.plot(timestamps, mem_utilization, label="mem", color="b")
+        ax2.set_ylim([0.0, 100.0])
+        ax2.legend(loc='upper right')
+        #ax.set_title(f"Disk+Net I/O normalized plot (max = {max_disk_net_normalization_value:.2f}mb")
+
+        #plt.xlabel("job time")
+        #plt.ylim(0.0, max_disk_net_normalization_value)
+        plt.legend(loc='best')
+
+        plt.show()
+
+        # record in mlflow
+        self.metrics_logger.log_figure(fig, f"disk_and_net_plot_node{node}.png")
