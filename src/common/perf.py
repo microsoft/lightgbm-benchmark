@@ -201,7 +201,7 @@ class PerfReportPlotter():
             perf_report_file_path = tempfile.NamedTemporaryFile(suffix=".json").name
 
         with open(perf_report_file_path, "w") as out_file:
-            out_file.write(json.dumps(self.all_reports))
+            out_file.write(json.dumps(self.all_reports, indent="    "))
 
         return perf_report_file_path
 
