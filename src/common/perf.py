@@ -189,7 +189,7 @@ class PerformanceMetricsCollector():
 
 class PerfReportPlotter():
     PERF_DISK_NET_PLOT_BINS = 50
-    PERF_DISK_NET_PLOT_FIGSIZE = (16,12)
+    PERF_DISK_NET_PLOT_FIGSIZE = (16,8)
 
     """Once collected all perf reports from all nodes"""
     def __init__(self, metrics_logger):
@@ -372,7 +372,7 @@ class PerfReportPlotter():
         #plt.switch_backend('agg')
 
         # show the distribution prediction latencies
-        fig, ax = plt.subplots(nrows=1, ncols=1, sharex=False, figsize=(16,8))
+        fig, ax = plt.subplots(nrows=1, ncols=1, sharex=False, figsize=PerfReportPlotter.PERF_DISK_NET_PLOT_FIGSIZE)
         
         #ax = axes[0]
         ax.set_xlabel('job time')
