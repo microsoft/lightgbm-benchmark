@@ -369,15 +369,15 @@ class PerfReportPlotter():
 
         # import matploblib just-in-time
         import matplotlib.pyplot as plt
-        #plt.switch_backend('agg')
+        plt.switch_backend('agg') # to enable it in thread
 
-        # show the distribution prediction latencies
-        fig, ax = plt.subplots(nrows=1, ncols=1, sharex=False, figsize=PerfReportPlotter.PERF_DISK_NET_PLOT_FIGSIZE)
+        fig, ax = plt.subplots(
+            nrows=1,
+            ncols=1,
+            sharex=False, # both mem+cpu and disk+net will share the same x axis (job time)
+            figsize=PerfReportPlotter.PERF_DISK_NET_PLOT_FIGSIZE
+        )
         
-        #ax = axes[0]
-        ax.set_xlabel('job time')
-        ax.set_ylabel('mb')
-
         reduced_disk_io_read, reduced_timestamps = self.diff_at_partitions(disk_io_read, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
         reduced_disk_io_write, _ = self.diff_at_partitions(disk_io_write, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
         reduced_net_io_ext_sent, _ = self.diff_at_partitions(net_io_ext_sent, PerfReportPlotter.PERF_DISK_NET_PLOT_BINS, timestamps)
@@ -391,28 +391,24 @@ class PerfReportPlotter():
             max(reduced_net_io_ext_recv),
         ) * 1.05 # 5% more to keep some visual margin on the plot
 
-        width = max(reduced_timestamps) / len(reduced_timestamps) / 5
-        ax.bar(reduced_timestamps, reduced_disk_io_read, width=width, label=f"disk read", color="springgreen")
-        ax.bar(reduced_timestamps + width, reduced_disk_io_write, width=width, label=f"disk write", color="darkgreen")
-        ax.bar(reduced_timestamps + 2*width, reduced_net_io_ext_sent, width=width, label=f"net recv", color="hotpink")
-        ax.bar(reduced_timestamps + 3*width, reduced_net_io_ext_recv, width=width, label=f"net sent", color="purple")
+        width = max(reduced_timestamps) / len(reduced_timestamps) / 5 # barplot width = 1/5 of timestamp unit
+        ax.bar(reduced_timestamps, reduced_disk_io_read, width=width, label=f"disk read", color="w", hatch='/', edgecolor="dimgray")
+        ax.bar(reduced_timestamps + width, reduced_disk_io_write, width=width, label=f"disk write", color="w", hatch='-', edgecolor="dimgray")
+        ax.bar(reduced_timestamps + 2*width, reduced_net_io_ext_sent, width=width, label=f"net recv", color="silver")
+        ax.bar(reduced_timestamps + 3*width, reduced_net_io_ext_recv, width=width, label=f"net sent", color="gray")
         ax.set_ylim([0.0, max_disk_net_normalization_value])
         ax.legend(loc='upper left')
+        ax.set_ylabel('MB')
 
-        ax2 = ax.twinx()
-        #ax2 = axes[1]
-        ax2.set_ylabel('%')
+        ax2 = ax.twinx() # will superpose plot to ax, but show axis on right
         ax2.plot(timestamps, cpu_utilization, label="cpu", color="r")
-        ax2.plot(timestamps, mem_utilization, label="mem", color="b")
-        ax2.set_ylim([0.0, 100.0])
+        ax2.plot(timestamps, mem_utilization, label="mem", color="b", linestyle='dotted')
+        ax2.set_ylim([0.0, max(max(cpu_utilization), max(mem_utilization), 100.0)])
         ax2.legend(loc='upper right')
-        #ax.set_title(f"Disk+Net I/O normalized plot (max = {max_disk_net_normalization_value:.2f}mb")
+        ax2.set_ylabel('%')
 
-        #plt.xlabel("job time")
-        #plt.ylim(0.0, max_disk_net_normalization_value)
-        plt.legend(loc='best')
-
-        plt.show()
+        ax.set_xlabel("time in seconds (job duration={:.2f}s)".format(timestamps[-1]-timestamps[0]))
+        plt.title(f"Perf plot for node {node}")
 
         # record in mlflow
-        self.metrics_logger.log_figure(fig, f"disk_and_net_plot_node{node}.png")
+        self.metrics_logger.log_figure(fig, f"perf_plot_node{node}.png")
