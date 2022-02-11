@@ -9,6 +9,7 @@ nav:
 - About: lightgbm-benchmark-project.md
 - Contribute:
     Developer Guide: contribute/developer-guide.md
+    Architecture Guide: contribute/architecture-guide.md
     Reporting Guide: contribute/reporting-guide.md
 - Run:
     Install: run/install.md
