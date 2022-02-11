@@ -9,6 +9,8 @@ import logging
 import threading
 import time
 import psutil
+import tempfile
+import json
 
 
 class PerformanceReportingThread(threading.Thread):
@@ -191,6 +193,17 @@ class PerfReportPlotter():
     def __init__(self, metrics_logger):
         self.all_reports = {}
         self.metrics_logger = metrics_logger
+
+    def save_to(self, perf_report_file_path=None):
+        """Saves all reports into a json file"""
+        # if no file path provided, create a temp file
+        if perf_report_file_path is None:
+            perf_report_file_path = tempfile.NamedTemporaryFile(suffix=".json").name
+
+        with open(perf_report_file_path, "w") as out_file:
+            out_file.write(json.dumps(self.all_reports, indent="    "))
+
+        return perf_report_file_path
 
     def add_perf_reports(self, perf_reports, node):
         """Add a set of reports from a given node"""

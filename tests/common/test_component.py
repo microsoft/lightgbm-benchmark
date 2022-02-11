@@ -102,10 +102,11 @@ class FakeSingleNodeScript(SingleNodeScript):
             time.sleep(1)
 
 @patch('mlflow.end_run')
+@patch('mlflow.log_artifact')
 @patch('mlflow.log_metric')
 @patch('mlflow.set_tags')
 @patch('mlflow.start_run')
-def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_end_run_mock):
+def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_log_artifact_mock, mlflow_end_run_mock):
     # just run main
     test_component = FakeSingleNodeScript.main(
         [
@@ -130,6 +131,8 @@ def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock,
         [{'key':'fake_time_block', 'step':1}], # user_metrics
         mlflow_log_metric_mock
     )
+
+    mlflow_log_artifact_mock.assert_called_once()
 
 
 class FailingSingleNodeScript(SingleNodeScript):
