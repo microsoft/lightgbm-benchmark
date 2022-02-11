@@ -22,7 +22,7 @@ class FakeMultiNodeScript(MultiNodeScript):
     def run(self, args, logger, metrics_logger, unknown_args):
         # don't do anything
         with metrics_logger.log_time_block("fake_time_block", step=1):
-            time.sleep(1)
+            time.sleep(5)
 
 
 @patch('mlflow.end_run')

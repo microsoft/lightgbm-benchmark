@@ -197,6 +197,7 @@ class PerfReportPlotter():
     def __init__(self, metrics_logger):
         self.all_reports = {}
         self.metrics_logger = metrics_logger
+        self.logger = logging.getLogger(__name__)
 
     def save_to(self, perf_report_file_path=None):
         """Saves all reports into a json file"""
@@ -234,7 +235,6 @@ class PerfReportPlotter():
             partitioned_diff = []
             partitioned_time = []
             index_partitions = np.array_split(np.arange(len(a)), p)
-            print(f"i={index_partitions}")
             for part in index_partitions:
                 partitioned_diff.append(a[part[-1]] - a[part[0]]) # diff between last and first value of partition
                 partitioned_time.append(t[part[0]])
@@ -374,6 +374,10 @@ class PerfReportPlotter():
         
         NOTE: we're expecting all arrays to have same length.
         """
+        if len(timestamps) < 3:
+            self.logger.warning(f"Number of data points for perf is too low {len(timestamps)}, we will not print perf plot.")
+            return
+
         timestamps = timestamps - timestamps[0]
         disk_io_read = disk_io_read - disk_io_read[0] # cumsum starting at 0
         disk_io_write = disk_io_write - disk_io_write[0] # cumsum starting at 0
