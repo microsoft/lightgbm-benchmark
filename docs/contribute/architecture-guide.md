@@ -108,3 +108,7 @@ Thanks to the scripts using a common set of helper classes, they report a unifie
 Those metrics are reported using mlflow. When running locally, you can use mlflow to query the values and artifacts reported by each script. When running in AzureML, those values will flow in the UI for you to browse.
 
 ![snapshot of metrics panel for lightgbm training](../img/lightgbm-training-metrics.png)
+
+## 3. Architecture of pipelines
+
+WORK IN PROGRESS
