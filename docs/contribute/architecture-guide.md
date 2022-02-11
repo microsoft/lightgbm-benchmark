@@ -6,7 +6,7 @@ The benchmark repo follows an architecture where:
 - All scripts should follow a standard reporting framework.
 - Code duplication should be kept minimal.
 
-To achieve that, we're based our code on an object oriented architecture. The following document provides a walkthrough of that architecture to help you locate where you can contribute.
+To achieve that, we have based our code on an object oriented architecture. The following document provides a walkthrough of that architecture to help you locate where you can contribute.
 
 ## 1. Structure of the repository
 
@@ -27,7 +27,7 @@ To achieve that, we're based our code on an object oriented architecture. The fo
  
 ## 2. Architecture of runnable scripts in `src/scripts/`
 
-Every script under `src/scripts/` can be run manually. **Each runnable script inherits from `RunnableScript` helper class.** These classes provides all the standard reporting features, and contains the code that would otherwise be duplicated.
+Every script under `src/scripts/` can be run manually. **Each runnable script inherits from `RunnableScript` helper class.** These classes provides all the standard reporting features, and contains the boilerplate code that would otherwise be duplicated.
 
 ### 2.1. There's a helper class for each implementation scenario
 
