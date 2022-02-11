@@ -26,7 +26,7 @@ class FakeMultiNodeScript(MultiNodeScript):
 
 
 @patch('mlflow.end_run')
-@patch('mlflow.log_artifact')
+@patch('mlflow.log_figure')
 @patch('mlflow.log_artifact')
 @patch('mlflow.log_metric')
 @patch('mlflow.set_tags')
