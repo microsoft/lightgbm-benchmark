@@ -102,11 +102,12 @@ class FakeSingleNodeScript(SingleNodeScript):
             time.sleep(1)
 
 @patch('mlflow.end_run')
+@patch('mlflow.log_figure')
 @patch('mlflow.log_artifact')
 @patch('mlflow.log_metric')
 @patch('mlflow.set_tags')
 @patch('mlflow.start_run')
-def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_log_artifact_mock, mlflow_end_run_mock):
+def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_log_artifact_mock, mlflow_log_figure_mock, mlflow_end_run_mock):
     # just run main
     test_component = FakeSingleNodeScript.main(
         [
@@ -132,7 +133,8 @@ def test_single_node_script_metrics(mlflow_start_run_mock, mlflow_set_tags_mock,
         mlflow_log_metric_mock
     )
 
-    mlflow_log_artifact_mock.assert_called_once()
+    mlflow_log_artifact_mock.assert_called_once() # perf data exported in json
+    mlflow_log_figure_mock.assert_called_once() # perf plot
 
 
 class FailingSingleNodeScript(SingleNodeScript):
