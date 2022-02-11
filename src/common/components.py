@@ -162,6 +162,9 @@ class RunnableScript():
             plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=0)
             plotter.report_nodes_perf()
 
+            # write perf record as artifact
+            self.metrics_logger.log_artifact(plotter.save_to())
+
         # close mlflow
         self.metrics_logger.close()
 
