@@ -34,6 +34,7 @@ COMPONENT_SPEC_FILES = [
 
     "training/lightgbm_python/spec.yaml",
     "training/lightgbm_ray/spec.yaml",
+    "training/ray_tune/spec.yaml",
 
     "model_transformation/treelite_compile/spec.yaml",
 

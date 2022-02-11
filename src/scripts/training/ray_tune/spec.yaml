@@ -1,0 +1,218 @@
+$schema: http://azureml/sdk-2-0/CommandComponent.json
+name: lightgbm.ray.tune
+version: 1.0.1
+display_name: "LightGBM Tuning (Ray Tune API)"
+type: CommandComponent
+description: >-
+  **Tune a LightGBM Model**
+  
+  This script can leverage HPO tools Ray Tune.
+  
+  Many of the parameters are documented in [LightGBM parameter docs](https://lightgbm.readthedocs.io/en/latest/Parameters.html).
+  To try this one in Designer UI, follow the tutorial in the [lightgbm-benchmark documentation](https://microsoft.github.io/lightgbm-benchmark/run/azureml/designer-ui/). 
+is_deterministic: false
+
+tags:
+  git: https://github.com/microsoft/lightgbm-benchmark
+  docs: https://microsoft.github.io/lightgbm-benchmark
+  framework: lightgbm_ray_tune
+  framework_version: 0.0.1
+
+inputs:
+  # Inputs
+  train:
+    type: AnyDirectory
+    description: Directory to the training data
+    optional: false
+  test:
+    type: AnyDirectory
+    description: Directory to the testing data
+    optional: false
+  construct:
+    type: Boolean
+    description: "Use lazy intialization during data loading phase (both train and test datasets)"
+    default: True
+
+  # Input Parameters
+  header:
+    type: Boolean
+    default: False
+    description: "Does data have a header? (ex: csv/tsv)"
+  label_column:
+    type: String
+    default: "0"
+    description: "Specify label column (default=0)"
+  group_column:
+    type: String
+    optional: True
+    description: "Specify group/query column (default '')"
+
+  # Learning Parameters
+  objective:
+    type: Enum
+    default: "regression"
+    enum:
+      - regression
+      - regression_l1
+      - huber
+      - fair
+      - poisson
+      - quantile
+      - mape
+      - gamma
+      - tweedie
+      - binary
+      - multiclass
+      - multiclassova
+      - cross_entropy
+      - cross_entropy_lambda
+      - lambdarank
+      - rank_xendcg
+    description: "Objective function to use for training."
+  metric:
+    # let's not use Enum here to allow for custom metrics
+    type: String
+    default: ''
+    description: "Name of the metric (ex: rmse, ndcg)"
+  boosting:
+    type: Enum
+    default: "gbdt"
+    enum:
+      - gbdt
+      - rf
+      - dart
+      - goss
+    description: "Boosting technique"
+  tree_learner:
+    type: Enum
+    default: "serial"
+    enum:
+      - serial
+      - feature
+      - data
+      - voting
+    description: "For distributed learning"
+  label_gain:
+    type: String
+    optional: True
+    description: "Relevant gain for labels (used only in lambdarank application)"
+  num_iterations:
+    type: String
+    default: "100"
+    description: "Number of trees (alias num_iterations)"
+  num_leaves:
+    type: String
+    default: "31"
+    description: "Number of leaves"
+  min_data_in_leaf:
+    type: String
+    default: "20"
+    description: "Minimum data in leaves"
+  learning_rate:
+    type: String
+    default: "0.1"
+    description: "Learning/shrinkage rate"
+  max_bin:
+    type: String
+    default: "255"
+    description: "Max number of bins that feature values will be bucketed in"
+  feature_fraction:
+    type: String
+    default: "1.0"
+    description: "LightGBM will randomly select a subset of features on each iteration (tree) if feature_fraction is smaller than 1.0. For example, if you set it to 0.8, LightGBM will select 80% of features before training each tree."
+  device_type:
+    type: Enum
+    default: 'cpu'
+    enum:
+      - cpu
+      - gpu
+      - cuda
+    description: "Device for the tree learning, you can use GPU to achieve the faster learning (to use gpu/cuda you need a specific dockerfile)"
+
+  # generic benchmark parameters
+  custom_params:
+    type: String
+    optional: True
+    description: "Provide as a json dictionary (ex: {\"foo\":\"bar\"}) any additional custom lightgbm parameter"
+
+  # ray tune parameters
+  mode:
+    type: Enum
+    default: 'min'
+    enum:
+      - min
+      - max
+    description: "Find the minimized or maximized primary metrics in the sweep job."
+  search_alg:
+    type: Enum
+    default: 'BasicVariantGenerator'
+    enum:
+      - BasicVariantGenerator
+      - AxSearch
+      - BayesOptSearch
+      - BlendSearch
+  scheduler:
+    type: Enum
+    default: "FIFOScheduler"
+    enum:
+      - FIFOScheduler
+      - ASHAScheduler
+      - HyperBandScheduler
+      - MedianStoppingRule
+  num_samples:
+    type: Integer
+    min: -1
+    default: -1
+  time_budget:
+    type: Integer
+    default: 1800 
+    min: 120
+  cpus_per_trial:
+    type: Integer
+    min: 1
+    default: 1
+  concurrent_trials:
+    type: Integer
+    min: 0
+    default: 0
+
+outputs:
+  output_path:
+    type: AnyDirectory
+    description: "Summary of the HPO results."
+
+command: >-
+  raytune.py
+  --ray_on_aml True 
+  --train {inputs.train}  
+  --test {inputs.test}
+  --label_column {inputs.label_column}
+  [--group_column {inputs.group_column}]
+  --output_path {outputs.output_path}
+  --objective {inputs.objective}
+  --metric {inputs.metric}
+  --boosting {inputs.boosting}
+  --tree_learner {inputs.tree_learner}
+  [--label_gain {inputs.label_gain}]
+  --num_iterations {inputs.num_iterations}
+  --num_leaves {inputs.num_leaves}
+  --min_data_in_leaf {inputs.min_data_in_leaf}
+  --learning_rate {inputs.learning_rate}
+  --max_bin {inputs.max_bin}
+  --feature_fraction {inputs.feature_fraction}
+  --mode {inputs.mode}
+  --search_alg {inputs.search_alg}
+  --scheduler {inputs.scheduler}
+  --num_samples {inputs.num_samples}
+  --time_budget {inputs.time_budget}
+  --cpus_per_trial {inputs.cpus_per_trial}
+  --max_concurrent_trials {inputs.concurrent_trials}
+  [--custom_params {inputs.custom_params}]
+
+environment:
+  docker:
+    build:
+      dockerfile: file:default.dockerfile
+  conda:
+    userManagedDependencies: true
+  os: Linux
