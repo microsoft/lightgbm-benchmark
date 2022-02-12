@@ -183,8 +183,8 @@ outputs:
 
 command: >-
   raytune.py
-  --ray_on_aml True 
-  --train {inputs.train}  
+  --ray_on_aml True
+  --train {inputs.train}
   --test {inputs.test}
   --label_column {inputs.label_column}
   [--group_column {inputs.group_column}]
