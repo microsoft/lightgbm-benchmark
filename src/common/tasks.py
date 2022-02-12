@@ -140,5 +140,6 @@ class training_variant:
     runtime: lightgbm_training_environment_variant_parameters = MISSING
 
     # below are optional
+    raytune: Optional[Any] = None
     sweep: Optional[sweep_settings] = None
     output:Optional[lightgbm_training_output_variant_parameters] = None

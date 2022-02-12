@@ -83,6 +83,8 @@ lightgbm_ray_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENT
 partition_data_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
 lightgbm_data2bin_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
 
+# load ray tune module.
+lightgbm_ray_tune_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "ray_tune", "spec.yaml"))
 
 ### PIPELINE SPECIFIC CODE ###
 
@@ -280,7 +282,7 @@ def lightgbm_training_pipeline_function(config,
                 lightgbm_train_module = lightgbm_basic_train_module
         elif variant_params.framework == "lightgbm_ray":
             if use_sweep:
-                raise NotImplementedError("Sweep on lightgbm_ray component is not implemented.")
+                raise NotImplementedError("Sweep on lightgbm_ray component is not implemented, use framework lightgbm_ray_tune instead.")
             lightgbm_train_module = lightgbm_ray_train_module
 
             # remove arguments that are not in lightgbm_ray component
@@ -290,6 +292,34 @@ def lightgbm_training_pipeline_function(config,
                 del training_params['header']
             if 'construct' in training_params:
                 del training_params['construct']
+            if 'custom_properties' in training_params:
+                del training_params['custom_properties']
+            if 'verbose' in training_params:
+                del training_params['verbose']
+
+        elif variant_params.framework == 'lightgbm_ray_tune':
+            lightgbm_train_module = lightgbm_ray_tune_module
+            use_sweep = False
+
+            # manually add ray tune parameters.
+            training_params['mode'] = variant_params.raytune.mode
+            training_params['search_alg'] = variant_params.raytune.search_alg
+            training_params['scheduler'] = variant_params.raytune.scheduler
+            training_params['num_samples'] = variant_params.raytune.num_samples
+            training_params['time_budget'] = variant_params.raytune.time_budget
+            training_params['concurrent_trials'] = variant_params.raytune.concurrent_trials
+
+            # remove arguments that are not in lightgbm_ray_tune component
+            if 'multinode_driver' in training_params:
+                del training_params['multinode_driver']
+            if 'header' in training_params:
+                del training_params['header']
+            if 'construct' in training_params:
+                del training_params['construct']
+            if 'custom_properties' in training_params:
+                del training_params['custom_properties']
+            if 'verbose' in training_params:
+                del training_params['verbose']
         else:
             raise NotImplementedError(f"training framework {variant_params.framework} hasn't been implemented yet.")
 
@@ -302,7 +332,8 @@ def lightgbm_training_pipeline_function(config,
         # apply runsettings
         lightgbm_train_step.runsettings.target=training_target
         lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
-        lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
+        # This line is never used. It might run into the error saying "process_count_per_node' is not an expected key" 
+        # lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
 
         if use_sweep:
             # apply settings from our custom yaml config

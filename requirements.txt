@@ -11,6 +11,7 @@ lightgbm-ray==0.1.2
 lightgbm==3.3.0
 treelite==2.1.0
 treelite_runtime==2.1.0
+flaml==0.9.6
 
 # pipelines
 shrike[pipeline]==1.14.7
