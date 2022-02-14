@@ -64,7 +64,7 @@ def process_raytune_parameters(args):
         'train',
         'construct',
         'disable_perf_metrics',
-        'ray_head',
+        'ray_head_addr',
         'ray_head_port',
         'ray_redis_password',
         'ray_on_aml',
