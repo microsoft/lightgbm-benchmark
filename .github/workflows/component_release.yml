@@ -38,11 +38,13 @@ jobs:
         az upgrade --yes --all
 
         # Uninstall any previously installed extensions: azure-cli-ml (the `az ml` commands), ml (the vNext extension)
+        echo "Remove existing az ml extensions..."
         az extension remove -n ml; az extension remove -n azure-cli-ml
         
         # Install remote version of azure-cli-ml (which includes `az ml component` commands)
         # This might take several minutes depends on your network, thanks for your patience.
         # Install specific stable version (recommended)
+        echo "Install remove version of azure-cli-ml..."
         az extension add --source https://azuremlsdktestpypi.blob.core.windows.net/wheels/componentsdk/azure_cli_ml-0.9.5-py3-none-any.whl --pip-extra-index-urls https://azuremlsdktestpypi.azureedge.net/componentsdk/0.9.5 --yes --verbose
 
     - name: azure login
