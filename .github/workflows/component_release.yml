@@ -72,7 +72,8 @@ jobs:
     name: Release components
     environment: mlops
     runs-on: ubuntu-latest
-  
+    needs: [component_build]
+    
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v2
