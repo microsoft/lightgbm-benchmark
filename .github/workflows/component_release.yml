@@ -37,9 +37,6 @@ jobs:
         sudo apt install zip
         pip install --upgrade --force-reinstall --no-cache-dir "azure-cli==2.33.1"
 
-        # Uninstall any previously installed extensions: azure-cli-ml (the `az ml` commands), ml (the vNext extension)
-        az extension remove -n ml; az extension remove -n azure-cli-ml
-
         # Install remote version of azure-cli-ml (which includes `az ml component` commands)
         # This might take several minutes depends on your network, thanks for your patience.
         # Install specific stable version (recommended)
