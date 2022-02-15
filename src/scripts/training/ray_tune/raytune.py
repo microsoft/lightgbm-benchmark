@@ -67,7 +67,7 @@ def process_raytune_parameters(args):
         'ray_head_addr',
         'ray_head_port',
         'ray_redis_password',
-        'ray_on_aml',
+        'cluster_auto_setup',
         'search_alg',
         'scheduler',
         'mode',

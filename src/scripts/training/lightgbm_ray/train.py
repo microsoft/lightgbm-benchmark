@@ -117,7 +117,7 @@ class LightGBMOnRayTrainingScript(RayScript):
             'construct',
             'disable_perf_metrics',
             'ray_head_port',
-            'ray_on_aml',
+            'cluster_auto_setup',
             'train_data_format',
             'lightgbm_ray_actors',
             'ray_data_distributed'
