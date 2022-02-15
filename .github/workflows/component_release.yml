@@ -57,7 +57,7 @@ jobs:
         az ml component build --file ${{matrix.file_path}} --target dist/${{matrix.component_name}}/
 
         # compress as zip
-        zip -r dist/${{matrix.component_name}}-${{steps.tag.outputs.branch}}-${{steps.tag.outputs.tag}}.zip dist/${{matrix.component_name}}/
+        zip -r dist/${{matrix.component_name}}-${{env.GITHUB_REF_NAME}}.zip dist/${{matrix.component_name}}/
 
         # clean up
         rm -rf dist/${{matrix.component_name}}/
@@ -69,6 +69,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/${{matrix.component_name}}-${{steps.tag.outputs.branch}}-${{steps.tag.outputs.tag}}.zip
-        asset_name: ${{matrix.component_name}}-${{steps.tag.outputs.branch}}-${{steps.tag.outputs.tag}}.zip
+        asset_path: dist/${{matrix.component_name}}-${{env.GITHUB_REF_NAME}}.zip
+        asset_name: ${{matrix.component_name}}-${{env.GITHUB_REF_NAME}}.zip
         asset_content_type: application/zip
