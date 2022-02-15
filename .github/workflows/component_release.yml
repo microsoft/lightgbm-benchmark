@@ -50,7 +50,7 @@ jobs:
     - name: Build ${{matrix.component_name}}
       run: |
         # use az ml extension to build component
-        az ml component build --file ${{matrix.component_yaml_file_path}} --target dist/${{matrix.component_name}}/
+        az ml component build --file ${{matrix.file_path}} --target dist/${{matrix.component_name}}/
 
         # compress as zip
         zip -r dist/${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip dist/${{matrix.component_name}}/
