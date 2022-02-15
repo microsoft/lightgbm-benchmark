@@ -62,8 +62,23 @@ jobs:
         # clean up
         rm -rf dist/${{matrix.component_name}}/
 
-    - name: Upload component as build artifact
+    - name: Upload ${{matrix.component_name}} as build artifact
       uses: actions/upload-artifact@v2.3.1
       with:
         name: ${{matrix.component_name}}
         path: dist/component-${{matrix.component_name}}.zip
+
+  release_components:
+    name: Release components
+    environment: mlops
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: release/
+
+      - name: Display structure of release
+        run: ls -R
+        working-directory: release/
