@@ -47,13 +47,20 @@ jobs:
       with:
         creds: ${{secrets.AZURE_CREDS}}
 
+    - name: Get tag
+      id: tag
+      uses: dawidd6/action-get-tag@v1
+      with:
+        # Optionally strip `v` prefix
+        strip_v: true
+
     - name: Build ${{matrix.component_name}}
       run: |
         # use az ml extension to build component
         az ml component build --file ${{matrix.file_path}} --target dist/${{matrix.component_name}}/
 
         # compress as zip
-        zip -r dist/${{matrix.component_name}}-v${{GITHUB_REF#refs/tags/}}.zip dist/${{matrix.component_name}}/
+        zip -r dist/${{matrix.component_name}}-${{steps.tag.outputs.tag}}.zip dist/${{matrix.component_name}}/
 
         # clean up
         rm -rf dist/${{matrix.component_name}}/
@@ -65,6 +72,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip
-        asset_name: ${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip
+        asset_path: dist/${{matrix.component_name}}-${{steps.tag.outputs.tag}}.zip
+        asset_name: ${{matrix.component_name}}-${{steps.tag.outputs.tag}}.zip
         asset_content_type: application/zip
