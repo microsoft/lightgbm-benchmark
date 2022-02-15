@@ -34,8 +34,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip==21.3.1
-        pip install --upgrade --force-reinstall --no-cache-dir "azure-cli<2.30.0"
         sudo apt install zip
 
         # Uninstall any previously installed extensions: azure-cli-ml (the `az ml` commands), ml (the vNext extension)
