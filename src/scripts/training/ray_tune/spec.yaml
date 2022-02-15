@@ -183,7 +183,7 @@ outputs:
 
 command: >-
   raytune.py
-  --ray_on_aml True
+  --cluster_auto_setup True
   --train {inputs.train}
   --test {inputs.test}
   --label_column {inputs.label_column}

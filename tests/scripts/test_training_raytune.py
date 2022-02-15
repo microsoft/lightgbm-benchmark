@@ -9,11 +9,23 @@ import pytest
 from unittest.mock import patch
 
 from scripts.training.ray_tune import raytune
+from common.distributed import multinode_config_class
 
 # IMPORTANT: see conftest.py for fixtures
 
-def test_ray_tune(temporary_dir, regression_train_sample, regression_test_sample):
+@patch('ray.shutdown') # patching this to avoid ray.shutdown() call, using ray_init_fixture instead
+@patch('ray.init') # patching this to avoid ray.init() call, using ray_init_fixture instead
+@patch('common.distributed.MultiNodeMPIDriver') # patching this to avoid mpi.init() call
+def test_ray_tune(mpi_driver_mock, ray_init_mock, ray_shutdown_mock, ray_init_fixture, temporary_dir, regression_train_sample, regression_test_sample):
     """Tests src/scripts/training/ray_tune/raytune.py"""
+    # fake mpi initialization + config
+    mpi_driver_mock().get_multinode_config.return_value = multinode_config_class(
+        1, # world_size
+        0, # world_rank
+        False, # mpi_available
+        True, # main_node
+    )
+
     output_file = os.path.join(temporary_dir, "output")
 
     # create test arguments for the script
