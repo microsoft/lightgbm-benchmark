@@ -53,7 +53,7 @@ jobs:
         az ml component build --file ${{matrix.file_path}} --target dist/${{matrix.component_name}}/
 
         # compress as zip
-        zip -r dist/${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip dist/${{matrix.component_name}}/
+        zip -r dist/${{matrix.component_name}}-v${{GITHUB_REF#refs/tags/}}.zip dist/${{matrix.component_name}}/
 
         # clean up
         rm -rf dist/${{matrix.component_name}}/
