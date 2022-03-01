@@ -231,6 +231,7 @@ def lightgbm_training_pipeline_function(config,
         training_params['header'] = variant_params.data.header
         training_params['label_column'] = variant_params.data.label_column
         training_params['group_column'] = variant_params.data.group_column
+        training_params['construct'] = variant_params.data.construct
 
         # extract and construct "sweepable" params
         if variant_params.sweep:
