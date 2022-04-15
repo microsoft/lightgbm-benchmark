@@ -9,6 +9,7 @@ nav:
 - About: lightgbm-benchmark-project.md
 - Contribute:
     Developer Guide: contribute/developer-guide.md
+    Architecture Guide: contribute/architecture-guide.md
     Reporting Guide: contribute/reporting-guide.md
 - Run:
     Install: run/install.md
@@ -23,6 +24,7 @@ nav:
         Custom Pipelines:
             Upload your data: run/azureml/upload-your-data.md
             Train on your data: run/azureml/train-on-your-data.md
+        Designer UI: run/azureml/designer-ui.md
 - Results:
     Inferencing: results/inferencing.md
     Manual: results/manual.md
@@ -33,9 +35,11 @@ nav:
         - io.py: references/common/io.md
         - lightgbm_utils.py: references/common/lightgbm_utils.md
         - metrics.py: references/common/metrics.md
+        - perf.py: references/common/perf.md
         - tasks.py: references/common/tasks.md
     - src/scripts/:
         - sample/sample.py: references/scripts/sample/sample.md
+        - training/lightgbm_python/: references/scripts/training/lightgbm_python.md
 
 theme:
   name: readthedocs

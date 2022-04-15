@@ -14,7 +14,7 @@ import logging
 import traceback
 from distutils.util import strtobool
 
-from .metrics import MetricsLogger
+from .metrics import MetricsLogger, MLFlowMetricsLogger, AzureMLRunMetricsLogger
 from .perf import PerformanceMetricsCollector, PerfReportPlotter
 
 class RunnableScript():
@@ -39,10 +39,10 @@ class RunnableScript():
 
         self.logger = logging.getLogger(f"{framework}.{task}")
 
-        # initializes reporting of metrics
+        # default metrics logger is just stdout print
         self.metrics_logger = MetricsLogger(
             f"{framework}.{task}",
-            metrics_prefix=metrics_prefix
+            metrics_prefix=self.metrics_prefix
         )
 
         self.perf_report_collector = None
@@ -65,7 +65,7 @@ class RunnableScript():
             parser = argparse.ArgumentParser()
 
         # add generic arguments here
-        group_general = parser.add_argument_group("General parameters")
+        group_general = parser.add_argument_group(f"General parameters [{__name__}:{cls.__name__}]")
         group_general.add_argument(
             "--verbose",
             required=False,
@@ -87,12 +87,35 @@ class RunnableScript():
             type=strtobool,
             help="disable performance metrics (default: False)",
         )
+        group_general.add_argument(
+            "--metrics_driver",
+            required=False,
+            default="mlflow",
+            choices=['mlflow', 'azureml'],
+            type=str,
+            help="which class to use to report metrics mlflow or azureml",
+        )
 
         return parser
 
     def initialize_run(self, args):
         """Initialize the component run, opens/setups what needs to be"""
         self.logger.info("Initializing script run...")
+
+        # initializes reporting of metrics
+        if args.metrics_driver == 'mlflow':
+            self.metrics_logger = MLFlowMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        elif args.metrics_driver == 'azureml':
+            self.metrics_logger = AzureMLRunMetricsLogger(
+                f"{self.framework}.{self.task}",
+                metrics_prefix=self.metrics_prefix
+            )
+        else:
+            # use default metrics_logger (stdout print)
+            pass
 
         # open mlflow
         self.metrics_logger.open()
@@ -139,9 +162,51 @@ class RunnableScript():
             plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=0)
             plotter.report_nodes_perf()
 
+            # write perf record as artifact
+            self.metrics_logger.log_artifact(plotter.save_to())
+
         # close mlflow
         self.metrics_logger.close()
 
+
+    ####################
+    ### MAIN METHODS ###
+    ####################
+
+    @classmethod
+    def initialize_root_logger(cls):
+        # initialize root logger
+        logger = logging.getLogger()
+        logger.setLevel(logging.INFO)
+        console_handler = logging.StreamHandler()
+        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
+
+        return logger
+
+    @classmethod
+    def parse_class_arguments(cls, cli_args=None):
+        logger = logging.getLogger()
+
+        # show the command used to run
+        if cli_args:
+            logger.info(f"Running main() with specific cli args: {cli_args}")
+        else:
+            logger.info(f"Running main() with sys.argv={sys.argv}")
+
+        # construct arg parser
+        parser = cls.get_arg_parser()
+    
+        # if argument parsing fails, or if unknown arguments, will except
+        args, unknown_args = parser.parse_known_args(cli_args)
+        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+
+        return args, unknown_args
+
+    def _main_run_hook(self, args, unknown_args):
+        """Run function called from main()"""
+        self.run(args, self.logger, self.metrics_logger, unknown_args=unknown_args)
 
     @classmethod
     def main(cls, cli_args=None):
@@ -151,20 +216,8 @@ class RunnableScript():
         Args:
             cli_args (List[str], optional): list of args to feed script, useful for debugging. Defaults to None.
         """
-        # initialize root logger
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-        console_handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
-        console_handler.setFormatter(formatter)
-        logger.addHandler(console_handler)
-
-        # construct arg parser
-        parser = cls.get_arg_parser()
-    
-        # if argument parsing fails, or if unknown arguments, will except
-        args, unknown_args = parser.parse_known_args(cli_args)
-        logger.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+        cls.initialize_root_logger()
+        args, unknown_args = cls.parse_class_arguments(cli_args)
 
         # create script instance, initialize mlflow
         script_instance = cls()
@@ -172,8 +225,8 @@ class RunnableScript():
 
         # catch run function exceptions to properly finalize run (kill/join threads)
         try:
-            # run the actual thing
-            script_instance.run(args, script_instance.logger, script_instance.metrics_logger, unknown_args)
+            # run the class run method (passthrough)
+            script_instance._main_run_hook(args, unknown_args)
         except BaseException as e:
             logging.critical(f"Exception occured during run():\n{traceback.format_exc()}")
             script_instance.finalize_run(args)

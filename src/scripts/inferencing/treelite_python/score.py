@@ -50,7 +50,7 @@ class TreeLightInferencingScript(RunnableScript):
         # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
-        group_i = parser.add_argument_group("Input Data")
+        group_i = parser.add_argument_group(f"Input Data [{__name__}:{cls.__name__}]")
         group_i.add_argument("--data",
             required=True, type=input_file_path, help="Inferencing data location (file path)")
         group_i.add_argument("--so_path",
@@ -58,7 +58,7 @@ class TreeLightInferencingScript(RunnableScript):
         group_i.add_argument("--output",
             required=False, default=None, type=str, help="Inferencing output location (file path)")
         
-        group_params = parser.add_argument_group("Scoring parameters")
+        group_params = parser.add_argument_group(f"Scoring parameters [{__name__}:{cls.__name__}]")
         group_params.add_argument("--num_threads",
             required=False, default=1, type=int, help="number of threads")
 

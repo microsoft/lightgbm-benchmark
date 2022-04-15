@@ -10,12 +10,10 @@ from unittest.mock import patch
 
 from scripts.training.lightgbm_python import train
 from scripts.inferencing.lightgbm_python import score
-from common.distributed import mpi_config_class
 
 # IMPORTANT: see conftest.py for fixtures
 
-@patch('common.distributed.MPIHandler')
-def test_lightgbm_python_train(mpi_handler_mock, temporary_dir, regression_train_sample, regression_test_sample):
+def test_lightgbm_python_train(temporary_dir, regression_train_sample, regression_test_sample):
     """Tests src/scripts/training/lightgbm_python/train.py"""
     model_dir = os.path.join(temporary_dir, "model")
 
@@ -25,6 +23,8 @@ def test_lightgbm_python_train(mpi_handler_mock, temporary_dir, regression_train
     script_args = [
         "train.py",
         "--train", regression_train_sample,
+        "--label_column", "name:label",
+        "--header", "True",
         "--test", regression_test_sample,
         "--export_model", model_dir,
         "--objective", objective_argument,
@@ -33,20 +33,13 @@ def test_lightgbm_python_train(mpi_handler_mock, temporary_dir, regression_train
         "--metric", "rmse",
         "--num_trees", "5",
         "--num_leaves", "10",
-        "--min_data_in_leaf", "1",
+        "--min_data_in_leaf", "255",
         "--learning_rate", "0.3",
         "--max_bin", "16",
         "--feature_fraction", "0.15",
-        "--device_type", "cpu"
+        "--device_type", "cpu",
+        "--multinode_driver", "socket"
     ]
-
-    # fake mpi initialization + config
-    mpi_handler_mock().mpi_config.return_value = mpi_config_class(
-        1, # world_size
-        0, # world_rank
-        False, # mpi_available
-        True, # main_node
-    )
 
     # replaces sys.argv with test arguments and run main
     with patch.object(sys, "argv", script_args):
@@ -66,6 +59,7 @@ def test_lightgbm_python_score(temporary_dir, regression_model_sample, regressio
     script_args = [
         "score.py",
         "--data", regression_inference_sample,
+        "--header", "True",
         "--model", regression_model_sample,
         "--output", predictions_dir
     ]

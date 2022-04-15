@@ -1,10 +1,16 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: generate_synthetic_data
-version: 1.0.1
-display_name: "Generate Synthetic Data (small)"
+version: 1.0.5
+display_name: "Generate Synthetic Data"
 type: CommandComponent
-description: "generate synthetic data using scikit-learn make_* functions"
+description: "Generate data for classification or regression."
 is_deterministic: true
+
+tags:
+  git: https://github.com/microsoft/lightgbm-benchmark
+  docs: https://microsoft.github.io/lightgbm-benchmark
+  framework: scikit-learn
+  framework_version: 0.24.2
 
 inputs:
   learning_task:
@@ -16,23 +22,43 @@ inputs:
       - lambdarank
   train_samples:
     type: Integer
-    description: Number of training samples
+    description: Number of training samples to generate
+    default: 1000
+    optional: false
+  train_partitions:
+    type: Integer
+    description: Number of partitions to generate for training data
+    default: 1
     optional: false
   test_samples:
     type: Integer
-    description: Number of testing samples
+    description: Number of testing samples to generate
+    default: 100
+    optional: false
+  test_partitions:
+    type: Integer
+    description: Number of partitions to generate for testing data
+    default: 1
     optional: false
   inferencing_samples:
     type: Integer
-    description: Number of inferencing samples
+    description: Number of inferencing samples to generate
+    default: 1000
+    optional: false
+  inferencing_partitions:
+    type: Integer
+    description: Number of partitions to generate for inferencing data
+    default: 1
     optional: false
   n_features:
     type: Integer
     description: Number of features/columns
+    default: 100
     optional: false
   n_informative:
     type: Integer
     description: Number of informative features
+    default: 100
     optional: false
   n_redundant:
     type: Integer
@@ -42,21 +68,38 @@ inputs:
     type: Integer
     description: random seed
     optional: true
-  delimiter:
-    type: String
-    description: selimiter
-    optional: true
-    default: ","
   docs_per_query:
     type: Integer
-    description: random seed
+    description: docs per query, used for ranking data
+    default: 20
     optional: true
+  n_label_classes:
+    type: Integer
+    description: n_label_classes, used for ranking data
+    default: 10
+    optional: true
+
+
+  delimiter:
+    type: Enum
+    default: "comma"
+    enum:
+      - tab
+      - comma
+      - space
+  header:
+    type: Boolean
+    default: False
+    description: "generate header for output files"
+
+  # generic benchmark parameters
   verbose:
     type: Boolean
     default: False
+    description: "Show debug logs"
   custom_properties:
     type: String
-    description: additional custom tags for the job (as json dict)
+    description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
     optional: true
 
 outputs:
@@ -66,27 +109,35 @@ outputs:
     type: AnyDirectory
   output_inference:
     type: AnyDirectory
+  external_header:
+    type: AnyDirectory
   output_header:
     type: AnyDirectory
-
+    
 command: >-
   python generate.py
   --type {inputs.learning_task}
   --train_samples {inputs.train_samples}
+  --train_partitions {inputs.train_partitions}
   --test_samples {inputs.test_samples}
+  --test_partitions {inputs.test_partitions}
   --inferencing_samples {inputs.inferencing_samples}
+  --inferencing_partitions {inputs.inferencing_partitions}
   --n_features {inputs.n_features}
   --n_informative {inputs.n_informative}
   [--n_redundant {inputs.n_redundant}]
   [--random_state {inputs.random_state}]
-  [--docs_per_query {inputs.docs_per_query}]
+  --delimiter {inputs.delimiter}
+  --generate_header {inputs.header}
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}
   --output_header {outputs.output_header}
+  --external_header {outputs.external_header}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
-  [--delimiter {inputs.delimiter}]
+  [--docs_per_query {inputs.docs_per_query}]
+  [--n_label_classes {inputs.n_label_classes}]
 
 environment:
   conda:

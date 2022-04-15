@@ -47,7 +47,7 @@ class PartitionDataScript(RunnableScript):
         parser = RunnableScript.get_arg_parser(parser)
 
         # add arguments that are specific to the script
-        group = parser.add_argument_group('Partitioning arguments')
+        group = parser.add_argument_group(f"Partitioning arguments [{__name__}:{cls.__name__}]")
         group.add_argument("--input", dest="input", type=str, required=True, help="file/directory to split")
         group.add_argument("--output", dest="output", type=str, help="location to store partitioned files", required=True)
         group.add_argument("--mode", type=str, choices=PartitioningEngine.PARTITION_MODES, required=True, help="Partitioning mode")

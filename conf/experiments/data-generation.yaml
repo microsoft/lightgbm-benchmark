@@ -1,0 +1,47 @@
+# This experiment generates multiple synthetic datasets for regression
+# with varying number of features
+#
+# to execute:
+# > python src/pipelines/azureml/data_generation.py --exp-config conf/experiments/data-generation.yaml
+
+defaults:
+  - aml: custom
+  - compute: custom
+
+### CUSTOM PARAMETERS ###
+
+experiment:
+  name: "data_generation_dev"
+  description: "something interesting to say about this"
+
+data_generation_config:
+  # name of your particular benchmark
+  benchmark_name: "benchmark-dev" # override this with a unique name
+
+  # DATA
+  tasks:
+    - task: "regression"
+      train_samples: 100000
+      test_samples: 10000
+      inferencing_samples: 10000
+      n_features: 10
+      n_informative: 10
+    - task: "lambdarank"
+      train_samples: 100
+      test_samples: 100
+      inferencing_samples: 100
+      n_features: 10
+      n_informative: 13
+      n_label_classes: 5
+      docs_per_query: 10
+      train_partitions: 7
+    - task: "classification"
+      train_samples: 100
+      test_samples: 100
+      inferencing_samples: 100
+      n_features: 10
+      n_informative: 13
+      n_label_classes: 3
+
+  register_outputs: false
+  register_outputs_prefix: "data-synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"

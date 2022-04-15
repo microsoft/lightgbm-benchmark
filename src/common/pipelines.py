@@ -139,7 +139,8 @@ def azureml_connect(config: DictConfig):
         aml_resource_group=config.aml.resource_group,
         aml_workspace_name=config.aml.workspace_name,
         aml_auth=config.aml.auth,
-        aml_tenant=config.aml.tenant
+        aml_tenant=config.aml.tenant,
+        aml_force=config.aml.force
     )
 
 def pipeline_submit(workspace: Workspace,
@@ -171,13 +172,38 @@ def pipeline_submit(workspace: Workspace,
         experiment_description = experiment_description[:5000-50] + "\n<<<TRUNCATED DUE TO SIZE LIMIT>>>"
 
     if pipeline_config.run.submit:
-        return pipeline_instance.submit(
+        # convert dictconfig to dict format as required for pipeline_submit function.
+        if pipeline_config.experiment.tags:
+            tags_dict = OmegaConf.to_container(pipeline_config.experiment.tags)
+        else:
+            tags_dict = None
+        pipeline_run = pipeline_instance.submit(
             workspace=workspace,
             experiment_name=(experiment_name or pipeline_config.experiment.name),
             description=experiment_description,
             display_name=(display_name or pipeline_config.experiment.display_name),
-            tags=(tags or pipeline_config.experiment.tags),
+            tags=(tags or tags_dict),
             default_compute_target=pipeline_config.compute.default_compute_target,
             regenerate_outputs=pipeline_config.run.regenerate_outputs,
             continue_on_step_failure=pipeline_config.run.continue_on_failure,
         )
+
+        logging.info(
+            f"""
+#################################
+#################################
+#################################
+
+Follow link below to access your pipeline run directly:
+-------------------------------------------------------
+{pipeline_run.get_portal_url()}
+
+#################################
+#################################
+#################################
+        """
+        )
+
+        return pipeline_run
+    else:
+        logging.warning("Pipeline was not submitted, to submit it please add +run.submit=true to your command.")

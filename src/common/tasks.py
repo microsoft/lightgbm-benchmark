@@ -32,10 +32,17 @@ class data_generation_task:
     task: str = MISSING
     task_key: Optional[str] = None
     train_samples: int = MISSING
+    train_partitions: int = 1
     test_samples: int = MISSING
+    test_partitions: int = 1
     inferencing_samples: int = MISSING
+    inferencing_partitions: int = 1
     n_features: int = MISSING
     n_informative: Optional[int] = None
+    n_label_classes: Optional[int] = None
+    docs_per_query: Optional[int] = None
+    delimiter: str = "comma"
+    header: bool = False
 
 @dataclass
 class training_task:
@@ -95,6 +102,7 @@ class lightgbm_training_variant_parameters:
 
     # COMPUTE
     device_type: str = "cpu"
+    multinode_driver: str = "socket"
     verbose: bool = False
 
 @dataclass
@@ -125,11 +133,13 @@ class lightgbm_training_output_variant_parameters:
 
 @dataclass
 class training_variant:
-    # three below are mandatory sections of the variant config
+    # below are mandatory sections of the variant config
+    framework: str = MISSING
     data: lightgbm_training_data_variant_parameters = MISSING
     training: lightgbm_training_variant_parameters = MISSING
     runtime: lightgbm_training_environment_variant_parameters = MISSING
 
-    # two below are optional
+    # below are optional
+    raytune: Optional[Any] = None
     sweep: Optional[sweep_settings] = None
     output:Optional[lightgbm_training_output_variant_parameters] = None

@@ -8,6 +8,7 @@ in the benchmark scripts. It also provides some automation routine to handle dat
 import os
 import argparse
 import logging
+from os.path import exists
 
 def input_file_path(path):
     """ Argparse type to resolve input path as single file from directory.
@@ -46,6 +47,10 @@ def get_all_files(path, fail_on_unknown_type=False):
     Returns:
         List[str]: list of paths contained in path
     """
+    # check the existence of the path
+    if exists(path) == False: 
+        raise Exception(f"The specified path {path} does not exist.")
+
     # if input path is already a file, return as list
     if os.path.isfile(path):
         logging.getLogger(__name__).info(f"Found INPUT file {path}")

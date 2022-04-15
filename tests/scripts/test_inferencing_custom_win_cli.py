@@ -47,6 +47,6 @@ def test_lightgbm_c_api_score(subprocess_run_mock, mlflow_log_metric_mock, tempo
     # assert os.path.isfile(os.path.join(predictions_dir, "predictions.txt"))
 
     metric_calls = mlflow_log_metric_mock.call_args_list
-    # 12 = 11 perf metrics + 1 time_inferencing
-    assert mlflow_log_metric_mock.call_count == 12
-    assert len(metric_calls) == 12
+    # 19 = 18 perf metrics + 1 time_inferencing
+    assert mlflow_log_metric_mock.call_count == 19
+    assert len(metric_calls) == 19
