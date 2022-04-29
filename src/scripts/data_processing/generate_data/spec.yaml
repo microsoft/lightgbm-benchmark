@@ -111,8 +111,6 @@ outputs:
     type: AnyDirectory
   external_header:
     type: AnyDirectory
-  output_header:
-    type: AnyDirectory
     
 command: >-
   python generate.py
@@ -132,7 +130,6 @@ command: >-
   --output_train {outputs.output_train}
   --output_test {outputs.output_test}
   --output_inference {outputs.output_inference}
-  --output_header {outputs.output_header}
   --external_header {outputs.external_header}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]
