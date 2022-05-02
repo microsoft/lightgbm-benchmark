@@ -13,16 +13,18 @@ on:
         default: '...'
 
 jobs:
-  component_publish:
-    name: Build and publish components
+  build_release:
+    name: Build components for release
     environment: mlops
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         include:
-          - file_path: src/scripts/training/lightgbm_python/spec.yaml
-            component_name: "lightgbm.python.training"
+          - component_folder: src/scripts/training/lightgbm_python/
+            component_name: "lightgbm_python_training"
+          - component_folder: src/scripts/data_processing/generate_data/
+            component_name: "generate_data"
 
     steps:  
     - uses: actions/checkout@v2
@@ -34,41 +36,60 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip==21.3.1
-        pip install --upgrade --force-reinstall --no-cache-dir "azure-cli<2.30.0"
         sudo apt install zip
-
-        # Uninstall any previously installed extensions: azure-cli-ml (the `az ml` commands), ml (the vNext extension)
-        az extension remove -n ml; az extension remove -n azure-cli-ml
 
         # Install remote version of azure-cli-ml (which includes `az ml component` commands)
         # This might take several minutes depends on your network, thanks for your patience.
         # Install specific stable version (recommended)
-        az extension add --source https://azuremlsdktestpypi.blob.core.windows.net/wheels/componentsdk/azure_cli_ml-0.9.5-py3-none-any.whl --pip-extra-index-urls https://azuremlsdktestpypi.azureedge.net/componentsdk/0.9.5 --yes --verbose
+        echo "Install remove version of azure-cli-ml..."
+        az extension add -n ml --yes --verbose
 
     - name: azure login
       uses: azure/login@v1
       with:
         creds: ${{secrets.AZURE_CREDS}}
 
+    - name: Get tag and branch name
+      id: tag
+      uses: ypicard/get-branch-name-github-action@v1
+
     - name: Build ${{matrix.component_name}}
       run: |
-        # use az ml extension to build component
-        az ml component build --file ${{matrix.component_yaml_file_path}} --target dist/${{matrix.component_name}}/
+        # copy sources of the component
+        mkdir -p dist/${{matrix.component_name}}/
+        cp ${{matrix.component_folder}}/* dist/${{matrix.component_name}}/
+
+        # process "additional includes"
+        rm dist/${{matrix.component_name}}/*.additional_includes
+        mkdir dist/${{matrix.component_name}}/common/
+        cp src/common/* dist/${{matrix.component_name}}/common/
 
         # compress as zip
-        zip -r dist/${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip dist/${{matrix.component_name}}/
+        cd dist/
+        zip -r component-${{matrix.component_name}}.zip ${{matrix.component_name}}/
+        cd ..
 
         # clean up
         rm -rf dist/${{matrix.component_name}}/
 
-    - name: Upload ${{matrix.component_name}} as asset
-      id: upload-release-asset 
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload ${{matrix.component_name}} as build artifact
+      uses: actions/upload-artifact@v2.3.1
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip
-        asset_name: ${{matrix.component_name}}-v${GITHUB_REF#refs/tags/}.zip
-        asset_content_type: application/zip
+        name: ${{matrix.component_name}}
+        path: dist/component-${{matrix.component_name}}.zip
+
+  publish_release:
+    name: Release components
+    environment: mlops
+    runs-on: ubuntu-latest
+    needs: [build_release]
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: release/
+
+      - name: Display structure of release
+        run: ls -R
+        working-directory: release/
