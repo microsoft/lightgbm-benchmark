@@ -63,7 +63,9 @@ jobs:
         cp src/common/* dist/${{matrix.component_name}}/common/
 
         # compress as zip
-        zip -r dist/component-${{matrix.component_name}}.zip dist/${{matrix.component_name}}/
+        cd dist/
+        zip -r component-${{matrix.component_name}}.zip ${{matrix.component_name}}/
+        cd ..
 
         # clean up
         rm -rf dist/${{matrix.component_name}}/
