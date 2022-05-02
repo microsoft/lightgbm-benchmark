@@ -22,7 +22,7 @@ jobs:
       matrix:
         include:
           - component_folder: src/scripts/training/lightgbm_python/
-            component_name: "lightgbm.python.training"
+            component_name: "lightgbm_python_training"
 
     steps:  
     - uses: actions/checkout@v2
@@ -54,7 +54,7 @@ jobs:
     - name: Build ${{matrix.component_name}}
       run: |
         # copy sources of the component
-        mkdir dist/${{matrix.component_name}}/
+        mkdir -p dist/${{matrix.component_name}}/
         cp ${{matrix.component_folder}}/* dist/${{matrix.component_name}}/
 
         # process "additional includes"
