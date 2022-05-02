@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - file_path: src/scripts/training/lightgbm_python/spec.yaml
+          - component_folder: src/scripts/training/lightgbm_python/
             component_name: "lightgbm.python.training"
 
     steps:  
@@ -53,8 +53,14 @@ jobs:
 
     - name: Build ${{matrix.component_name}}
       run: |
-        # use az ml extension to build component
-        az ml component build --file ${{matrix.file_path}} --target dist/${{matrix.component_name}}/
+        # copy sources of the component
+        mkdir dist/${{matrix.component_name}}/
+        cp ${{matrix.component_folder}}/* dist/${{matrix.component_name}}/
+
+        # process "additional includes"
+        rm dist/${{matrix.component_name}}/*.additional_includes
+        mkdir dist/${{matrix.component_name}}/common/
+        cp src/common/* dist/${{matrix.component_name}}/common/
 
         # compress as zip
         zip -r dist/component-${{matrix.component_name}}.zip dist/${{matrix.component_name}}/
