@@ -23,6 +23,8 @@ jobs:
         include:
           - component_folder: src/scripts/training/lightgbm_python/
             component_name: "lightgbm_python_training"
+          - component_folder: src/scripts/data_processing/generate_data/
+            component_name: "generate_data"
 
     steps:  
     - uses: actions/checkout@v2
