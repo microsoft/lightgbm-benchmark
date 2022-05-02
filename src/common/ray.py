@@ -7,19 +7,15 @@ Helper code to run Ray distributed scripts [EXPERIMENTAL]
 import os
 import logging
 import traceback
-from .components import RunnableScript
-from dataclasses import dataclass
-
-from distutils.util import strtobool
-
-import subprocess
-import ray
+import uuid
 import time
 
-from .metrics import MetricsLogger, MLFlowMetricsLogger, AzureMLRunMetricsLogger
-from .perf import PerformanceMetricsCollector, PerfReportPlotter
+import ray
 
-class RayScript(RunnableScript):
+from .distributed import MultiNodeClusterSyncSetupScript
+
+
+class RayScript(MultiNodeClusterSyncSetupScript):
     def __init__(self, task, framework, framework_version, metrics_prefix=None):
         """ Generic initialization for all script classes.
 
@@ -39,196 +35,79 @@ class RayScript(RunnableScript):
         )
 
         # ray init settings
-        self.self_is_head = True
         self.head_address = None
         self.head_port = 6379
         self.redis_password = None
-        self.available_nodes = 1
 
     @classmethod
     def get_arg_parser(cls, parser=None):
         """Adds component/module arguments to a given argument parser.
-
         Args:
             parser (argparse.ArgumentParser): an argument parser instance
-
         Returns:
             ArgumentParser: the argument parser instance
-
         Notes:
             if parser is None, creates a new parser instance
         """
         # add generic arguments
-        parser = RunnableScript.get_arg_parser(parser)
+        parser = MultiNodeClusterSyncSetupScript.get_arg_parser(parser)
 
         # add generic arguments here
-        group_general = parser.add_argument_group("Ray parameters")
-        group_general.add_argument(
-            "--ray_head",
+        group_args = parser.add_argument_group(f"Ray setup arguments [{__name__}:{cls.__name__}]")
+        group_args.add_argument(
+            "--ray_head_addr",
             required=False,
             default=None,
             type=str,
             help="address of ray cluster (if running this script locally)",
         )
-        group_general.add_argument(
+        group_args.add_argument(
             "--ray_head_port",
             required=False,
             default=6379,
             type=int,
             help="port of ray cluster (if running this script locally)",
         )
-        group_general.add_argument(
+        group_args.add_argument(
             "--ray_redis_password",
             required=False,
             default=None,
             type=str,
             help="redis password of ray cluster (if running this script locally)",
         )
-        group_general.add_argument(
-            "--ray_on_aml",
-            required=False,
-            default=False,
-            type=strtobool,
-            help="if running this script within an AzureML run (head/port will be discovered)",
-        )
 
         return parser
-
-    def initialize_run(self, args):
-        """Initialize the component run, opens/setups what needs to be"""
-        self.logger.info("Initializing Ray component script...")
-
-        # initializes reporting of metrics
-        if args.metrics_driver == 'mlflow':
-            self.metrics_logger = MLFlowMetricsLogger(
-                f"{self.framework}.{self.task}",
-                metrics_prefix=self.metrics_prefix
-            )
-        elif args.metrics_driver == 'azureml':
-            self.metrics_logger = AzureMLRunMetricsLogger(
-                f"{self.framework}.{self.task}",
-                metrics_prefix=self.metrics_prefix
-            )
-        else:
-            # use default metrics_logger (stdout print)
-            pass
-
-        if args.ray_on_aml:
-            # if running on AzureML, get context of cluster from env variables
-            self.head_address = os.environ.get("AZ_BATCHAI_JOB_MASTER_NODE_IP")
-            self.redis_password = os.environ.get("AZUREML_RUN_TOKEN_RAND", "12345")
-            self.self_is_head = (os.environ.get("OMPI_COMM_WORLD_RANK", "0") == "0")
-            self.available_nodes = int(os.environ.get("OMPI_COMM_WORLD_SIZE", "1"))
-
-            if self.self_is_head: # if we're on the first node of this job
-                if self.available_nodes > 1: # and if number of nodes if more than one
-                    # then initialize head node to listen to cluster nodes
-                    self.logger.info(f"Available nodes = {self.available_nodes}, initializing ray for HEAD node.")
-                    self.setup_head_node()
-
-                    # then run ray init
-                    ray_init_ret_val = ray.init(address="auto", _redis_password=self.redis_password)
-                    self.logger.info(f"Ray init returned: {ray_init_ret_val}")
-                    self.logger.info("Ray resources: {}".format(ray.available_resources()))
-
-                    # and wait for cluster nodes to be initialized as well
-                    for i in range(60):
-                        self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{self.available_nodes}]")
-                        if (len(ray.nodes()) >= self.available_nodes):
-                            break
-                        time.sleep(1)
-                    else:
-                        raise Exception("Could not reach maximum number of nodes before 60 seconds.")
-                else:
-                    # if just one node, nothing to do here
-                    self.logger.info(f"Available nodes = {self.available_nodes}, running ray.init() as for a single node...")
-                    ray.init()
-
-            else:
-                self.setup_cluster_node()
-
-        else:
-            # considering this one as head
-            self.self_is_head = True
-
-            # if not running this script in AzureML...
-            if args.ray_head:
-                # initialize ray for remote ray cluster
-                ray.init(
-                    redis_addr=f"{args.ray_head}:{args.ray_head_port}",
-                    _redis_password=args.ray_redis_password
-                )
-            else:
-                # initialize ray locally
-                ray.init()
-
-        # open mlflow
-        self.metrics_logger.open()
-
-        if self.self_is_head:
-            # record properties only from the main node
-            self.metrics_logger.set_properties(
-                task = self.task,
-                framework = self.framework,
-                framework_version = self.framework_version
-            )
-
-            # if provided some custom_properties by the outside orchestrator
-            if args.custom_properties:
-                self.metrics_logger.set_properties_from_json(args.custom_properties)
-
-            # add properties about environment of this script
-            self.metrics_logger.set_platform_properties()
-
-            # enable perf reporting
-            self.perf_report_collector = PerformanceMetricsCollector()
-            self.perf_report_collector.start()
-
-
-    def finalize_run(self, args):
-        """Finalize the run, close what needs to be"""
-        self.logger.info(f"Finalizing Ray component script...")
-
-        # clean ray exit on HEAD node only
-        if self.self_is_head:
-            self.logger.info(f"At finalization, number of nodes is [nodes={len(ray.nodes())}]")
-            ray.shutdown()
-
-        if self.perf_report_collector:
-            self.perf_report_collector.finalize()
-            plotter = PerfReportPlotter(self.metrics_logger)
-            plotter.add_perf_reports(self.perf_report_collector.perf_reports, node=0)
-            plotter.report_nodes_perf()
-
-        # close mlflow
-        self.metrics_logger.close()
 
     #####################
     ### SETUP METHODS ###
     #####################
 
-    def run_ray_cli(self, ray_cli_command, timeout=60):
-        """Runs subprocess for ray setup command"""
-        self.logger.info(f"Launching ray cli with command: {ray_cli_command}")
-        ray_cli_command_call = subprocess.run(
-            ray_cli_command,
-            #stdout=PIPE,
-            #stderr=PIPE,
-            universal_newlines=True,
-            check=False, # will not raise an exception if subprocess fails (so we capture with .returncode)
-            timeout=timeout, # TODO: more than a minute would be weird?
-            #env=custom_env
-        )
-        self.logger.info(f"return code: {ray_cli_command_call.returncode}")
+    def setup_local(self, args):
+        """Setup method if custom_sync_setup=False"""
+        self.logger.info(f"{self.__class__.__name__}.setup_local() called.")
 
-        if ray_cli_command_call.returncode != 0:
-            raise RuntimeError("Ray cli command returned code != 0")
+        # create setup config
+        self.head_address = args.ray_head_addr
+        self.head_port = args.ray_head_port
+        self.redis_password = args.ray_redis_password
 
-        return ray_cli_command_call.returncode
 
     def setup_head_node(self):
         """Setup to run only on head node"""
-        self.logger.info("Setting up Ray for HEAD node.")
+        super().setup_head_node()
+
+        # create setup config
+        self.head_address = os.environ.get('AZ_BATCHAI_NODE_IP')
+        self.head_port = 6379
+        self.redis_password = str(uuid.uuid4())
+
+        # record what's needed to setup cluster nodes
+        self.setup_config_add_key("head_address", self.head_address)
+        self.setup_config_add_key("head_port", self.head_port)
+        self.setup_config_add_key("redis_password", self.redis_password)
+
+        # on head node, init should use "auto"
+        self.head_address = "auto"
 
         # run ray cli
         ray_setup_command = [
@@ -238,21 +117,37 @@ class RayScript(RunnableScript):
             f"--port={self.head_port}",
             f"--redis-password={self.redis_password}"
         ]
-        self.run_ray_cli(ray_setup_command)
+        self.run_cli_command(ray_setup_command)
 
     def setup_cluster_node(self):
         """Setup to run only on non-head cluster nodes"""
-        self.logger.info("Setting up Ray for CLUSTER node.")
+        super().setup_head_node()
         
+        self.head_address = self.setup_config_get_key("head_address")
+        self.head_port = self.setup_config_get_key("head_port")
+        self.redis_password = self.setup_config_get_key("redis_password")
+
         # run ray cli
         ray_setup_command = [
             "ray",
             "start",
             f"--address={self.head_address}:{self.head_port}",
             f"--redis-password={self.redis_password}",
-            #"--block" # should remain in subprocess forever
         ]
-        self.run_ray_cli(ray_setup_command, timeout=None)
+        self.run_cli_command(ray_setup_command)
+
+    def head_node_teardown(self):
+        """Un-setup a cluster node"""
+        super().head_node_teardown()
+
+        ray.shutdown()
+
+        self.run_cli_command(["ray", "stop", "--force", "-v"])
+
+    def cluster_node_teardown(self):
+        """Un-setup a cluster node"""
+        super().cluster_node_teardown()
+        self.run_cli_command(["ray", "stop", "--force", "-v"])
 
 
     ############################
@@ -261,7 +156,35 @@ class RayScript(RunnableScript):
 
     def _main_run_hook(self, args, unknown_args):
         """Run function called from main()"""
-        if self.self_is_head:
+        # call run() only on main node
+        if self.multinode_config.main_node:
+            # initialize ray lib
+            if self.head_address is None:
+                # purely local without a ray cluster
+                ray.init()
+            elif self.head_address == "auto":
+                # run from within cluster_auto_setup
+                ray.init(
+                    address="auto",
+                    _redis_password=self.redis_password
+                )
+            else:
+                # custom cluster url
+                ray.init(
+                    address=f"{self.head_address}:{self.head_port}",
+                    _redis_password=self.redis_password
+                )
+
+            # making absolutely sure all nodes are there...
+            for i in range(60):
+                self.logger.info(f"Waiting for ray cluster to reach available nodes size... [{len(ray.nodes())}/{self.multinode_config.world_size}]")
+                if (len(ray.nodes()) >= self.multinode_config.world_size):
+                    break
+                time.sleep(1)
+            else:
+                raise Exception("Could not reach maximum number of nodes before 60 seconds.")
+
             self.run(args, self.logger, self.metrics_logger, unknown_args=unknown_args)
         else:
-            self.logger.warning("This is not HEAD node, exiting script now")
+            self.logger.info("Running on cluster node, run() is skipped.")
+            return

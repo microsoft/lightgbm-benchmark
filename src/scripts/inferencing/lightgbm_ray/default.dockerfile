@@ -21,5 +21,6 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-defaults==1.35.0' \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
+                'mpi4py==3.1.1' \
                 'ray==1.9.2' \
                 'lightgbm-ray==0.1.2'

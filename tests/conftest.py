@@ -86,3 +86,11 @@ def aml_config(request):
         tenant,
         False # force auth
     )
+
+@pytest.fixture(scope='session', autouse=True)
+def ray_init_fixture(request):
+    # using this fixture to avoid re-running ray.init() in each script it is required
+    # you'll also need to patch ray.init() and ray.shutdown()
+    logging.getLogger().warning("Running ray.init() from ray_init_fixture")
+    import ray
+    return ray.init()
