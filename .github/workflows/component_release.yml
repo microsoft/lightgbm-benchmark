@@ -71,38 +71,12 @@ jobs:
         name: ${{matrix.component_name}}
         path: dist/component-${{matrix.component_name}}.zip
 
-  publish_release:
-    name: Release components
-    environment: mlops
-    runs-on: ubuntu-latest
-    needs: [build_release]
-    
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v2
-        with:
-          path: release/
-
-      - name: Display structure of release
-        run: ls -R
-        working-directory: release/
-
-      - name: Upload Release Asset [lightgbm_python_training]
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: release/lightgbm_python_training/
-          asset_name: component-lightgbm_python_training.zip
-          asset_content_type: application/zip
-
-      - name: Upload Release Asset [generate_data]
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: release/generate_data/
-          asset_name: component-generate_data.zip
-          asset_content_type: application/zip
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: dist/
+        asset_name: component-${{matrix.component_name}}.zip
+        asset_content_type: application/zip
