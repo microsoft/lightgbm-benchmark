@@ -42,10 +42,6 @@ jobs:
       with:
         creds: ${{secrets.AZURE_CREDS}}
 
-    - name: Get tag and branch name
-      id: tag
-      uses: ypicard/get-branch-name-github-action@v1
-
     - name: Build ${{matrix.component_name}}
       run: |
         # copy sources of the component
@@ -77,6 +73,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-        asset_path: dist/
+        asset_path: dist/component-${{matrix.component_name}}.zip
         asset_name: component-${{matrix.component_name}}.zip
         asset_content_type: application/zip
