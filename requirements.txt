@@ -8,7 +8,7 @@ psutil==5.8.0
 # frameworks
 ray==1.9.2
 lightgbm-ray==0.1.2
-lightgbm==3.3.0
+lightgbm==3.3.1
 treelite==2.1.0
 treelite_runtime==2.1.0
 flaml==0.9.6

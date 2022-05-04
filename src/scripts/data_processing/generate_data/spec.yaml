@@ -111,7 +111,7 @@ outputs:
     type: AnyDirectory
   external_header:
     type: AnyDirectory
-
+    
 command: >-
   python generate.py
   --type {inputs.learning_task}
@@ -135,7 +135,7 @@ command: >-
   [--custom_properties {inputs.custom_properties}]
   [--docs_per_query {inputs.docs_per_query}]
   [--n_label_classes {inputs.n_label_classes}]
-  
+
 environment:
   conda:
     # conda file path is resolved after additional includes
