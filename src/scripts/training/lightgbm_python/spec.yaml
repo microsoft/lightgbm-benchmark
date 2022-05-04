@@ -30,6 +30,10 @@ inputs:
     type: AnyDirectory
     description: Directory to the testing data
     optional: false
+  parser_config_file:
+    type: AnyDirectory
+    description: directory to the transform parser config
+    optional: true
   construct:
     type: Boolean
     description: "Use lazy intialization during data loading phase (both train and test datasets)"
@@ -167,6 +171,7 @@ launcher:
     python train.py
     --train {inputs.train}
     --test {inputs.test}
+    [--parser_config_file {inputs.parser_config_file}]
     --construct {inputs.construct}
     --header {inputs.header}
     --label_column {inputs.label_column}
