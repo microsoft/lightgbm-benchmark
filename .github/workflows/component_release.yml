@@ -1,0 +1,78 @@
+name: Publish components as release assets
+
+on:
+  release:
+    types:
+    - published
+
+jobs:
+  build_release:
+    name: Build components for release
+    environment: mlops
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - component_folder: src/scripts/training/lightgbm_python/
+            component_name: "lightgbm_python_training"
+          - component_folder: src/scripts/data_processing/generate_data/
+            component_name: "generate_data"
+
+    steps:  
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        sudo apt install zip
+
+        # Install remote version of azure-cli-ml (which includes `az ml component` commands)
+        # This might take several minutes depends on your network, thanks for your patience.
+        # Install specific stable version (recommended)
+        echo "Install remove version of azure-cli-ml..."
+        az extension add -n ml --yes --verbose
+
+    - name: azure login
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDS}}
+
+    - name: Build ${{matrix.component_name}}
+      run: |
+        # copy sources of the component
+        mkdir -p dist/${{matrix.component_name}}/
+        cp ${{matrix.component_folder}}/* dist/${{matrix.component_name}}/
+
+        # process "additional includes"
+        rm dist/${{matrix.component_name}}/*.additional_includes
+        mkdir dist/${{matrix.component_name}}/common/
+        cp src/common/* dist/${{matrix.component_name}}/common/
+
+        # compress as zip
+        cd dist/
+        zip -r component-${{matrix.component_name}}.zip ${{matrix.component_name}}/
+        cd ..
+
+        # clean up
+        rm -rf dist/${{matrix.component_name}}/
+
+    - name: Upload ${{matrix.component_name}} as build artifact
+      uses: actions/upload-artifact@v2.3.1
+      with:
+        name: ${{matrix.component_name}}
+        path: dist/component-${{matrix.component_name}}.zip
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+        asset_path: dist/component-${{matrix.component_name}}.zip
+        asset_name: component-${{matrix.component_name}}.zip
+        asset_content_type: application/zip

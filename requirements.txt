@@ -1,13 +1,25 @@
-lightgbm==3.3.0
-pytest==6.2.4
-pytest-cov==2.12.1
-pytest-mock==3.6.1
-mlflow==1.21.0
-hydra-core~=1.0.3
-typing_extensions==4.0.1 # for hydra
+# benchmark common code
+mlflow==1.23.1
 omegaconf~=2.1
-treelite==2.1.0
-treelite_runtime==2.1.0
 mpi4py==3.1.1
 matplotlib==3.4.3
 psutil==5.8.0
+
+# frameworks
+ray==1.9.2
+lightgbm-ray==0.1.2
+lightgbm==3.3.1
+treelite==2.1.0
+treelite_runtime==2.1.0
+flaml==0.9.6
+
+# unit testing
+pytest==6.2.4
+pytest-cov==2.12.1
+pytest-mock==3.6.1
+
+# pipelines
+hydra-core~=1.0.3
+typing_extensions==4.0.1 # for hydra
+azure-ml==0.0.61212840
+--extra-index-url https://azuremlsdktestpypi.azureedge.net/sdk-cli-v2

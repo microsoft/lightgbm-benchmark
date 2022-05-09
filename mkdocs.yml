@@ -9,6 +9,7 @@ nav:
 - About: lightgbm-benchmark-project.md
 - Contribute:
     Developer Guide: contribute/developer-guide.md
+    Architecture Guide: contribute/architecture-guide.md
     Reporting Guide: contribute/reporting-guide.md
 - Run:
     Install: run/install.md
@@ -34,6 +35,7 @@ nav:
         - io.py: references/common/io.md
         - lightgbm_utils.py: references/common/lightgbm_utils.md
         - metrics.py: references/common/metrics.md
+        - perf.py: references/common/perf.md
         - tasks.py: references/common/tasks.md
     - src/scripts/:
         - sample/sample.py: references/scripts/sample/sample.md

@@ -1,0 +1,197 @@
+$schema: http://azureml/sdk-1-5/DistributedComponent.json
+name: lightgbm.ray.train
+version: 1.0.0
+display_name: "LightGBM Training (Ray API)"
+type: DistributedComponent
+description: >-
+  **Train a LightGBM Model**
+  
+  This script can leverage distributed training using Ray.
+  
+  Many of the parameters are documented in [LightGBM parameter docs](https://lightgbm.readthedocs.io/en/latest/Parameters.html).
+
+  To try this one in Designer UI, follow the tutorial in the [lightgbm-benchmark documentation](https://microsoft.github.io/lightgbm-benchmark/run/azureml/designer-ui/). 
+
+is_deterministic: true
+
+tags:
+  git: https://github.com/microsoft/lightgbm-benchmark
+  docs: https://microsoft.github.io/lightgbm-benchmark
+  framework: lightgbm_ray
+  framework_version: 0.1.2
+
+inputs:
+  # Inputs
+  train:
+    type: AnyDirectory
+    description: Directory to the training data
+    optional: false
+  train_data_format:
+    type: Enum
+    default: "CSV"
+    enum:
+      - CSV
+      - PARQUET
+      - PETAFORM
+  test:
+    type: AnyDirectory
+    description: Directory to the testing data
+    optional: false
+  test_data_format:
+    type: Enum
+    default: "CSV"
+    enum:
+      - CSV
+      - PARQUET
+      - PETAFORM
+
+  # Input Parameters
+  label_column:
+    type: String
+    default: "0"
+    description: "Specify label column (default=0)"
+  group_column:
+    type: String
+    optional: true
+    description: "Specify group/query column (default '')"
+
+  # Learning Parameters
+  objective:
+    type: Enum
+    default: "regression"
+    enum:
+      - regression
+      - regression_l1
+      - huber
+      - fair
+      - poisson
+      - quantile
+      - mape
+      - gamma
+      - tweedie
+      - binary
+      - multiclass
+      - multiclassova
+      - cross_entropy
+      - cross_entropy_lambda
+      - lambdarank
+      - rank_xendcg
+    description: "Objective function to use for training."
+  metric:
+    # let's not use Enum here to allow for custom metrics
+    type: String
+    default: ''
+    description: "Name of the metric (ex: rmse, ndcg)"
+  boosting:
+    type: Enum
+    default: "gbdt"
+    enum:
+      - gbdt
+      - rf
+      - dart
+      - goss
+    description: "Boosting technique"
+  tree_learner:
+    type: Enum
+    default: "serial"
+    enum:
+      - serial
+      - feature
+      - data
+      - voting
+    description: "For distributed learning"
+  label_gain:
+    type: String
+    optional: True
+    description: "Relevant gain for labels (used only in lambdarank application)"
+  num_iterations:
+    type: Integer
+    min: 1
+    default: 100
+    description: "Number of trees (alias num_trees)"
+  num_leaves:
+    type: Integer
+    min: 1
+    default: 31
+    description: "Number of leaves"
+  min_data_in_leaf:
+    type: Integer
+    min: 1
+    default: 20
+    description: "Minimum data in leaves"
+  learning_rate:
+    type: Float
+    default: 0.1
+    description: "Learning/shrinkage rate"
+  max_bin:
+    type: Integer
+    min: 1
+    default: 255
+    description: "Max number of bins that feature values will be bucketed in"
+  feature_fraction:
+    type: Float
+    default: 1.0
+    description: "LightGBM will randomly select a subset of features on each iteration (tree) if feature_fraction is smaller than 1.0. For example, if you set it to 0.8, LightGBM will select 80% of features before training each tree."
+  device_type:
+    type: Enum
+    default: 'cpu'
+    enum:
+      - cpu
+      - gpu
+      - cuda
+    description: "Device for the tree learning, you can use GPU to achieve the faster learning (to use gpu/cuda you need a specific dockerfile)"
+  custom_params:
+    type: String
+    optional: true
+    description: "Provide as a json dictionary (ex: {\"foo\":\"bar\"}) any additional custom lightgbm parameter"
+
+  # generic benchmark parameters
+  verbose:
+    type: Boolean
+    default: False
+    description: "Show debug logs"
+  custom_properties:
+    type: String
+    description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
+    optional: true
+
+outputs:
+  model:
+    type: AnyDirectory
+    description: "LightGBM model trained"
+
+launcher:
+  type: mpi
+  additional_arguments: >-
+    python train.py
+    --train {inputs.train}
+    --train_data_format {inputs.train_data_format}
+    --test {inputs.test}
+    --test_data_format {inputs.test_data_format}
+    --label_column {inputs.label_column}
+    [--group_column {inputs.group_column}]
+    --device_type {inputs.device_type}
+    --objective {inputs.objective}
+    --metric {inputs.metric}
+    [--label_gain {inputs.label_gain}]
+    [--custom_params {inputs.custom_params}]
+    --boosting {inputs.boosting}
+    --tree_learner {inputs.tree_learner}
+    --num_iterations {inputs.num_iterations}
+    --num_leaves {inputs.num_leaves}
+    --min_data_in_leaf {inputs.min_data_in_leaf}
+    --learning_rate {inputs.learning_rate}
+    --max_bin {inputs.max_bin}
+    --feature_fraction {inputs.feature_fraction}
+    --export_model {outputs.model}
+    --verbose {inputs.verbose}
+    [--custom_properties {inputs.custom_properties}]
+    --cluster_auto_setup True
+
+environment:
+  docker:
+    build:
+      dockerfile: file:default.dockerfile
+  conda:
+    userManagedDependencies: true
+  os: Linux

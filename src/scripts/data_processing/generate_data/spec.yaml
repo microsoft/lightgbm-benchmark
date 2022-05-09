@@ -19,6 +19,7 @@ inputs:
     enum:
       - regression
       - classification
+      - lambdarank
   train_samples:
     type: integer
     description: Number of training samples to generate
@@ -67,6 +68,17 @@ inputs:
     type: integer
     description: random seed
     optional: true
+  docs_per_query:
+    type: Integer
+    description: docs per query, used for ranking data
+    default: 20
+    optional: true
+  n_label_classes:
+    type: Integer
+    description: n_label_classes, used for ranking data
+    default: 10
+    optional: true
+
 
   delimiter:
     type: string
@@ -75,6 +87,10 @@ inputs:
       - tab
       - comma
       - space
+  header:
+    type: Boolean
+    default: False
+    description: "generate header for output files"
 
   # generic benchmark parameters
   verbose:
@@ -93,29 +109,35 @@ outputs:
     type: path
   output_inference:
     type: path
+  external_header:
+    type: path
 
 code:
   local_path: "../../../"
 
 command: >-
   python scripts/data_processing/generate_data/generate.py
-  --type ${{inputs.learning_task}}
-  --train_samples ${{inputs.train_samples}}
-  --train_partitions ${{inputs.train_partitions}}
-  --test_samples ${{inputs.test_samples}}
-  --test_partitions ${{inputs.test_partitions}}
-  --inferencing_samples ${{inputs.inferencing_samples}}
-  --inferencing_partitions ${{inputs.inferencing_partitions}}
-  --n_features ${{inputs.n_features}}
-  --n_informative ${{inputs.n_informative}}
-  [--n_redundant ${{inputs.n_redundant}}]
-  [--random_state ${{inputs.random_state}}]
-  --delimiter ${{inputs.delimiter}}
-  --output_train {outputs.output_train}}
-  --output_test {outputs.output_test}}
-  --output_inference {outputs.output_inference}}
-  --verbose ${{inputs.verbose}}
-  [--custom_properties '${{inputs.custom_properties}}']
+  --type {inputs.learning_task}
+  --train_samples {inputs.train_samples}
+  --train_partitions {inputs.train_partitions}
+  --test_samples {inputs.test_samples}
+  --test_partitions {inputs.test_partitions}
+  --inferencing_samples {inputs.inferencing_samples}
+  --inferencing_partitions {inputs.inferencing_partitions}
+  --n_features {inputs.n_features}
+  --n_informative {inputs.n_informative}
+  [--n_redundant {inputs.n_redundant}]
+  [--random_state {inputs.random_state}]
+  --delimiter {inputs.delimiter}
+  --generate_header {inputs.header}
+  --output_train {outputs.output_train}
+  --output_test {outputs.output_test}
+  --output_inference {outputs.output_inference}
+  --external_header {outputs.external_header}
+  --verbose {inputs.verbose}
+  [--custom_properties {inputs.custom_properties}]
+  [--docs_per_query {inputs.docs_per_query}]
+  [--n_label_classes {inputs.n_label_classes}]
 
 environment:
   name: data_generation_base

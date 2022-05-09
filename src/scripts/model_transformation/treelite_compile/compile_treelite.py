@@ -50,11 +50,11 @@ class TreeLightCompileScript(RunnableScript):
         # add generic arguments
         parser = RunnableScript.get_arg_parser(parser)
 
-        group_i = parser.add_argument_group("Input Data")
+        group_i = parser.add_argument_group(f"Input Data [{__name__}:{cls.__name__}]")
         group_i.add_argument("--model",
             required=False, type=input_file_path, help="Exported model location (file path)")
         
-        group_treelite = parser.add_argument_group("Treelite parameters")
+        group_treelite = parser.add_argument_group(f"Treelite parameters [{__name__}:{cls.__name__}]")
         group_treelite.add_argument("--model_format",
             required=False, default="lightgbm", type=str, help="format of the input --model")
         group_treelite.add_argument("--so_path",

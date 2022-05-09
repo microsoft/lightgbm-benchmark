@@ -34,6 +34,7 @@ from common.tasks import training_task, training_variant
 from common.sweep import SweepParameterParser
 from common.aml import load_dataset_from_data_input_spec
 from common.aml import apply_sweep_settings
+from common.aml import format_run_name
 from common.pipelines import (
     parse_pipeline_config,
     azureml_connect,
@@ -48,7 +49,7 @@ from common.pipelines import (
 # to read that config from a given yaml file + hydra override commands
 
 @dataclass
-class lightgbm_training_config: # pylint: disable=invalid-name
+class lightgbm_training_config: # pragma: no cover
     """ Config object constructed as a dataclass.
 
     NOTE: the name of this class will be used as namespace in your config yaml file.
@@ -71,11 +72,19 @@ class lightgbm_training_config: # pylint: disable=invalid-name
 # load those components from local yaml specifications
 # use COMPONENTS_ROOT as base folder
 
-lightgbm_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
-lightgbm_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
+# lightgbm python api with socket (pip install lightgbm)
+lightgbm_basic_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
+lightgbm_basic_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
+
+# lightgbm ray api
+lightgbm_ray_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_ray", "spec.yaml"))
+
+# preprocessing/utility modules
 partition_data_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
 lightgbm_data2bin_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
 
+# load ray tune module.
+lightgbm_ray_tune_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "ray_tune", "spec.yaml"))
 
 ### PIPELINE SPECIFIC CODE ###
 
@@ -222,6 +231,7 @@ def lightgbm_training_pipeline_function(config,
         training_params['header'] = variant_params.data.header
         training_params['label_column'] = variant_params.data.label_column
         training_params['group_column'] = variant_params.data.group_column
+        training_params['construct'] = variant_params.data.construct
 
         # extract and construct "sweepable" params
         if variant_params.sweep:
@@ -242,7 +252,7 @@ def lightgbm_training_pipeline_function(config,
         # create custom properties and serialize to pass as argument
         variant_custom_properties = {
             'variant_index': variant_index,
-            'framework': "lightgbm",
+            'framework': variant_params.framework,
             'framework_build': variant_params.runtime.build,
         }
         variant_custom_properties.update(benchmark_custom_properties)
@@ -262,40 +272,79 @@ def lightgbm_training_pipeline_function(config,
             else:
                 training_target = config.compute.linux_cpu
 
-        if use_sweep:
-            # sweep training
-            if variant_params.sweep.primary_metric is None:
-                variant_params.sweep.primary_metric=f"node_0/valid_0.{variant_params.training.metric}"
+        # switch between frameworks (work in progress)
+        if variant_params.framework == "lightgbm_python":
+            if use_sweep:
+                lightgbm_train_module = lightgbm_basic_train_sweep_module
+                # make sure there's a metric
+                if variant_params.sweep.primary_metric is None:
+                    variant_params.sweep.primary_metric=f"node_0/valid_0.{variant_params.training.metric}"
+            else:
+                lightgbm_train_module = lightgbm_basic_train_module
+        elif variant_params.framework == "lightgbm_ray":
+            if use_sweep:
+                raise NotImplementedError("Sweep on lightgbm_ray component is not implemented, use framework lightgbm_ray_tune instead.")
+            lightgbm_train_module = lightgbm_ray_train_module
 
-            lightgbm_train_step = lightgbm_train_sweep_module(
-                train = prepared_train_data,
-                test = prepared_test_data,
-                **training_params
-            )
-            # apply runsettings
-            lightgbm_train_step.runsettings.target=training_target
-            lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
-            lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
+            # remove arguments that are not in lightgbm_ray component
+            if 'multinode_driver' in training_params:
+                del training_params['multinode_driver']
+            if 'header' in training_params:
+                del training_params['header']
+            if 'construct' in training_params:
+                del training_params['construct']
+            if 'custom_properties' in training_params:
+                del training_params['custom_properties']
+            if 'verbose' in training_params:
+                del training_params['verbose']
+
+        elif variant_params.framework == 'lightgbm_ray_tune':
+            lightgbm_train_module = lightgbm_ray_tune_module
+            use_sweep = False
+
+            # manually add ray tune parameters.
+            training_params['mode'] = variant_params.raytune.mode
+            training_params['search_alg'] = variant_params.raytune.search_alg
+            training_params['scheduler'] = variant_params.raytune.scheduler
+            training_params['num_samples'] = variant_params.raytune.num_samples
+            training_params['time_budget'] = variant_params.raytune.time_budget
+            training_params['concurrent_trials'] = variant_params.raytune.concurrent_trials
+
+            # remove arguments that are not in lightgbm_ray_tune component
+            if 'multinode_driver' in training_params:
+                del training_params['multinode_driver']
+            if 'header' in training_params:
+                del training_params['header']
+            if 'construct' in training_params:
+                del training_params['construct']
+            if 'custom_properties' in training_params:
+                del training_params['custom_properties']
+            if 'verbose' in training_params:
+                del training_params['verbose']
+        else:
+            raise NotImplementedError(f"training framework {variant_params.framework} hasn't been implemented yet.")
+
+        # configure the training module
+        lightgbm_train_step = lightgbm_train_module(
+            train = prepared_train_data,  # see end of DATA section
+            test = prepared_test_data,  # see end of DATA section
+            **training_params
+        )
+        # apply runsettings
+        lightgbm_train_step.runsettings.target=training_target
+        lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
+        # This line is never used. It might run into the error saying "process_count_per_node' is not an expected key" 
+        # lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
+
+        if use_sweep:
             # apply settings from our custom yaml config
             apply_sweep_settings(lightgbm_train_step, variant_params.sweep)
-
-        else:
-            # regular training, no sweep
-            lightgbm_train_step = lightgbm_train_module(
-                train = prepared_train_data,
-                test = prepared_test_data,
-                **training_params
-            )
-            # apply runsettings
-            lightgbm_train_step.runsettings.target=training_target
-            lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
-            lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
 
         ###############
         ### RUNTIME ###
         ###############
 
-        # # optional: override docker (ex: to test custom builds)
+        # optional: override docker (ex: to test custom builds)
         if 'build' in variant_params.runtime and variant_params.runtime.build:
             custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, variant_params.runtime.build))
             lightgbm_train_step.runsettings.environment.configure(
@@ -313,6 +362,9 @@ def lightgbm_training_pipeline_function(config,
                 # add more
             ]
         )
+
+        # provide step readable display name
+        lightgbm_train_step.node_name = format_run_name(f"training_{variant_params.framework}_{variant_index}")
 
         # optional: save output model
         if variant_params.output and variant_params.output.register_model:

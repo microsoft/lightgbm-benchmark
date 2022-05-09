@@ -37,6 +37,8 @@ from common.pipelines import (
     pipeline_submit,
     COMPONENTS_ROOT
 )
+from common.aml import format_run_name
+
 
 ### CONFIG DATACLASS ###
 
@@ -107,10 +109,33 @@ def data_generation_main_pipeline_function(config):
                 inferencing_partitions = generation_task.inferencing_partitions,
                 n_features = generation_task.n_features,
                 n_informative = generation_task.n_informative,
+                n_label_classes = generation_task.n_label_classes,
+                docs_per_query = generation_task.docs_per_query,
                 delimiter = generation_task.delimiter,
+                header = generation_task.header,
                 random_state = 5,
                 verbose = False,
                 custom_properties = benchmark_custom_properties
+            )
+            # run it on the right compute target
+            generate_data_step.runsettings.configure(target=config.compute.linux_cpu)
+
+        # generate a readable run name
+        generate_data_step.node_name = format_run_name("generate_{}_train{}test{}inf{}_feat{}".format(
+            generation_task.task,
+            generation_task.train_samples,
+            generation_task.test_samples,
+            generation_task.inferencing_samples,
+            generation_task.n_features
+        ))
+
+        # if config asks to register the outputs automatically...
+        if config.data_generation_config.register_outputs:
+            # create a prefix for the dataset
+            dataset_prefix = "{prefix}-{task}-{cols}cols".format(
+                prefix=config.data_generation_config.register_outputs_prefix,
+                task=generation_task.task,
+                cols=generation_task.n_features
             )
             # run it on the right compute target
             generate_data_step.compute = config.compute.linux_cpu

@@ -33,11 +33,14 @@ COMPONENT_SPEC_FILES = [
     "data_processing/partition_data/spec.yaml",
 
     "training/lightgbm_python/spec.yaml",
+    "training/lightgbm_ray/spec.yaml",
+    "training/ray_tune/spec.yaml",
 
     "model_transformation/treelite_compile/spec.yaml",
 
     "inferencing/lightgbm_python/spec.yaml",
     "inferencing/lightgbm_c_api/spec.yaml",
+    "inferencing/lightgbm_ray/spec.yaml",
     "inferencing/custom_win_cli/spec.yaml",
     "inferencing/treelite_python/spec.yaml",
 ]

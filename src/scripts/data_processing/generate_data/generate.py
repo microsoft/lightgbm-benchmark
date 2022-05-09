@@ -23,7 +23,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.components import RunnableScript
-from common.data import RegressionDataGenerator
+from common.data import RegressionDataGenerator, RankingDataGenerator, ClassificationDataGenerator
 
 class GenerateSyntheticDataScript(RunnableScript):
     def __init__(self):
@@ -54,9 +54,9 @@ class GenerateSyntheticDataScript(RunnableScript):
         parser = RunnableScript.get_arg_parser(parser)
 
         # add arguments that are specific to the script
-        group_params = parser.add_argument_group("Synthesis params")
+        group_params = parser.add_argument_group(f"Data generation params [{__name__}:{cls.__name__}]")
         group_params.add_argument(
-            "--type", required=True, type=str, choices=["classification", "regression"]
+            "--type", required=True, type=str, choices=["classification", "regression", "lambdarank"]
         )
         group_params.add_argument("--train_samples", required=True, type=int)
         group_params.add_argument("--train_partitions", required=False, type=int, default=1)
@@ -68,10 +68,15 @@ class GenerateSyntheticDataScript(RunnableScript):
         group_params.add_argument("--n_informative", required=True, type=int)
         group_params.add_argument("--n_redundant", required=False, type=int)
         group_params.add_argument("--random_state", required=False, default=None, type=int)
-
+        group_params.add_argument("--docs_per_query", required=False, default=20, type=int)
+        group_params.add_argument("--n_label_classes", required=False, default=10, type=int)
+    
         group_params = parser.add_argument_group("Format params")
         group_params.add_argument(
             "--delimiter", required=False, type=str, choices=['tab', 'comma', 'space'], default='comma'
+        )
+        group_params.add_argument(
+            "--generate_header", required=False, type=strtobool, default=False, help="generate header on top of output files (independent from external_header)"
         )
 
         group_o = parser.add_argument_group("Outputs")
@@ -93,64 +98,18 @@ class GenerateSyntheticDataScript(RunnableScript):
             type=str,
             help="Output data location (directory)",
         )
+        group_o.add_argument(
+            "--external_header",
+            required=False,
+            type=str,
+            help="Output the header in an external location (directory)",
+        )
+
 
         return parser
+   
 
-    def generate_classification(self, args):
-        total_samples = (
-                args.train_samples + args.test_samples + args.inferencing_samples
-        )
-
-        X, y = make_classification(
-            n_samples=total_samples,
-            n_features=args.n_features,
-            n_informative=args.n_informative,
-            n_redundant=args.n_redundant,
-            random_state=args.random_state,
-        )
-
-        # target as one column
-        y = numpy.reshape(y, (y.shape[0], 1))
-
-        train_X = X[0 : args.train_samples]
-        train_y = y[0 : args.train_samples]
-        train_data = numpy.hstack((train_y, train_X))  # keep target as column 0
-        self.logger.info(f"Train data shape: {train_data.shape}")
-
-        test_X = X[args.train_samples : args.train_samples + args.test_samples]
-        test_y = y[args.train_samples : args.train_samples + args.test_samples]
-        test_data = numpy.hstack((test_y, test_X))  # keep target as column 0
-        self.logger.info(f"Test data shape: {test_data.shape}")
-
-        inference_data = X[args.train_samples + args.test_samples :]
-        self.logger.info(f"Inference data shape: {inference_data.shape}")
-
-        # save as CSV
-        self.logger.info(f"Saving data...")
-        numpy.savetxt(
-            os.path.join(args.output_train, "train_0.txt"),
-            train_data,
-            delimiter=args.delimiter,
-            newline="\n",
-            fmt="%1.3f",
-        )
-        numpy.savetxt(
-            os.path.join(args.output_test, "test_0.txt"),
-            test_data,
-            delimiter=args.delimiter,
-            newline="\n",
-            fmt="%1.3f",
-        )
-        numpy.savetxt(
-            os.path.join(args.output_inference, "inference_0.txt"),
-            inference_data,
-            delimiter=args.delimiter,
-            newline="\n",
-            fmt="%1.3f",
-        )
-
-
-    def generate_regression_tasks(self, args):
+    def generate_tasks(self, args):
         """Create generation tasks based on arguments"""
         train_partition_size = args.train_samples // args.train_partitions
         test_partition_size = args.test_samples // args.test_partitions
@@ -165,15 +124,37 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         self.logger.info(f"Using batch size {batch_size}")
 
-        generator = RegressionDataGenerator(
-            batch_size=batch_size,
-            n_features=args.n_features,
-            n_informative=args.n_informative,
-            n_targets=1,
-            bias=0.0,
-            noise=0.0,
-            seed=args.random_state,
-        )
+        if args.type =="regression":
+            generator = RegressionDataGenerator(
+                    batch_size=batch_size,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    bias=0.0,
+                    noise=0.0,
+                    seed=args.random_state,
+                )
+        elif args.type =="lambdarank":
+            generator = RankingDataGenerator(
+                    docs_per_query=args.docs_per_query,
+                    n_label_classes=args.n_label_classes,
+                    batch_size=batch_size,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    bias=0.0,
+                    noise=0.0,
+                    seed=args.random_state,
+                )
+        elif args.type =="classification":
+            generator = ClassificationDataGenerator(
+                    n_label_classes=args.n_label_classes,
+                    batch_size=batch_size,
+                    n_features=args.n_features,
+                    n_informative=args.n_informative,
+                    bias=0.0,
+                    noise=0.0,
+                    seed=args.random_state,
+                )
+
 
         # add train partitions to list of tasks
         for i in range(args.train_partitions):
@@ -198,18 +179,36 @@ class GenerateSyntheticDataScript(RunnableScript):
         for output_file_path, generator, batches in self.generation_tasks:
             self.logger.info(f"Will generate output {output_file_path} with {batches} batches")
 
+        # generate a fake header
+        if args.generate_header or args.external_header:
+            if args.type == "lambdarank":
+                synthetic_header = (args.delimiter.join([
+                            str(i) for i in range(args.n_features+2) # label + queryid + features
+                ]))
+            else:
+                synthetic_header = (args.delimiter.join([
+                            str(i) for i in range(args.n_features+1) # label + features
+                ]))
+            
+
+        partition_count=0
         # generate each data outputs
         for output_file_path, generator, batches in self.generation_tasks:
             self.logger.info(f"Opening file {output_file_path} for writing...")
 
             # create/erase file
             with open(output_file_path, "w") as output_file:
-                output_file.write("")
+                if args.generate_header:
+                    # generate synthetic header
+                    output_file.write(synthetic_header)
+                    output_file.write("\n")
+                else:
+                    output_file.write("")
 
             # iterate and append
             for i in range(batches):
                 with self.metrics_logger.log_time_block("time_data_generation_batch"):
-                    X,y = generator.generate()
+                    X,y = generator.generate(partition_count)
                     y = numpy.reshape(y, (y.shape[0], 1))
                     data = numpy.hstack((y, X))  # keep target as column 0
 
@@ -228,7 +227,16 @@ class GenerateSyntheticDataScript(RunnableScript):
                 del X
                 del y
 
+                partition_count+=1
+
             self.logger.info(f"Finished generating file {output_file_path}.")
+        
+        # create an external header 
+        if args.external_header:
+            self.logger.info(f"Creating an external header file for the generated data")
+            os.makedirs(args.external_header, exist_ok=True)
+            with open(os.path.join(args.external_header, "header.txt"), 'w') as hf:
+                hf.writelines(synthetic_header)
 
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -244,6 +252,8 @@ class GenerateSyntheticDataScript(RunnableScript):
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
+        os.makedirs(args.external_header, exist_ok=True)
+
 
         # transform delimiter
         if args.delimiter == "comma":
@@ -266,14 +276,8 @@ class GenerateSyntheticDataScript(RunnableScript):
 
         # record a metric
         logger.info(f"Generating data.")
-        if args.type == "classification":
-            self.generate_classification(args)
-        elif args.type == "regression":
-            self.generate_regression_tasks(args)
-            self.execute_tasks(args)
-        else:
-            raise NotImplementedError(f"--type {args.type} is not implemented.")
-
+        self.generate_tasks(args)
+        self.execute_tasks(args)
 
 def get_arg_parser(parser=None):
     """ To ensure compatibility with shrike unit tests """

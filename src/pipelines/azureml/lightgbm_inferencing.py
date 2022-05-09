@@ -39,7 +39,7 @@ from common.pipelines import (
     pipeline_submit,
     COMPONENTS_ROOT
 )
-from common.aml import load_dataset_from_data_input_spec
+from common.aml import load_dataset_from_data_input_spec, format_run_name
 
 ### CONFIG DATACLASS ###
 
@@ -66,6 +66,7 @@ class lightgbm_inferencing_config: # pylint: disable=invalid-name
 
 lightgbm_python_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_python", "spec.yaml"))
 lightgbm_c_api_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_c_api", "spec.yaml"))
+lightgbm_ray_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_ray", "spec.yaml"))
 custom_win_cli_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "custom_win_cli", "spec.yaml"))
 treelite_compile_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "model_transformation", "treelite_compile", "spec.yaml"))
 treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "treelite_python", "spec.yaml"))
@@ -165,6 +166,16 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
             )
             inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
 
+        elif variant.framework == "lightgbm_ray":
+            # call module with all the right arguments
+            inferencing_step = lightgbm_ray_score_module(
+                data = data,
+                model = model,
+                verbose = False,
+                custom_properties = custom_properties
+            )
+            inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
+
         else:
             raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
 
@@ -181,6 +192,9 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
 
         # add some comment to the component
         inferencing_step.comment = " -- ".join(variant_comment)
+
+        # provide step readable display name
+        inferencing_step.node_name = format_run_name(f"inferencing_{variant.framework}_{variant_index}")
 
     # return {key: output}'
     return pipeline_outputs
@@ -202,7 +216,7 @@ def inferencing_all_tasks(workspace, config):
     Returns:
         None
     """
-    for inferencing_task in config.lightgbm_inferencing_config.tasks:
+    for task_index, inferencing_task in enumerate(config.lightgbm_inferencing_config.tasks):
         data = load_dataset_from_data_input_spec(workspace, inferencing_task.data)
         model = load_dataset_from_data_input_spec(workspace, inferencing_task.model)
 
@@ -226,6 +240,9 @@ def inferencing_all_tasks(workspace, config):
             f"benchmark name: {config.lightgbm_inferencing_config.benchmark_name}",
             # NOTE: add more here?
         ])
+
+        # provide readable subgraph display name
+        inferencing_task_subgraph_step.node_name = f"inferencing_task_{task_index}"
 
 
 ### MAIN BLOCK ###

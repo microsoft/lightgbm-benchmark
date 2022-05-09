@@ -134,21 +134,30 @@ def azureml_connect(config: DictConfig):
     """
     if config.aml.auth == "msi":
         from azure.identity import ManagedIdentityCredential
-        auth = ManagedIdentityCredential()
+        credential = ManagedIdentityCredential()
     elif config.aml.auth == "azurecli":
         from azure.identity import AzureCliCredential
-        auth = AzureCliCredential()
+        credential = AzureCliCredential()
     elif config.aml.auth == "interactive":
         from azure.identity import InteractiveBrowserCredential
 
-        auth = InteractiveBrowserCredential(
+        credential = InteractiveBrowserCredential(
             tenant_id=config.aml.tenant, force=config.aml.force
         )
     else:
-        auth = None
+        # authentication package
+        from azure.identity import DefaultAzureCredential
+        try:
+            credential = DefaultAzureCredential()
+            # Check if given credential can get token successfully.
+            credential.get_token("https://management.azure.com/.default")
+        except Exception as ex:
+            from azure.identity import InteractiveBrowserCredential
+            # Fall back to InteractiveBrowserCredential in case DefaultAzureCredential not work
+            credential = InteractiveBrowserCredential()
 
     return MLClient(
-        credential=auth,
+        credential=credential,
         subscription_id=config.aml.subscription_id,
         resource_group_name=config.aml.resource_group,
         workspace_name=config.aml.workspace_name
@@ -190,21 +199,21 @@ def pipeline_submit(ml_client: MLClient,
             tags=(tags or pipeline_config.experiment.tags),
             continue_run_on_step_failure=pipeline_config.run.continue_on_failure
         )
-#         logging.info(
-#             f"""
-# #################################
-# #################################
-# #################################
+        logging.info(
+            f"""
+#################################
+#################################
+#################################
 
-# Follow link below to access your pipeline run directly:
-# -------------------------------------------------------
-# {pipeline_run.get_portal_url()}
+Follow link below to access your pipeline run directly:
+-------------------------------------------------------
+{pipeline_run..services['Studio'].endpoint}
 
-# #################################
-# #################################
-# #################################
-#         """
-#         )
+#################################
+#################################
+#################################
+        """
+        )
 
         return pipeline_run
     else:
