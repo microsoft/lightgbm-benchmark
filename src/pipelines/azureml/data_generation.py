@@ -143,13 +143,15 @@ def data_generation_main_pipeline_function(config):
 
             # if config asks to register the outputs automatically...
             if config.data_generation_config.register_outputs:
+                raise NotImplementedError("automated registering of outputs currently doesn't work in sdkv2")
+
                 # create a prefix for the dataset
                 dataset_prefix = "{prefix}-{task}-{cols}cols".format(
                     prefix=config.data_generation_config.register_outputs_prefix,
                     task=generation_task.task,
                     cols=generation_task.n_features
                 )
-                
+
                 # register each output (train, test, inference)
                 generate_data_step.outputs.output_train.register_as(
                     name=f"{dataset_prefix}-{generation_task.train_samples}samples-train",
