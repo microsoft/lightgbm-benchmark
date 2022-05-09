@@ -1,4 +1,4 @@
-name: treelite_conda_env
+name: generate_data_env
 channels:
 - defaults
 dependencies:

@@ -21,6 +21,7 @@ from typing import Optional, List
 
 # AzureML SDK 2.0
 from azure.ml import dsl
+from azure.ml.entities import load_component
 
 # when running this script directly, needed to import common
 LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -67,7 +68,7 @@ class data_generation_config: # pylint: disable=invalid-name
 # load those components from local yaml specifications
 # use COMPONENTS_ROOT as base folder
 
-generate_data_component = dsl.load_component(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
+generate_data_component = load_component(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
 
 ### DATA GENERATION PIPELINE ###
 
@@ -118,7 +119,7 @@ def data_generation_main_pipeline_function(config):
                 custom_properties = benchmark_custom_properties
             )
             # run it on the right compute target
-            generate_data_step.runsettings.configure(target=config.compute.linux_cpu)
+            generate_data_step.compute = config.compute.linux_cpu
 
         # generate a readable run name
         generate_data_step.node_name = format_run_name("generate_{}_train{}test{}inf{}_feat{}".format(

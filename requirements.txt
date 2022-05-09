@@ -20,6 +20,5 @@ pytest-mock==3.6.1
 
 # pipelines
 hydra-core~=1.0.3
-typing_extensions==4.0.1 # for hydra
 azure-ml==0.0.61212840
 --extra-index-url https://azuremlsdktestpypi.azureedge.net/sdk-cli-v2

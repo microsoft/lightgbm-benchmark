@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
-name: lightgbm_benchmark.data.generate
+name: lightgbm_benchmark_data_generate
 version: 2.0.0
 display_name: "Generate Synthetic Data"
 type: command
@@ -69,12 +69,12 @@ inputs:
     description: random seed
     optional: true
   docs_per_query:
-    type: Integer
+    type: integer
     description: docs per query, used for ranking data
     default: 20
     optional: true
   n_label_classes:
-    type: Integer
+    type: integer
     description: n_label_classes, used for ranking data
     default: 10
     optional: true
@@ -88,7 +88,7 @@ inputs:
       - comma
       - space
   header:
-    type: Boolean
+    type: boolean
     default: False
     description: "generate header for output files"
 
@@ -112,8 +112,7 @@ outputs:
   external_header:
     type: path
 
-code:
-  local_path: "../../../"
+code: "../../../"
 
 command: >-
   python scripts/data_processing/generate_data/generate.py
@@ -140,7 +139,5 @@ command: >-
   [--n_label_classes {inputs.n_label_classes}]
 
 environment:
-  name: data_generation_base
   image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
   conda_file: conda_env.yaml
-  os_type: linux

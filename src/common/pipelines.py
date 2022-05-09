@@ -207,7 +207,7 @@ def pipeline_submit(ml_client: MLClient,
 
 Follow link below to access your pipeline run directly:
 -------------------------------------------------------
-{pipeline_run..services['Studio'].endpoint}
+{pipeline_run.services['Studio'].endpoint}
 
 #################################
 #################################
