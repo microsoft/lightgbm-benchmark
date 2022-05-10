@@ -1,0 +1,47 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+settings:
+  default_datastore: azureml:workspaceblobstore
+  continue_on_step_failure: true
+
+jobs:
+  generate_1:
+    type: command
+    component: file:../../scripts/data_processing/generate_data/spec_v2.yaml
+    compute: azureml:cpu-cluster
+    inputs:
+      learning_task: "regression"
+      train_samples: 100000
+      test_samples: 10000
+      inferencing_samples: 10000
+      n_features: 10
+      n_informative: 10
+
+  generate_2:
+    type: command
+    component: file:../../scripts/data_processing/generate_data/spec_v2.yaml
+    compute: azureml:cpu-cluster
+    inputs:
+      learning_task: "lambdarank"
+      train_samples: 100
+      train_partitions: 7
+      test_samples: 100
+      inferencing_samples: 100
+      n_features: 10
+      n_informative: 13
+      n_label_classes: 5
+      docs_per_query: 10
+
+  generate_3:
+    type: command
+    component: file:../../scripts/data_processing/generate_data/spec_v2.yaml
+    compute: azureml:cpu-cluster
+    inputs:
+      learning_task: "classification"
+      train_samples: 100
+      test_samples: 100
+      inferencing_samples: 100
+      n_features: 10
+      n_informative: 13
+      n_label_classes: 3

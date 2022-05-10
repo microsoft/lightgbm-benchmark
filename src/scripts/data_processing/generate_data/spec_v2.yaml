@@ -1,0 +1,143 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: lightgbm_generate_data
+version: 2.0.0
+display_name: "Generate Synthetic Data"
+type: command
+description: "Generate data for classification or regression."
+is_deterministic: true
+
+tags:
+  git: https://github.com/microsoft/lightgbm-benchmark
+  docs: https://microsoft.github.io/lightgbm-benchmark
+  framework: scikit-learn
+  framework_version: 0.24.2
+
+inputs:
+  learning_task:
+    type: string
+    default: "regression"
+    enum:
+      - regression
+      - classification
+      - lambdarank
+  train_samples:
+    type: integer
+    description: Number of training samples to generate
+    default: 1000
+    optional: false
+  train_partitions:
+    type: integer
+    description: Number of partitions to generate for training data
+    default: 1
+    optional: false
+  test_samples:
+    type: integer
+    description: Number of testing samples to generate
+    default: 100
+    optional: false
+  test_partitions:
+    type: integer
+    description: Number of partitions to generate for testing data
+    default: 1
+    optional: false
+  inferencing_samples:
+    type: integer
+    description: Number of inferencing samples to generate
+    default: 1000
+    optional: false
+  inferencing_partitions:
+    type: integer
+    description: Number of partitions to generate for inferencing data
+    default: 1
+    optional: false
+  n_features:
+    type: integer
+    description: Number of features/columns
+    default: 100
+    optional: false
+  n_informative:
+    type: integer
+    description: Number of informative features
+    default: 100
+    optional: false
+  n_redundant:
+    type: integer
+    description: number of redundant features (for classification)
+    optional: true
+  random_state:
+    type: integer
+    description: random seed
+    optional: true
+  docs_per_query:
+    type: integer
+    description: docs per query, used for ranking data
+    default: 20
+    optional: true
+  n_label_classes:
+    type: integer
+    description: n_label_classes, used for ranking data
+    default: 10
+    optional: true
+
+
+  delimiter:
+    type: string
+    default: "comma"
+    enum:
+      - tab
+      - comma
+      - space
+  header:
+    type: boolean
+    default: False
+    description: "generate header for output files"
+
+  # generic benchmark parameters
+  verbose:
+    type: boolean
+    default: False
+    description: "Show debug logs"
+  custom_properties:
+    type: string
+    description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
+    optional: true
+
+outputs:
+  output_train:
+    type: path
+  output_test:
+    type: path
+  output_inference:
+    type: path
+  external_header:
+    type: path
+
+code: "../../../"
+
+command: >-
+  python scripts/data_processing/generate_data/generate.py
+  --type ${{inputs.learning_task}}
+  --train_samples ${{inputs.train_samples}}
+  --train_partitions ${{inputs.train_partitions}}
+  --test_samples ${{inputs.test_samples}}
+  --test_partitions ${{inputs.test_partitions}}
+  --inferencing_samples ${{inputs.inferencing_samples}}
+  --inferencing_partitions ${{inputs.inferencing_partitions}}
+  --n_features ${{inputs.n_features}}
+  --n_informative ${{inputs.n_informative}}
+  [--n_redundant ${{inputs.n_redundant}}]
+  [--random_state ${{inputs.random_state}}]
+  --delimiter ${{inputs.delimiter}}
+  --generate_header ${{inputs.header}}
+  --output_train ${{outputs.output_train}}
+  --output_test ${{outputs.output_test}}
+  --output_inference ${{outputs.output_inference}}
+  --external_header ${{outputs.external_header}}
+  --verbose ${{inputs.verbose}}
+  [--custom_properties '${{inputs.custom_properties}}']
+  [--docs_per_query ${{inputs.docs_per_query}}]
+  [--n_label_classes ${{inputs.n_label_classes}}]
+
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+  conda_file: conda_env.yaml
