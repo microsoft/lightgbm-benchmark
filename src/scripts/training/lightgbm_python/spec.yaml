@@ -160,6 +160,12 @@ inputs:
     description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
     optional: true
 
+  model_filename:
+    type: String
+    description: "Name of the model output file"
+    optional: true
+    default: 'model.txt'
+
 outputs:
   model:
     type: AnyDirectory
@@ -191,6 +197,7 @@ launcher:
     --max_bin {inputs.max_bin}
     --feature_fraction {inputs.feature_fraction}
     --export_model {outputs.model}
+    [--model_filename {inputs.model_filename}]
     --verbose {inputs.verbose}
     [--custom_properties {inputs.custom_properties}]
 

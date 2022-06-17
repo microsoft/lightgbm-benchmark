@@ -16,7 +16,7 @@ from scripts.inferencing.lightgbm_python import score
 def test_lightgbm_python_train(temporary_dir, regression_train_sample, regression_test_sample):
     """Tests src/scripts/training/lightgbm_python/train.py"""
     model_dir = os.path.join(temporary_dir, "model")
-
+    model_filename = 'custom_modelfilename.txt'
     # create test arguments for the script
     objective_argument = "regression"
 
@@ -27,6 +27,7 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
         "--header", "True",
         "--test", regression_test_sample,
         "--export_model", model_dir,
+        "--model_filename", model_filename,
         "--objective", objective_argument,
         "--boosting_type", "gbdt",
         "--tree_learner", "serial",
@@ -47,8 +48,8 @@ def test_lightgbm_python_train(temporary_dir, regression_train_sample, regressio
 
     # test expected outputs
     assert os.path.isfile(
-        os.path.join(model_dir, "model.txt")
-    ), "Script train.py should generate a model.txt output file but did not"
+        os.path.join(model_dir, model_filename)
+    ), f"Script train.py should generate a {model_filename} output file but did not"
 
 
 def test_lightgbm_python_score(temporary_dir, regression_model_sample, regression_inference_sample):
