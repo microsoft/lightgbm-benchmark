@@ -70,7 +70,7 @@ class LightGBMOnRayTrainingScript(RayScript):
         group_o = parser.add_argument_group(f"Outputs [{__name__}:{cls.__name__}]")
         group_o.add_argument("--export_model",
             required=False, type=str, help="Export the model in this location (file path)")
-        group_o.add_argument("--model_filename", required=False, type=str, help="Model filename",default="model.txt")
+        group_o.add_argument("--model_filename", required=False, type=str, help="Model filename", default="model.txt")
         
         # learner params
         group_lgbm = parser.add_argument_group(f"LightGBM learning parameters [{__name__}:{cls.__name__}]")
