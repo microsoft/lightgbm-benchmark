@@ -27,7 +27,7 @@ def test_lightgbm_ray_train(mpi_driver_mock, ray_init_mock, ray_shutdown_mock, r
     )
 
     model_dir = os.path.join(temporary_dir, "model")
-
+    model_filename = 'custom_model_filename.txt'
     # create test arguments for the script
     objective_argument = "regression"
 
@@ -37,6 +37,7 @@ def test_lightgbm_ray_train(mpi_driver_mock, ray_init_mock, ray_shutdown_mock, r
         "--label_column", "label",
         "--test", regression_test_sample,
         "--export_model", model_dir,
+        "--model_filename", model_filename,        
         "--objective", objective_argument,
         "--boosting_type", "gbdt",
         "--tree_learner", "serial",
@@ -57,5 +58,5 @@ def test_lightgbm_ray_train(mpi_driver_mock, ray_init_mock, ray_shutdown_mock, r
 
     # test expected outputs
     assert os.path.isfile(
-        os.path.join(model_dir, "model.txt")
-    ), "Script train.py should generate a model.txt output file but did not"
+        os.path.join(model_dir, model_filename)
+    ), f"Script train.py should generate a {model_filename} output file but did not"

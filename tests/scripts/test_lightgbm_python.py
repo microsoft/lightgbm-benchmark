@@ -16,7 +16,7 @@ from scripts.inferencing.lightgbm_python import score
 def test_lightgbm_python_train(temporary_dir, regression_train_sample, regression_test_sample):
     """Tests src/scripts/training/lightgbm_python/train.py"""
     model_dir = os.path.join(temporary_dir, "model")
-    model_filename = 'custom_modelfilename.txt'
+    model_filename = 'custom_model_filename.txt'
     # create test arguments for the script
     objective_argument = "regression"
 

@@ -163,7 +163,7 @@ inputs:
   model_filename:
     type: String
     description: "Name of the model output file"
-    optional: true
+    optional: false
     default: 'model.txt'
 
 outputs:
@@ -197,7 +197,7 @@ launcher:
     --max_bin {inputs.max_bin}
     --feature_fraction {inputs.feature_fraction}
     --export_model {outputs.model}
-    [--model_filename {inputs.model_filename}]
+    --model_filename {inputs.model_filename}
     --verbose {inputs.verbose}
     [--custom_properties {inputs.custom_properties}]
 
