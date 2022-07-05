@@ -24,7 +24,7 @@ if COMMON_ROOT not in sys.path:
 
 # useful imports from common
 from common.components import RunnableScript
-from common.io import get_all_files
+from common.io import get_all_files, input_file_path
 from common.lightgbm_utils import LightGBMCallbackHandler
 from common.distributed import MultiNodeScript
 
@@ -231,6 +231,11 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
             test_data_paths = get_all_files(args.test)
 
             logger.info(f"Running with 1 train file and {len(test_data_paths)} test files.")
+
+            if lgbm_params.get('parser_config_file'):
+                lgbm_params['parser_config_file'] = input_file_path(lgbm_params['parser_config_file'])
+                if '.json' not in lgbm_params.get('parser_config_file',''):
+                    logger.warning('parser_config_file param expects a json file')
 
             # construct datasets
             if args.construct:
