@@ -22,16 +22,17 @@ class FakeMultiNodeScript(MultiNodeScript):
     def run(self, args, logger, metrics_logger, unknown_args):
         # don't do anything
         with metrics_logger.log_time_block("fake_time_block", step=1):
-            time.sleep(1)
+            time.sleep(5)
 
 
 @patch('mlflow.end_run')
+@patch('mlflow.log_figure')
 @patch('mlflow.log_artifact')
 @patch('mlflow.log_metric')
 @patch('mlflow.set_tags')
 @patch('mlflow.start_run')
 @patch('common.distributed.MultiNodeMPIDriver')
-def test_multi_node_script(mpi_driver_mock, mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_log_artifact_mock, mlflow_end_run_mock):
+def test_multi_node_script(mpi_driver_mock, mlflow_start_run_mock, mlflow_set_tags_mock, mlflow_log_metric_mock, mlflow_log_artifact_mock, mlflow_log_figure_mock, mlflow_end_run_mock):
     # fake mpi initialization + config
     mpi_driver_mock().get_multinode_config.return_value = multinode_config_class(
         1, # world_size
@@ -65,7 +66,8 @@ def test_multi_node_script(mpi_driver_mock, mlflow_start_run_mock, mlflow_set_ta
         mlflow_log_metric_mock
     )
 
-    mlflow_log_artifact_mock.assert_called_once()
+    mlflow_log_artifact_mock.assert_called_once() # perf data exported in json
+    mlflow_log_figure_mock.assert_called_once() # perf plot
 
 
 class FailingMultiNodeScript(MultiNodeScript):
