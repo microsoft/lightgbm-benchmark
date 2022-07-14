@@ -54,7 +54,7 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' && \
     pip install lightgbm==${lightgbm_version} --install-option=--mpi &&\
-    pip install lightgbm-transform=={lightgbm_transform_version}
+    pip install lightgbm-transform==${lightgbm_transform_version}
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
