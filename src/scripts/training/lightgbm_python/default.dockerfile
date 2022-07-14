@@ -1,8 +1,9 @@
-FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:20220516.v1
 LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.1/20211210.1"
 
 # https://github.com/microsoft/lightgbm-transform/blob/main/docs/Installation-Guide.rst
 # Install CMake, gcc, g++, boost.
+ENV ACCEPT_EULA=Y
 RUN apt-get update && apt-get -y upgrade && DEBIAN_FRONTEND="noninteractive" apt-get install -y libboost-all-dev gcc g++ wget cmake git curl libtinfo5
 
 # Install LLVM with RTTI feature.
@@ -24,6 +25,7 @@ RUN mkdir build && cd build && cmake -DBOND_ENABLE_GRPC=FALSE .. && make -j4 && 
 # they are here just to allow for lightgbm-benchmark build to actually check
 # dockerfiles in a PR against their actual branch
 ARG lightgbm_version="3.3.1"
+ARG lightgbm_transform_version="3.3.1.post1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
@@ -52,7 +54,7 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0' && \
     pip install lightgbm==${lightgbm_version} --install-option=--mpi &&\
-    pip install lightgbm-transform==${lightgbm_version}
+    pip install 'lightgbm-transform=={lightgbm_transform_version}'
 
 # This is needed for mpi to locate libpython
 ENV LD_LIBRARY_PATH $AZUREML_CONDA_ENVIRONMENT_PATH/lib:$LD_LIBRARY_PATH
