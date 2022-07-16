@@ -7,7 +7,7 @@ such as registering Datasets or obtaining a Dataset handler from a given workspa
 """
 import logging
 import re
-from azureml.core import Datastore, Dataset
+#from azureml.core import Datastore, Dataset
 
 
 def dataset_from_dstore_path(workspace, datastore, datastore_path, validate=True):
