@@ -201,6 +201,7 @@ launcher:
     --cluster_auto_setup True
     --train {inputs.train}
     --test {inputs.test}
+    --header {inputs.header}
     --label_column {inputs.label_column}
     [--group_column {inputs.group_column}]
     --output_path {outputs.output_path}

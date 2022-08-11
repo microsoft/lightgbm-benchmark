@@ -82,7 +82,8 @@ def process_raytune_parameters(args):
         'time_budget',
         'max_concurrent_trials',
         'cpus_per_trial',
-        'output_path'
+        'output_path',
+        'metrics_driver'
     ]
     for key in non_lgbm_params:
         del cli_params[key]
@@ -215,7 +216,7 @@ class LightGBMRayTuneScript(RayScript):
         group_raytune.add_argument(
             "--cpus_per_trial", required=False, default=1, type=int)
         group_raytune.add_argument(
-            "--max_concurrent_trials", required=False, default=0, type=int)
+            "--max_concurrent_trials", required=False, default=2, type=int)
 
         # ray tune parameters for certain optimizer or scheduler
         group_raytune.add_argument(
