@@ -1,8 +1,8 @@
-$schema: http://azureml/sdk-2-0/CommandComponent.json
+$schema: http://azureml/sdk-1-5/DistributedComponent.json
 name: lightgbm.ray.tune
 version: 1.0.2
 display_name: "LightGBM Tuning (Ray Tune API)"
-type: CommandComponent
+type: DistributedComponent
 description: >-
   **Tune a LightGBM Model**
   
@@ -194,36 +194,38 @@ outputs:
     type: AnyDirectory
     description: "Summary of the HPO results."
 
-command: >-
-  raytune.py
-  --cluster_auto_setup True
-  --train {inputs.train}
-  --test {inputs.test}
-  --label_column {inputs.label_column}
-  [--group_column {inputs.group_column}]
-  --output_path {outputs.output_path}
-  --objective {inputs.objective}
-  --metric {inputs.metric}
-  --boosting {inputs.boosting}
-  --tree_learner {inputs.tree_learner}
-  [--label_gain {inputs.label_gain}]
-  --num_iterations {inputs.num_iterations}
-  --num_leaves {inputs.num_leaves}
-  --min_data_in_leaf {inputs.min_data_in_leaf}
-  --learning_rate {inputs.learning_rate}
-  --max_bin {inputs.max_bin}
-  --feature_fraction {inputs.feature_fraction}
-  --mode {inputs.mode}
-  --search_alg {inputs.search_alg}
-  --scheduler {inputs.scheduler}
-  --num_samples {inputs.num_samples}
-  --time_budget {inputs.time_budget}
-  --cpus_per_trial {inputs.cpus_per_trial}
-  --max_concurrent_trials {inputs.concurrent_trials}
-  [--low_num_iterations {inputs.low_num_iterations}]
-  [--low_num_leaves {inputs.low_num_leaves}]
-  [--low_min_data_in_leaf {inputs.low_min_data_in_leaf}]
-  [--custom_params {inputs.custom_params}]
+launcher:
+  type: mpi
+  additional_arguments: >-
+    python raytune.py
+    --cluster_auto_setup True
+    --train {inputs.train}
+    --test {inputs.test}
+    --label_column {inputs.label_column}
+    [--group_column {inputs.group_column}]
+    --output_path {outputs.output_path}
+    --objective {inputs.objective}
+    --metric {inputs.metric}
+    --boosting {inputs.boosting}
+    --tree_learner {inputs.tree_learner}
+    [--label_gain {inputs.label_gain}]
+    --num_iterations {inputs.num_iterations}
+    --num_leaves {inputs.num_leaves}
+    --min_data_in_leaf {inputs.min_data_in_leaf}
+    --learning_rate {inputs.learning_rate}
+    --max_bin {inputs.max_bin}
+    --feature_fraction {inputs.feature_fraction}
+    --mode {inputs.mode}
+    --search_alg {inputs.search_alg}
+    --scheduler {inputs.scheduler}
+    --num_samples {inputs.num_samples}
+    --time_budget {inputs.time_budget}
+    --cpus_per_trial {inputs.cpus_per_trial}
+    --max_concurrent_trials {inputs.concurrent_trials}
+    [--low_num_iterations {inputs.low_num_iterations}]
+    [--low_num_leaves {inputs.low_num_leaves}]
+    [--low_min_data_in_leaf {inputs.low_min_data_in_leaf}]
+    [--custom_params {inputs.custom_params}]
 
 environment:
   docker:
