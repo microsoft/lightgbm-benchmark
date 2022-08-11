@@ -86,6 +86,9 @@ lightgbm_data2bin_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS
 # load ray tune module.
 lightgbm_ray_tune_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "ray_tune", "spec.yaml"))
 
+# load ray tune distributed module.
+lightgbm_ray_tune_distributed_module = Component.from_yaml(yaml_file=os.path.join(
+    COMPONENTS_ROOT, "training", "ray_tune_distributed", "spec.yaml"))
 ### PIPELINE SPECIFIC CODE ###
 
 def process_sweep_parameters(params_dict, sweep_algorithm):
@@ -182,8 +185,20 @@ def lightgbm_training_pipeline_function(config,
 
         # if we're using multinode, add partitioning
         if variant_params.data.auto_partitioning and (variant_params.training.tree_learner == "data" or variant_params.training.tree_learner == "voting"):
+            # if training is distributed to multiple nodes using ray:
+            if variant_params.raytune and variant_params.raytune.lightgbm_ray_actors > 1:
+                partition_data_step = partition_data_module(
+                    input_data=train_dataset,
+                    mode="roundrobin",
+                    number=variant_params.raytune.lightgbm_ray_actors,
+                    header=variant_params.data.header,
+                    verbose=variant_params.training.verbose
+                )
+                partition_data_step.runsettings.configure(
+                    target=config.compute.linux_cpu)
+                partitioned_train_data = partition_data_step.outputs.output_data
             # if using data parallel, train data has to be partitioned first
-            if (variant_params.runtime.nodes * variant_params.runtime.processes) > 1:
+            elif (variant_params.runtime.nodes * variant_params.runtime.processes) > 1:
                 partition_data_step = partition_data_module(
                     input_data=train_dataset,
                     mode="roundrobin",
@@ -318,6 +333,31 @@ def lightgbm_training_pipeline_function(config,
             # remove arguments that are not in lightgbm_ray_tune component
             if 'multinode_driver' in training_params:
                 del training_params['multinode_driver']
+            if 'custom_properties' in training_params:
+                del training_params['custom_properties']
+            if 'verbose' in training_params:
+                del training_params['verbose']
+        elif variant_params.framework == 'lightgbm_ray_tune_distributed':
+            lightgbm_train_module = lightgbm_ray_tune_distributed_module
+            use_sweep = False
+
+            # manually add parameters for lightgbm_ray
+            training_params['train_data_format'] = variant_params.data.train_data_format
+            training_params['test_data_format'] = variant_params.data.test_data_format
+
+            # manually add ray tune parameters.
+            training_params['mode'] = variant_params.raytune.mode
+            training_params['search_alg'] = variant_params.raytune.search_alg
+            training_params['scheduler'] = variant_params.raytune.scheduler
+            training_params['num_samples'] = variant_params.raytune.num_samples
+            training_params['time_budget'] = variant_params.raytune.time_budget
+            training_params['concurrent_trials'] = variant_params.raytune.concurrent_trials
+            training_params['lightgbm_ray_actors'] = variant_params.raytune.lightgbm_ray_actors
+            training_params['cpus_per_actor'] = variant_params.raytune.cpus_per_actor
+
+            # remove arguments that are not in lightgbm_ray_tune component
+            if 'multinode_driver' in training_params:
+                del training_params['multinode_driver']
             if 'header' in training_params:
                 del training_params['header']
             if 'construct' in training_params:
@@ -327,7 +367,8 @@ def lightgbm_training_pipeline_function(config,
             if 'verbose' in training_params:
                 del training_params['verbose']
         else:
-            raise NotImplementedError(f"training framework {variant_params.framework} hasn't been implemented yet.")
+            raise NotImplementedError(
+                f"training framework {variant_params.framework} hasn't been implemented yet.")
 
         # configure the training module
         lightgbm_train_step = lightgbm_train_module(
@@ -460,8 +501,7 @@ def main():
     # add pipeline tags
     autotags = {"data": config.lightgbm_training_config.tasks[0].train.path}
     reference_configs = config.lightgbm_training_config.reference
-    logging.info(f"tags: {autotags}")
-
+    print(f"tags: {autotags}")
     # add the information of the reference
     if reference_configs.raytune:
         autotags.update({
@@ -480,8 +520,7 @@ def main():
             'cluster_nodes': str(reference_configs.runtime.nodes * reference_configs.sweep.limits.max_concurrent_trials),
         })
 
-    logging.info(f"tags: {autotags}")
-
+    print(f"tags: {autotags}")
     # validate/submit the pipeline (if run.submit=True)
     pipeline_submit(
         workspace,
@@ -490,6 +529,7 @@ def main():
         experiment_description=experiment_description,
         tags=autotags
     )
+
 
 if __name__ == "__main__":
     main()
