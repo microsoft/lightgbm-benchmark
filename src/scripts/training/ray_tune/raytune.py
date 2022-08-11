@@ -350,7 +350,7 @@ class LightGBMRayTuneScript(RayScript):
             test_data = lightgbm.Dataset(test_file, params=fixed_params)
 
             gbm = lightgbm.train(
-                config,
+                fixed_params,
                 train_data,
                 valid_sets=[test_data],
                 valid_names=[valid_name],
