@@ -471,9 +471,7 @@ class LightGBMRayTuneDistributedScript(RayScript):
             resources_per_trial=tune_resources,
             raise_on_failed_trial=False,
             local_dir ='./outputs',
-            sync_config=tune.SyncConfig(
-            syncer=None  # Disable syncing
-            )
+            sync_config=tune.SyncConfig(syncer=None)  # Disable syncing
         )
 
         logger.info(f'Best hyperparameters found were: {analysis.best_config}')

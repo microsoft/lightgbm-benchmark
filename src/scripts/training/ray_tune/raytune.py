@@ -5,6 +5,8 @@
 LightGBM sweep script using ray tune.
 """
 
+from common.raytune_param import RayTuneParameterParser
+from common.ray import RayScript
 from functools import partial
 from genericpath import exists
 import json
@@ -47,8 +49,7 @@ if COMMON_ROOT not in sys.path:
 
 
 # useful imports from common
-from common.ray import RayScript
-from common.raytune_param import RayTuneParameterParser
+
 
 def process_raytune_parameters(args):
     """Parses config and spots sweepable paraneters
@@ -240,12 +241,16 @@ class LightGBMRayTuneScript(RayScript):
         else:
             search_alg_args = None
             if args.search_alg == "BlendSearch":
-                 low_cost_draft = {"num_iterations": args.low_num_iterations, "num_leaves": args.low_num_leaves, "min_data_in_leaf": args.low_min_data_in_leaf}
-                 # remove the None value
-                 low_cost_partial_config = {k: v for k, v in low_cost_draft.items() if v is not None}
-                 search_alg_args = {"low_cost_partial_config": low_cost_partial_config}
-                 print(f'The search_alg_args is {low_cost_partial_config} for {args.search_alg}')
-            if search_alg_args is not None: 
+                low_cost_draft = {"num_iterations": args.low_num_iterations,
+                                  "num_leaves": args.low_num_leaves, "min_data_in_leaf": args.low_min_data_in_leaf}
+                # remove the None value
+                low_cost_partial_config = {
+                    k: v for k, v in low_cost_draft.items() if v is not None}
+                search_alg_args = {
+                    "low_cost_partial_config": low_cost_partial_config}
+                print(
+                    f'The search_alg_args is {low_cost_partial_config} for {args.search_alg}')
+            if search_alg_args is not None:
                 search_alg = search_alg_func(**search_alg_args)
             else:
                 search_alg = search_alg_func()
@@ -286,7 +291,7 @@ class LightGBMRayTuneScript(RayScript):
                 args.output_path, "best_result.csv")
 
         # I need a local copy of the function to make it available to ray tune training func.
-        # TODO: find a better way for this. 
+        # TODO: find a better way for this.
         def input_file_path(path):
             """ Argparse type to resolve input path as single file from directory.
             Given input path can be either a file, or a directory.
@@ -294,7 +299,7 @@ class LightGBMRayTuneScript(RayScript):
 
             Args:
                 path (str): either file or directory path
-            
+
             Returns:
                 str: path to file, or to unique file in directory
             """
@@ -304,13 +309,17 @@ class LightGBMRayTuneScript(RayScript):
             if os.path.isdir(path):
                 all_files = os.listdir(path)
                 if not all_files:
-                    raise Exception(f"Could not find any file in specified input directory {path}")
+                    raise Exception(
+                        f"Could not find any file in specified input directory {path}")
                 if len(all_files) > 1:
-                    raise Exception(f"Found multiple files in input file path {path}, use input_directory_path type instead.")
-                logger.info(f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
+                    raise Exception(
+                        f"Found multiple files in input file path {path}, use input_directory_path type instead.")
+                logger.info(
+                    f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
                 return os.path.join(path, all_files[0])
-            
-            logger.critical(f"Provided INPUT path {path} is neither a directory or a file???")
+
+            logger.critical(
+                f"Provided INPUT path {path} is neither a directory or a file???")
             return path
 
         # define training function
@@ -382,20 +391,24 @@ class LightGBMRayTuneScript(RayScript):
                         if report_metric not in t.last_result:
                             continue
                         if not best_metric or \
-                        t.last_result[report_metric] * metric_op > best_metric:
+                                t.last_result[report_metric] * metric_op > best_metric:
                             best_metric = t.last_result[report_metric] * metric_op
                             best_trial = t
                     # get back the original best_trial
                     best_metric *= metric_op
-                    # log the metrics for the best child. 
-                    print(f"Current best trial @ {time.time()-start_time}: {best_trial.trial_id} with {report_metric}={best_metric}")
-                    metrics_logger.log_metric("wall_clock_time", time.time()-start_time)
-                    metrics_logger.log_metric("best_child_metrics", best_metric) 
-                    metrics_logger.log_metric("Num_of_trials", len(trials)) 
+                    # log the metrics for the best child.
+                    print(
+                        f"Current best trial @ {time.time()-start_time}: {best_trial.trial_id} with {report_metric}={best_metric}")
+                    metrics_logger.log_metric(
+                        "wall_clock_time", time.time()-start_time)
+                    metrics_logger.log_metric(
+                        "best_child_metrics", best_metric)
+                    metrics_logger.log_metric("Num_of_trials", len(trials))
                 except:
-                    pass                                   
+                    pass
 
-        logger.info(f'The tune run settings: num_samples={args.num_samples}; time_buget_s={args.time_budget}; cpus_per_trial={args.cpus_per_trial}')
+        logger.info(
+            f'The tune run settings: num_samples={args.num_samples}; time_buget_s={args.time_budget}; cpus_per_trial={args.cpus_per_trial}')
         start_time = time.time()
 
         analysis = tune.run(
@@ -413,9 +426,8 @@ class LightGBMRayTuneScript(RayScript):
             resources_per_trial={"cpu": args.cpus_per_trial, "gpu": 0},
             raise_on_failed_trial=False,
             callbacks=[LogBestMetricCallBack()],
-            local_dir ='./outputs',
-            sync_config=tune.SyncConfig(
-            syncer=None  # Disable syncing
+            local_dir='./outputs',
+            sync_config=tune.SyncConfig(syncer=None)  # Disable syncing
         )
 
         logger.info(f'Best hyperparameters found were: {analysis.best_config}')
