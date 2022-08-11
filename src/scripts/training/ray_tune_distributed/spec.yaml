@@ -1,8 +1,8 @@
-$schema: http://azureml/sdk-2-0/CommandComponent.json
+$schema: http://azureml/sdk-1-5/DistributedComponent.json
 name: lightgbm.ray.tune
-version: 1.0.1
+version: 1.0.2
 display_name: "LightGBM Tuning (Ray Tune API)"
-type: CommandComponent
+type: DistributedComponent
 description: >-
   **Tune a LightGBM Model**
   
@@ -24,10 +24,26 @@ inputs:
     type: AnyDirectory
     description: Directory to the training data
     optional: false
+  train_data_format:
+    type: Enum
+    default: "CSV"
+    enum:
+      - CSV
+      - TSV
+      - PARQUET
+      - PETAFORM
   test:
     type: AnyDirectory
     description: Directory to the testing data
     optional: false
+  test_data_format:
+    type: Enum
+    default: "CSV"
+    enum:
+      - CSV
+      - TSV
+      - PARQUET
+      - PETAFORM
   construct:
     type: Boolean
     description: "Use lazy intialization during data loading phase (both train and test datasets)"
@@ -136,6 +152,9 @@ inputs:
     description: "Provide as a json dictionary (ex: {\"foo\":\"bar\"}) any additional custom lightgbm parameter"
 
   # ray tune parameters
+  lightgbm_ray_actors:
+    type: Int
+    optional: True
   mode:
     type: Enum
     default: 'min'
@@ -151,8 +170,6 @@ inputs:
       - AxSearch
       - BayesOptSearch
       - BlendSearch
-      - TuneBOHB
-      - OptunaSearch
   scheduler:
     type: Enum
     default: "FIFOScheduler"
@@ -161,8 +178,6 @@ inputs:
       - ASHAScheduler
       - HyperBandScheduler
       - MedianStoppingRule
-      - PopulationBasedTraining
-      - HyperBandForBOHB
   num_samples:
     type: Integer
     min: -1
@@ -171,7 +186,7 @@ inputs:
     type: Integer
     default: 1800 
     min: 120
-  cpus_per_trial:
+  cpus_per_actor:
     type: Integer
     min: 1
     default: 1
@@ -179,51 +194,49 @@ inputs:
     type: Integer
     min: 0
     default: 0
-  low_num_iterations:
-    type: Integer
-    optional: True
-  low_num_leaves:
-    type: Integer
-    optional: True
-  low_min_data_in_leaf:
-    type: Integer
-    optional: True
 
 outputs:
   output_path:
     type: AnyDirectory
     description: "Summary of the HPO results."
+  log_path:
+    type: AnyDirectory
+    description: "Log files for ray tune."
 
-command: >-
-  raytune.py
-  --cluster_auto_setup True
-  --train {inputs.train}
-  --test {inputs.test}
-  --label_column {inputs.label_column}
-  [--group_column {inputs.group_column}]
-  --output_path {outputs.output_path}
-  --objective {inputs.objective}
-  --metric {inputs.metric}
-  --boosting {inputs.boosting}
-  --tree_learner {inputs.tree_learner}
-  [--label_gain {inputs.label_gain}]
-  --num_iterations {inputs.num_iterations}
-  --num_leaves {inputs.num_leaves}
-  --min_data_in_leaf {inputs.min_data_in_leaf}
-  --learning_rate {inputs.learning_rate}
-  --max_bin {inputs.max_bin}
-  --feature_fraction {inputs.feature_fraction}
-  --mode {inputs.mode}
-  --search_alg {inputs.search_alg}
-  --scheduler {inputs.scheduler}
-  --num_samples {inputs.num_samples}
-  --time_budget {inputs.time_budget}
-  --cpus_per_trial {inputs.cpus_per_trial}
-  --max_concurrent_trials {inputs.concurrent_trials}
-  [--low_num_iterations {inputs.low_num_iterations}]
-  [--low_num_leaves {inputs.low_num_leaves}]
-  [--low_min_data_in_leaf {inputs.low_min_data_in_leaf}]
-  [--custom_params {inputs.custom_params}]
+launcher:
+  type: mpi
+  additional_arguments: >-
+    python raytune_distributed.py
+    --train {inputs.train}
+    --train_data_format {inputs.train_data_format}
+    --test {inputs.test}
+    --test_data_format {inputs.test_data_format}
+    --header {inputs.header}
+    --label_column {inputs.label_column}
+    [--group_column {inputs.group_column}]
+    --output_path {outputs.output_path}
+    --log_path {outputs.log_path}
+    --objective {inputs.objective}
+    --metric {inputs.metric}
+    --boosting {inputs.boosting}
+    --tree_learner {inputs.tree_learner}
+    [--label_gain {inputs.label_gain}]
+    --num_iterations {inputs.num_iterations}
+    --num_leaves {inputs.num_leaves}
+    --min_data_in_leaf {inputs.min_data_in_leaf}
+    --learning_rate {inputs.learning_rate}
+    --max_bin {inputs.max_bin}
+    --feature_fraction {inputs.feature_fraction}
+    --mode {inputs.mode}
+    --search_alg {inputs.search_alg}
+    --scheduler {inputs.scheduler}
+    --num_samples {inputs.num_samples}
+    --time_budget {inputs.time_budget}
+    --cpus_per_actor {inputs.cpus_per_actor}
+    --max_concurrent_trials {inputs.concurrent_trials}
+    [--custom_params {inputs.custom_params}]
+    [--lightgbm_ray_actors {inputs.lightgbm_ray_actors}]
+    --cluster_auto_setup True
 
 environment:
   docker:

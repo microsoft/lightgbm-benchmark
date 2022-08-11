@@ -309,6 +309,11 @@ def lightgbm_training_pipeline_function(config,
             training_params['num_samples'] = variant_params.raytune.num_samples
             training_params['time_budget'] = variant_params.raytune.time_budget
             training_params['concurrent_trials'] = variant_params.raytune.concurrent_trials
+            training_params['cpus_per_trial'] = variant_params.raytune.cpus_per_trial
+            if 'low_num_iterations' in variant_params.raytune:
+                training_params['low_num_iterations'] = variant_params.raytune.low_num_iterations
+            if 'low_num_leaves' in variant_params.raytune:
+                training_params['low_num_leaves'] = variant_params.raytune.low_num_leaves
 
             # remove arguments that are not in lightgbm_ray_tune component
             if 'multinode_driver' in training_params:
@@ -452,12 +457,38 @@ def main():
         "```"
     ])
 
+    # add pipeline tags
+    autotags = {"data": config.lightgbm_training_config.tasks[0].train.path}
+    reference_configs = config.lightgbm_training_config.reference
+    logging.info(f"tags: {autotags}")
+
+    # add the information of the reference
+    if reference_configs.raytune:
+        autotags.update({
+            'search_algo': reference_configs.raytune.search_alg,
+            'scheduler': reference_configs.raytune.scheduler,
+            'concurrent_trials': str(reference_configs.raytune.concurrent_trials),
+            'time_minutes': str(reference_configs.raytune.time_budget/60),
+            'cluster_nodes': str(reference_configs.runtime.nodes),
+        })
+    if reference_configs.sweep:
+        autotags.update({
+            "search_algo": reference_configs.sweep.algorithm,
+            "truncate_percentage": str(reference_configs.sweep.early_termination.truncation_percentage),
+            "concurrent_trials": str(reference_configs.sweep.limits.max_concurrent_trials),
+            "time_minutes": str(reference_configs.sweep.limits.timeout_minutes),
+            'cluster_nodes': str(reference_configs.runtime.nodes * reference_configs.sweep.limits.max_concurrent_trials),
+        })
+
+    logging.info(f"tags: {autotags}")
+
     # validate/submit the pipeline (if run.submit=True)
     pipeline_submit(
         workspace,
         config,
         pipeline_instance,
-        experiment_description=experiment_description
+        experiment_description=experiment_description,
+        tags=autotags
     )
 
 if __name__ == "__main__":

@@ -27,15 +27,12 @@ from ray.tune import (
 
 class RayTuneParameterParser():
 
+    # TODO: allow more distributions
     DISTRIBUTIONS_MAP = {"choice": choice,
                          "uniform": uniform,
-                         # "loguniform": loguniform,
-                         # "normal": normal,
-                         # "lognormal": lognormal,
-                         # "quniform": quniform,
-                         # "qloguniform": qloguniform,
-                         # "qnormal": qnormal,
-                         # "qlognormal": qlognormal,
+                         "quniform": quniform,
+                         "randint": randint,
+                         "qrandint": qrandint,
                          }
 
     def __init__(self, tunable_parameters):
