@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: lightgbm.ray.tune
-version: 1.0.1
+version: 1.0.2
 display_name: "LightGBM Tuning (Ray Tune API)"
 type: CommandComponent
 description: >-
