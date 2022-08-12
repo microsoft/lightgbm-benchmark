@@ -1,7 +1,7 @@
 $schema: http://azureml/sdk-1-5/DistributedComponent.json
-name: lightgbm.ray.tune
+name: lightgbm.ray.tune.distributed
 version: 1.0.2
-display_name: "LightGBM Tuning (Ray Tune API)"
+display_name: "LightGBM Tuning (Ray Tune Distributed API)"
 type: DistributedComponent
 description: >-
   **Tune a LightGBM Model**
@@ -15,7 +15,7 @@ is_deterministic: false
 tags:
   git: https://github.com/microsoft/lightgbm-benchmark
   docs: https://microsoft.github.io/lightgbm-benchmark
-  framework: lightgbm_ray_tune
+  framework: lightgbm_ray_tune_distributed
   framework_version: 0.0.1
 
 inputs:
