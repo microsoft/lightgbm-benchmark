@@ -4,23 +4,13 @@
 """
 Parses Ray Tune parameters from text arguments (cli or yaml)
 """
-import re
 import argparse
 import logging
-from azureml.core import Workspace, Datastore, Dataset
-import ray
-from ray import tune
 from ray.tune import (
     uniform,
     quniform,
-    loguniform,
-    qloguniform,
-    randn,
-    qrandn,
     randint,
     qrandint,
-    lograndint,
-    qlograndint,
     choice,
 )
 
