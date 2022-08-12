@@ -359,8 +359,6 @@ def lightgbm_training_pipeline_function(config,
             # remove arguments that are not in lightgbm_ray_tune component
             if 'multinode_driver' in training_params:
                 del training_params['multinode_driver']
-            if 'header' in training_params:
-                del training_params['header']
             if 'construct' in training_params:
                 del training_params['construct']
             if 'custom_properties' in training_params:

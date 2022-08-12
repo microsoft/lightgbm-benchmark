@@ -35,8 +35,8 @@ lightgbm_training_config:
       header: true # IMPORTANT
       label_column: "0"
       group_column: null
-      train_data_format: 'TSV'
-      test_data_format: 'TSV'
+      train_data_format: 'CSV'
+      test_data_format: 'CSV'
 
     # lightgbm training parameters
     training:
