@@ -186,7 +186,7 @@ def lightgbm_training_pipeline_function(config,
         # if we're using multinode, add partitioning
         if variant_params.data.auto_partitioning and (variant_params.training.tree_learner == "data" or variant_params.training.tree_learner == "voting"):
             # if training is distributed to multiple nodes using ray:
-            if variant_params.raytune and variant_params.raytune.lightgbm_ray_actors > 1:
+            if variant_params.framework == 'lightgbm_ray_tune_distributed' and variant_params.raytune.lightgbm_ray_actors > 1:
                 partition_data_step = partition_data_module(
                     input_data=train_dataset,
                     mode="roundrobin",

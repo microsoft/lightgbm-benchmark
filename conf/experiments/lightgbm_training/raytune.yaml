@@ -78,5 +78,4 @@ lightgbm_training_config:
       num_samples: 5
       time_budget: 1800
       concurrent_trials: 0
-      lightgbm_ray_actors: 1
-      cpus_per_trial: 2
+      cpus_per_trial: 16
