@@ -117,6 +117,10 @@ class lightgbm_training_data_variant_parameters:
     group_column: Optional[str] = None
     construct: bool = True
 
+    # data formats
+    train_data_format: Optional[str] = None
+    test_data_format: Optional[str] = None
+
 @dataclass
 class lightgbm_training_environment_variant_parameters:
     # COMPUTE

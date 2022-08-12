@@ -337,6 +337,7 @@ def lightgbm_training_pipeline_function(config,
                 del training_params['custom_properties']
             if 'verbose' in training_params:
                 del training_params['verbose']
+
         elif variant_params.framework == 'lightgbm_ray_tune_distributed':
             lightgbm_train_module = lightgbm_ray_tune_distributed_module
             use_sweep = False
