@@ -29,4 +29,5 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'hpbandster==0.7.4' \
                 'ConfigSpace==0.5.0' \ 
                 'optuna==2.8.0' \
+                'protobuf==3.20.1' \
                 lightgbm==${lightgbm_version}
