@@ -499,7 +499,7 @@ def main():
     ])
 
     # add pipeline tags
-    autotags = {"data": config.lightgbm_training_config.tasks[0].train.path}
+    autotags = {}
     reference_configs = config.lightgbm_training_config.reference
     print(f"tags: {autotags}")
     # add the information of the reference
