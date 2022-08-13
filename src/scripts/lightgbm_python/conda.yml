@@ -1,0 +1,10 @@
+name: lightgbm_python_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+    - lightgbm==3.2.1
+    - mlflow==1.19.0
+    - azureml-mlflow==1.33.0
