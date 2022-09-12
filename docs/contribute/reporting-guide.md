@@ -89,7 +89,7 @@ You can capture all relevant platform/system info by using helper code function:
 metrics_logger.set_platform_properties()
 ```
 
-Optionally, you can provide custom properties using json (for instance from CLI arguments), and report those using:
+Optionally, you can provide custom properties [using json](https://www.scaler.com/topics/how-to-open-json-file-in-python/) (for instance from CLI arguments), and report those using:
 
 ```python
 # logger will parse the json
