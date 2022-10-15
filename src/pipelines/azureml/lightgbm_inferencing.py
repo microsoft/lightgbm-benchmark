@@ -67,6 +67,7 @@ class lightgbm_inferencing_config: # pylint: disable=invalid-name
 lightgbm_python_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_python", "spec.yaml"))
 lightgbm_c_api_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_c_api", "spec.yaml"))
 lightgbm_ray_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_ray", "spec.yaml"))
+lightgbm_ort_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_ort", "spec.yaml"))
 custom_win_cli_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "custom_win_cli", "spec.yaml"))
 treelite_compile_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "model_transformation", "treelite_compile", "spec.yaml"))
 treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "treelite_python", "spec.yaml"))
@@ -169,6 +170,16 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
         elif variant.framework == "lightgbm_ray":
             # call module with all the right arguments
             inferencing_step = lightgbm_ray_score_module(
+                data = data,
+                model = model,
+                verbose = False,
+                custom_properties = custom_properties
+            )
+            inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
+
+        elif variant.framework == "lightgbm_ort":
+            # call module with all the right arguments
+            inferencing_step = lightgbm_ort_score_module(
                 data = data,
                 model = model,
                 verbose = False,

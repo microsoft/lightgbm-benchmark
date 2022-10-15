@@ -252,7 +252,8 @@ class GenerateSyntheticDataScript(RunnableScript):
         os.makedirs(args.output_train, exist_ok=True)
         os.makedirs(args.output_test, exist_ok=True)
         os.makedirs(args.output_inference, exist_ok=True)
-        os.makedirs(args.external_header, exist_ok=True)
+        if args.external_header:
+            os.makedirs(args.external_header, exist_ok=True)
 
 
         # transform delimiter
