@@ -3,6 +3,8 @@ LABEL lightgbmbenchmark.linux.cpu.ray.version="0.1.2/20220111.1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
+ARG lightgbm_version="3.3.0"
+
 # Create conda environment
 RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
     python=3.8 pip=20.2.4
@@ -25,3 +27,7 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'onnxruntime==1.12.1' \
                 'onnxmltools==1.11.1' \
                 'onnxconverter-common==1.12.2'
+
+# install lightgbm with mpi
+RUN pip install lightgbm==${lightgbm_version} \
+    pip install 'protobuf==3.20'

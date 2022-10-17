@@ -148,7 +148,7 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         onnx_ml_model = convert_lightgbm(booster, initial_types=onnx_input_types)
 
         logger.info(f"Creating inference session")
-        sessionml = ort.InferenceSession(onnx_ml_model.SerializeToString(), sess)
+        sessionml = ort.InferenceSession(onnx_ml_model.SerializeToString())
 
         # capture data shape as property
         metrics_logger.set_properties(
@@ -157,45 +157,27 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         )
 
         logger.info(f"Running .predict()")
-
         batch_start_time = time.monotonic()
-        sessionml.run(
+        predictions_array = sessionml.run(
             [sessionml.get_outputs()[0].name],
             {sessionml.get_inputs()[0].name: inference_raw_data},
-        )
-
-        # onnxml_time = timeit.timeit(
-        #     "sessionml.run( [sessionml.get_outputs()[0].name],  {sessionml.get_inputs()[0].name: inference_raw_data} )",
-        #     number=10,
-        #     setup="from __main__ import sessionml, inference_raw_data",
-        # )
-        onnxml_time = timeit.timeit(
-            lambda: sessionml.run(
-                [sessionml.get_outputs()[0].name],
-                {sessionml.get_inputs()[0].name: inference_raw_data},
-            ),
-            number=10,
-        )
-        print(
-            "LGBM->ONNXML (CPU): {}".format(
-                num_classes, max_depth, n_estimators, onnxml_time
-            )
-        )
-
-        booster.num_trees
-        batch_start_time = time.monotonic()
-        predictions_array = booster.predict(
-            data=inference_raw_data,
-            num_threads=args.num_threads,
-            predict_disable_shape_check=bool(args.predict_disable_shape_check),
-        )
+        )[0]
         prediction_time = time.monotonic() - batch_start_time
         metrics_logger.log_metric("time_inferencing", prediction_time)
+
+        # TODO: Discuss alternative?
+        # onnxml_time = timeit.timeit(
+        #     lambda: sessionml.run(
+        #         [sessionml.get_outputs()[0].name],
+        #         {sessionml.get_inputs()[0].name: inference_raw_data},
+        #     ),
+        #     number=10,
+        # )
 
         # use helper to log latency with the right metric names
         metrics_logger.log_inferencing_latencies(
             [prediction_time],  # only one big batch
-            batch_length=inference_data.num_data(),
+            batch_length=len(inference_raw_data),
             factor_to_usecs=1000000.0,  # values are in seconds
         )
 
