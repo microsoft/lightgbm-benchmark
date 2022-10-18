@@ -187,6 +187,17 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
             )
             inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
 
+        elif variant.framework == "lightgbm_ort_multithread":
+            # call module with all the right arguments
+            inferencing_step = lightgbm_ort_score_module(
+                data = data,
+                model = model,
+                verbose = False,
+                run_parallel = True,
+                custom_properties = custom_properties
+            )
+            inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
+
         else:
             raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
 

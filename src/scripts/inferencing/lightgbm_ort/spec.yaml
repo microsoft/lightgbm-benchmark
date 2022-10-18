@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: lightgbm_ort_score
-version: 0.0.1
+version: 0.0.2
 display_name: "LightGBM Inferencing (ONNX RT)"
 type: CommandComponent
 description: "LightGBM inferencing using the ONNX Runtime."
@@ -21,6 +21,9 @@ inputs:
   n_threads:
     type: Integer
     optional: true
+  run_parallel:
+    type: Boolean
+    optional: true
   verbose:
     type: Boolean
     default: False
@@ -39,6 +42,7 @@ command: >-
   --model {inputs.model}
   --output {outputs.predictions}
   [--num_threads {inputs.n_threads}]
+  [--run_parallel {inputs.run_parallel}]
   --predict_disable_shape_check {inputs.predict_disable_shape_check}
   --verbose {inputs.verbose}
   [--custom_properties {inputs.custom_properties}]

@@ -86,14 +86,14 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         group_params.add_argument(
             "--num_threads",
             required=False,
-            default=1,
+            default=0,
             type=int,
             help="number of threads",
         )
         group_params.add_argument(
             "--run_parallel",
             required=False,
-            default=True,
+            default=False,
             type=bool,
             help="number of threads",
         )
@@ -131,7 +131,9 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         # BUG: https://github.com/onnx/onnxmltools/issues/338
         with open(args.model, "r") as mf:
             model_str = mf.read()
-            model_str = model_str.replace("objective=lambdarank", "objective=regression")
+            model_str = model_str.replace(
+                "objective=lambdarank", "objective=regression"
+            )
         booster = lightgbm.Booster(model_str=model_str)
 
         logger.info(f"Loading data for inferencing")
@@ -169,7 +171,14 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
 
         logger.info(f"Creating inference session")
         sess_options = ort.SessionOptions()
-        # sess_options.intra_op_num_threads = args.num_threads
+
+        if args.num_threads > 0:
+            logger.info(f"Setting number of threads to {args.num_threads}")
+            sess_options.intra_op_num_threads = args.num_threads
+
+        if args.run_parallel:
+            logger.info(f"Creating multithreaded inference session")
+
         sess_options.execution_mode = (
             ort.ExecutionMode.ORT_PARALLEL
             if args.run_parallel
@@ -205,19 +214,7 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         )[0]
 
         time_inferencing_per_query = []
-
         timeit_loops = 10
-        onnxml_batch_time = timeit.timeit(
-            lambda: sessionml_batch.run(
-                [sessionml.get_outputs()[0].name],
-                {sessionml.get_inputs()[0].name: inference_raw_data},
-            ),
-            number=timeit_loops,
-        )
-        onnxml_batch_time /= timeit_loops
-
-        metrics_logger.log_metric("time_inferencing_batch", onnxml_batch_time)
-
         for i in range(len(inference_raw_data)):
             prediction_time = timeit.timeit(
                 lambda: sessionml.run(
@@ -231,11 +228,6 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_query))
 
         # use helper to log latency with the right metric names
-        metrics_logger.log_inferencing_latencies(
-            [onnxml_batch_time],  # only one big batch
-            batch_length=len(inference_raw_data),
-            factor_to_usecs=1000000.0,  # values are in seconds
-        )
         metrics_logger.log_inferencing_latencies(
             time_inferencing_per_query,  # only one big batch
             batch_length=len(inference_raw_data),
