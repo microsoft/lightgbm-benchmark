@@ -91,6 +91,13 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
             help="number of threads",
         )
         group_params.add_argument(
+            "--run_parallel",
+            required=False,
+            default=True,
+            type=bool,
+            help="number of threads",
+        )
+        group_params.add_argument(
             "--predict_disable_shape_check",
             required=False,
             default=False,
@@ -140,15 +147,25 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         onnx_input_types = [
             (
                 "input",
-                FloatTensorType(
-                    [inference_data.num_data(), inference_data.num_feature()]
-                ),
+                FloatTensorType([1, inference_data.num_feature()]),
             )
         ]
         onnx_ml_model = convert_lightgbm(booster, initial_types=onnx_input_types)
 
         logger.info(f"Creating inference session")
-        sessionml = ort.InferenceSession(onnx_ml_model.SerializeToString())
+        sess_options = ort.SessionOptions()
+        # sess_options.intra_op_num_threads = args.num_threads
+        sess_options.execution_mode = (
+            ort.ExecutionMode.ORT_PARALLEL
+            if args.run_parallel
+            else ort.ExecutionMode.ORT_SEQUENTIAL
+        )
+        sess_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
+        sessionml = ort.InferenceSession(
+            onnx_ml_model.SerializeToString(), sess_options
+        )
 
         # capture data shape as property
         metrics_logger.set_properties(
@@ -156,14 +173,26 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
             inference_data_width=inference_data.num_feature(),
         )
 
+        # Warmup and compute results
+        for _ in range(100):
+            predictions_arraysessionml.run(
+                [sessionml.get_outputs()[0].name],
+                {sessionml.get_inputs()[0].name: inference_raw_data[0:1]},
+            )[0]
+
         logger.info(f"Running .predict()")
-        batch_start_time = time.monotonic()
-        predictions_array = sessionml.run(
-            [sessionml.get_outputs()[0].name],
-            {sessionml.get_inputs()[0].name: inference_raw_data},
-        )[0]
-        prediction_time = time.monotonic() - batch_start_time
-        metrics_logger.log_metric("time_inferencing", prediction_time)
+        time_inferencing_per_query = []
+        predictions_array = []
+        for i in range(len(inference_raw_data)):
+            batch_start_time = time.monotonic()
+            prediction = sessionml.run(
+                [sessionml.get_outputs()[0].name],
+                {sessionml.get_inputs()[0].name: inference_raw_data[i : i + 1]},
+            )[0]
+            prediction_time = time.monotonic() - batch_start_time
+            time_inferencing_per_query.append(prediction_time)
+            predictions_array.append(prediction)
+        metrics_logger.log_metric("time_inferencing", sum(prediction_time))
 
         # TODO: Discuss alternative?
         # onnxml_time = timeit.timeit(
