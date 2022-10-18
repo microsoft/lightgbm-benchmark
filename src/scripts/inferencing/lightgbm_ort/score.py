@@ -128,7 +128,11 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
             args.output = os.path.join(args.output, "predictions.txt")
 
         logger.info(f"Loading model from {args.model}")
-        booster = lightgbm.Booster(model_file=args.model)
+        # BUG: https://github.com/onnx/onnxmltools/issues/338
+        with open(args.model, "r") as mf:
+            model_str = mf.read()
+            model_str = model_str.replace("objective=lambdarank", "objective=regression")
+        booster = lightgbm.Booster(model_str=model_str)
 
         logger.info(f"Loading data for inferencing")
         assert args.data_format == "CSV"
@@ -150,7 +154,18 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
                 FloatTensorType([1, inference_data.num_feature()]),
             )
         ]
+        onnx_batch_input_types = [
+            (
+                "input",
+                FloatTensorType(
+                    [inference_data.num_data(), inference_data.num_feature()]
+                ),
+            )
+        ]
         onnx_ml_model = convert_lightgbm(booster, initial_types=onnx_input_types)
+        onnx_ml_batch_model = convert_lightgbm(
+            booster, initial_types=onnx_batch_input_types
+        )
 
         logger.info(f"Creating inference session")
         sess_options = ort.SessionOptions()
@@ -166,6 +181,9 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         sessionml = ort.InferenceSession(
             onnx_ml_model.SerializeToString(), sess_options
         )
+        sessionml_batch = ort.InferenceSession(
+            onnx_ml_batch_model.SerializeToString(), sess_options
+        )
 
         # capture data shape as property
         metrics_logger.set_properties(
@@ -173,39 +191,53 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
             inference_data_width=inference_data.num_feature(),
         )
 
+        logger.info(f"Running .predict()")
+
         # Warmup and compute results
         for _ in range(100):
-            predictions_arraysessionml.run(
+            sessionml.run(
                 [sessionml.get_outputs()[0].name],
                 {sessionml.get_inputs()[0].name: inference_raw_data[0:1]},
             )[0]
+        predictions_array = sessionml_batch.run(
+            [sessionml.get_outputs()[0].name],
+            {sessionml.get_inputs()[0].name: inference_raw_data},
+        )[0]
 
-        logger.info(f"Running .predict()")
         time_inferencing_per_query = []
-        predictions_array = []
-        for i in range(len(inference_raw_data)):
-            batch_start_time = time.monotonic()
-            prediction = sessionml.run(
-                [sessionml.get_outputs()[0].name],
-                {sessionml.get_inputs()[0].name: inference_raw_data[i : i + 1]},
-            )[0]
-            prediction_time = time.monotonic() - batch_start_time
-            time_inferencing_per_query.append(prediction_time)
-            predictions_array.append(prediction)
-        metrics_logger.log_metric("time_inferencing", sum(prediction_time))
 
-        # TODO: Discuss alternative?
-        # onnxml_time = timeit.timeit(
-        #     lambda: sessionml.run(
-        #         [sessionml.get_outputs()[0].name],
-        #         {sessionml.get_inputs()[0].name: inference_raw_data},
-        #     ),
-        #     number=10,
-        # )
+        timeit_loops = 10
+        onnxml_batch_time = timeit.timeit(
+            lambda: sessionml_batch.run(
+                [sessionml.get_outputs()[0].name],
+                {sessionml.get_inputs()[0].name: inference_raw_data},
+            ),
+            number=timeit_loops,
+        )
+        onnxml_batch_time /= timeit_loops
+
+        metrics_logger.log_metric("time_inferencing_batch", onnxml_batch_time)
+
+        for i in range(len(inference_raw_data)):
+            prediction_time = timeit.timeit(
+                lambda: sessionml.run(
+                    [sessionml.get_outputs()[0].name],
+                    {sessionml.get_inputs()[0].name: inference_raw_data[i : i + 1]},
+                ),
+                number=timeit_loops,
+            )
+            prediction_time /= timeit_loops
+            time_inferencing_per_query.append(prediction_time)
+        metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_query))
 
         # use helper to log latency with the right metric names
         metrics_logger.log_inferencing_latencies(
-            [prediction_time],  # only one big batch
+            [onnxml_batch_time],  # only one big batch
+            batch_length=len(inference_raw_data),
+            factor_to_usecs=1000000.0,  # values are in seconds
+        )
+        metrics_logger.log_inferencing_latencies(
+            time_inferencing_per_query,  # only one big batch
             batch_length=len(inference_raw_data),
             factor_to_usecs=1000000.0,  # values are in seconds
         )
