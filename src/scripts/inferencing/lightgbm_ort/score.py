@@ -31,9 +31,15 @@ from common.io import input_file_path
 
 class LightGBMONNXRTInferecingScript(RunnableScript):
     def __init__(self):
+        framework = "onnx"
+        if "--run_parallel" in sys.argv:
+            framework += "_multithreaded"
+        if "--run_batch" in sys.argv:
+            framework += "_batch"
+
         super().__init__(
             task="score",
-            framework="lightgbm",
+            framework=framework,
             framework_version="ONNXRT." + str(ort.__version__),
         )
 
@@ -95,7 +101,14 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
             required=False,
             default=False,
             type=bool,
-            help="number of threads",
+            help="allows intra sample parallelism",
+        )
+        group_params.add_argument(
+            "--run_batch",
+            required=False,
+            default=False,
+            type=bool,
+            help="runs inference in a single batch",
         )
         group_params.add_argument(
             "--predict_disable_shape_check",
@@ -215,22 +228,41 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
 
         time_inferencing_per_query = []
         timeit_loops = 10
-        for i in range(len(inference_raw_data)):
+
+        if args.run_batch:
+            batch_length = len(inference_raw_data)
             prediction_time = timeit.timeit(
-                lambda: sessionml.run(
-                    [sessionml.get_outputs()[0].name],
-                    {sessionml.get_inputs()[0].name: inference_raw_data[i : i + 1]},
+                lambda: sessionml_batch.run(
+                    [sessionml_batch.get_outputs()[0].name],
+                    {sessionml_batch.get_inputs()[0].name: inference_raw_data},
                 ),
                 number=timeit_loops,
             )
             prediction_time /= timeit_loops
-            time_inferencing_per_query.append(prediction_time)
-        metrics_logger.log_metric("time_inferencing", sum(time_inferencing_per_query))
+            metrics_logger.log_metric("time_inferencing", prediction_time)
+            time_inferencing_per_query = [prediction_time]
+        else:
+            batch_length = 1
+            for i in range(len(inference_raw_data)):
+                prediction_time = timeit.timeit(
+                    lambda: sessionml.run(
+                        [sessionml.get_outputs()[0].name],
+                        {sessionml.get_inputs()[0].name: inference_raw_data[i : i + 1]},
+                    ),
+                    number=timeit_loops,
+                )
+                prediction_time /= timeit_loops
+                time_inferencing_per_query.append(prediction_time)
+            metrics_logger.log_metric(
+                "time_inferencing", sum(time_inferencing_per_query)
+            )
+
+        logger.info(f"Batch size: {batch_length}")
 
         # use helper to log latency with the right metric names
         metrics_logger.log_inferencing_latencies(
             time_inferencing_per_query,  # only one big batch
-            batch_length=len(inference_raw_data),
+            batch_length=batch_length,
             factor_to_usecs=1000000.0,  # values are in seconds
         )
 

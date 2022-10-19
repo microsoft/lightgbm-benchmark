@@ -84,7 +84,9 @@ lightgbm_inferencing_config:
       build: docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
     # - framework: lightgbm_ray # ray implementation
     - framework: lightgbm_ort # ONNX RT implementation
+    - framework: lightgbm_ort_batch # ONNX RT implementation
     - framework: lightgbm_ort_multithread # ONNX RT multithreaded implementation
+    - framework: lightgbm_ort_multithread_batch # ONNX RT multithreaded implementation
     - framework: treelite_python # v1.3.0
 
     # to use custom_win_cli, you need to compile your own binaries

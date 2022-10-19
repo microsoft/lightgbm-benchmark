@@ -8,6 +8,9 @@ psutil==5.9.3
 # frameworks
 ray==2.0.0
 lightgbm-ray==0.1.7
+onnxruntime==1.12.1
+onnxmltools==1.11.1
+onnxconverter-common==1.12.2
 lightgbm==3.3.3
 treelite==3.0.0
 treelite-runtime==3.0.0
