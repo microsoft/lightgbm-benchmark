@@ -1,10 +1,10 @@
 FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0-patch/20211109.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.3-patch/20221020.1"
 
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
 # dockerfiles in a PR against their actual branch
-ARG lightgbm_version="3.3.0"
+ARG lightgbm_version="3.3.3"
 ARG lightgbm_benchmark_branch=main
 
 RUN apt-get update && \
@@ -62,15 +62,15 @@ ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 # Install pip dependencies
 RUN HOROVOD_WITH_TENSORFLOW=1 \
     pip install 'pandas>=1.1,<1.2' \
-                'numpy>=1.10,<1.20' \
-                'matplotlib==3.4.3' \
-                'scipy~=1.5.0' \
-                'scikit-learn~=0.24.1' \
-                'azureml-core==1.35.0' \
-                'azureml-defaults==1.35.0' \
-                'azureml-mlflow==1.35.0' \
-                'azureml-telemetry==1.35.0' \
-                'mpi4py==3.1.1'
+    'numpy>=1.10,<1.20' \
+    'matplotlib==3.4.3' \
+    'scipy~=1.5.0' \
+    'scikit-learn~=0.24.1' \
+    'azureml-core==1.35.0' \
+    'azureml-defaults==1.35.0' \
+    'azureml-mlflow==1.35.0' \
+    'azureml-telemetry==1.35.0' \
+    'mpi4py==3.1.1'
 
 RUN pip install --upgrade pip setuptools wheel && \
     pip install 'cmake==3.21.0'

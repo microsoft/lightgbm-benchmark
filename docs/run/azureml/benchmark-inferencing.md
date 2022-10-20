@@ -34,10 +34,10 @@ lightgbm_inferencing_config:
 
   # list all inferencing frameworks and their builds
   variants:
-    - framework: lightgbm_python # v3.3.0 via pypi
-    - framework: lightgbm_c_api # v3.3.0 with C API prediction
-    - framework: lightgbm_c_api # v3.3.0 with C API prediction
-      build: docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile
+    - framework: lightgbm_python # v3.3.3 via pypi
+    - framework: lightgbm_c_api # v3.3.3 with C API prediction
+    - framework: lightgbm_c_api # v3.3.3 with C API prediction
+      build: docker/lightgbm-custom/v333_patch_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction
       build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction
@@ -88,10 +88,10 @@ For each task, the pipeline will run inferencing "variants", which are different
 ```yaml
   # list all inferencing frameworks and their builds
   variants:
-    - framework: lightgbm_python # v3.3.0 via pypi
-    - framework: lightgbm_c_api # v3.3.0 with C API prediction
-    - framework: lightgbm_c_api # v3.3.0 with C API prediction
-      build: docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile
+    - framework: lightgbm_python # v3.3.3 via pypi
+    - framework: lightgbm_c_api # v3.3.3 with C API prediction
+    - framework: lightgbm_c_api # v3.3.3 with C API prediction
+      build: docker/lightgbm-custom/v333_patch_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction
       build: docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile
     - framework: lightgbm_c_api # v3.2.1 with C API prediction

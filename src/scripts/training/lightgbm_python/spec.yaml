@@ -18,7 +18,7 @@ tags:
   git: https://github.com/microsoft/lightgbm-benchmark
   docs: https://microsoft.github.io/lightgbm-benchmark
   framework: lightgbm
-  framework_version: 3.3.0-basic
+  framework_version: 3.3.3-basic
 
 inputs:
   # Inputs

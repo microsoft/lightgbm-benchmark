@@ -1,9 +1,9 @@
 FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
 LABEL lightgbmbenchmark.linux.cpu.ray.version="0.1.2/20220111.1"
 
-ARG lightgbm_version="3.3.3"
-
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
+
+ARG lightgbm_version="3.3.3"
 
 # Create conda environment
 RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
@@ -13,8 +13,7 @@ RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
 ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 
 # Install pip dependencies
-RUN HOROVOD_WITH_TENSORFLOW=1 \
-    pip install 'pandas>=1.1,<1.2' \
+RUN pip install 'pandas>=1.1,<1.2' \
     'numpy>=1.10,<1.20' \
     'matplotlib==3.4.3' \
     'scipy~=1.5.0' \
@@ -23,11 +22,11 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
     'azureml-defaults==1.35.0' \
     'azureml-mlflow==1.35.0' \
     'azureml-telemetry==1.35.0' \
-    'ray==1.9.2' \
-    'flaml==0.9.6' \
     'mpi4py==3.1.1' \
-    'hpbandster==0.7.4' \
-    'ConfigSpace==0.5.0' \ 
-    'optuna==2.8.0' \
-    'protobuf==3.20.1' \
-    lightgbm==${lightgbm_version}
+    'onnxruntime==1.12.1' \
+    'onnxmltools==1.11.1' \
+    'onnxconverter-common==1.12.2'
+
+# install lightgbm with mpi
+RUN pip install lightgbm==${lightgbm_version} \
+    pip install 'protobuf==3.20'
