@@ -14,9 +14,6 @@ experiment:
   name: "lightgbm_inferencing_dev"
   description: "something interesting to say about this"
 
-run:
-  submit: true
-
 lightgbm_inferencing_config:
   # name of your particular benchmark
   benchmark_name: "benchmark-inferencing-20211216.1" # need to be provided at runtime!
