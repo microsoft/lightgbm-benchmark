@@ -21,8 +21,8 @@ optuna==3.0.3
 
 # pipelines
 shrike[pipeline]==1.31.10
-azure-core==1.26.0
-azure-storage-blob==12.13.0
+azure-core==1.20.1
+azure-storage-blob==12.11.0
 azure-ml-component==0.9.13.post1
 azureml-train-core==1.37.0
 azureml-dataset-runtime==1.46.0
