@@ -7,8 +7,9 @@ such as registering Datasets or obtaining a Dataset handler from a given workspa
 """
 import logging
 import re
-#from azureml.core import Datastore, Dataset
-
+from azure.ai.ml.entities import Data
+from azure.ai.ml import Input
+from azure.ai.ml.constants import AssetTypes
 
 def dataset_from_dstore_path(workspace, datastore, datastore_path, validate=True):
     """ Obtains a local reference for a given datastore and path  
@@ -34,8 +35,8 @@ def dataset_from_dstore_path(workspace, datastore, datastore_path, validate=True
 
     return remote_dataset
 
-
-def load_dataset_from_data_input_spec(workspace, data_input_spec):
+#TODO: #DPv2 : Unable to register mltable : https://dev.azure.com/msdata/Vienna/_workitems/edit/2047281
+def load_dataset_from_data_input_spec(data_input_spec):
     """ Loads a dataset based on config object data_input_spec (see tasks.py data_input_spec)
     
     Args:

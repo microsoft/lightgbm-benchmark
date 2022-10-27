@@ -58,7 +58,7 @@ def get_all_files(path, fail_on_unknown_type=False):
 
     # if input path is a directory, list all files and return
     if os.path.isdir(path):
-        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) ]
+        all_files = [ os.path.join(path, entry) for entry in os.listdir(path) if str(entry).lower()!= 'mltable']
         if not all_files:
             raise Exception(f"Could not find any file in specified input directory {path}")
         return all_files

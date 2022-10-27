@@ -17,7 +17,7 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig, OmegaConf
 
-from azure.ml import MLClient
+from azure.ai.ml import MLClient
 
 # when running this script directly, needed to import common
 from .paths import COMPONENTS_ROOT, CONFIG_PATH

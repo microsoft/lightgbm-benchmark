@@ -1,8 +1,11 @@
-$schema: http://azureml/sdk-1-5/DistributedComponent.json
-name: lightgbm.train.python.basic
-version: 1.0.6
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: microsoft_aims_lightgbm_train_python
+version: 2.0.0
 display_name: "LightGBM Training (Python API Basic)"
-type: DistributedComponent
+type: command
+distribution: 
+  type: mpi
+  process_count_per_instance: 1
 description: >-
   **Train a LightGBM Model**
   
@@ -23,39 +26,39 @@ tags:
 inputs:
   # Inputs
   train:
-    type: AnyDirectory
+    type: mltable
     description: Directory to the training data
     optional: false
   test:
-    type: AnyDirectory
+    type: uri_folder
     description: Directory to the testing data
     optional: false
   parser_config_file:
-    type: AnyDirectory
+    type: uri_folder
     description: directory to the transform parser config
     optional: true
   construct:
-    type: Boolean
+    type: boolean
     description: "Use lazy intialization during data loading phase (both train and test datasets)"
     default: True
 
   # Input Parameters
   header:
-    type: Boolean
+    type: boolean
     default: False
     description: "Does data have a header? (ex: csv/tsv)"
   label_column:
-    type: String
+    type: string
     default: "0"
     description: "Specify label column (default=0)"
   group_column:
-    type: String
+    type: string
     optional: true
     description: "Specify group/query column (default '')"
 
   # Learning Parameters
   objective:
-    type: Enum
+    type: string
     default: "regression"
     enum:
       - regression
@@ -76,12 +79,12 @@ inputs:
       - rank_xendcg
     description: "Objective function to use for training."
   metric:
-    # let's not use Enum here to allow for custom metrics
-    type: String
+    # let's not use string here to allow for custom metrics
+    type: string
     default: ''
     description: "Name of the metric (ex: rmse, ndcg)"
   boosting:
-    type: Enum
+    type: string
     default: "gbdt"
     enum:
       - gbdt
@@ -90,7 +93,7 @@ inputs:
       - goss
     description: "Boosting technique"
   tree_learner:
-    type: Enum
+    type: string
     default: "serial"
     enum:
       - serial
@@ -99,39 +102,39 @@ inputs:
       - voting
     description: "For distributed learning"
   label_gain:
-    type: String
+    type: string
     optional: True
     description: "Relevant gain for labels (used only in lambdarank application)"
   num_iterations:
-    type: Integer
+    type: integer
     min: 1
     default: 100
     description: "Number of trees (alias num_trees)"
   num_leaves:
-    type: Integer
+    type: integer
     min: 1
     default: 31
     description: "Number of leaves"
   min_data_in_leaf:
-    type: Integer
+    type: integer
     min: 1
     default: 20
     description: "Minimum data in leaves"
   learning_rate:
-    type: Float
+    type: number
     default: 0.1
     description: "Learning/shrinkage rate"
   max_bin:
-    type: Integer
+    type: integer
     min: 1
     default: 255
     description: "Max number of bins that feature values will be bucketed in"
   feature_fraction:
-    type: Float
+    type: number
     default: 1.0
     description: "LightGBM will randomly select a subset of features on each iteration (tree) if feature_fraction is smaller than 1.0. For example, if you set it to 0.8, LightGBM will select 80% of features before training each tree."
   device_type:
-    type: Enum
+    type: string
     default: 'cpu'
     enum:
       - cpu
@@ -139,73 +142,71 @@ inputs:
       - cuda
     description: "Device for the tree learning, you can use GPU to achieve the faster learning (to use gpu/cuda you need a specific dockerfile)"
   multinode_driver:
-    type: Enum
+    type: string
     default: 'socket'
     enum:
       - socket
       - mpi
     description: "Communication framework used for multi-node training (socket for lightgbm basic, mpi for lightgbm compiled for mpi)"
   custom_params:
-    type: String
+    type: string
     optional: true
     description: "Provide as a json dictionary (ex: {\"foo\":\"bar\"}) any additional custom lightgbm parameter"
 
   # generic benchmark parameters
   verbose:
-    type: Boolean
+    type: boolean
     default: False
     description: "Show debug logs"
   custom_properties:
-    type: String
+    type: string
     description: "For benchmark analysis, provide as a json dictionary (ex: {\"foo\":\"bar\"}) anything that will be added as tags to the job"
     optional: true
 
   model_filename:
-    type: String
+    type: string
     description: "Name of the model output file"
     optional: false
     default: 'model.txt'
 
 outputs:
   model:
-    type: AnyDirectory
+    type: path
     description: "LightGBM model trained"
 
-launcher:
-  type: mpi
-  additional_arguments: >-
-    python train.py
-    --train {inputs.train}
-    --test {inputs.test}
-    [--parser_config_file {inputs.parser_config_file}]
-    --construct {inputs.construct}
-    --header {inputs.header}
-    --label_column {inputs.label_column}
-    [--group_column {inputs.group_column}]
-    --device_type {inputs.device_type}
-    --multinode_driver {inputs.multinode_driver}
-    --objective {inputs.objective}
-    --metric {inputs.metric}
-    [--label_gain {inputs.label_gain}]
-    [--custom_params {inputs.custom_params}]
-    --boosting {inputs.boosting}
-    --tree_learner {inputs.tree_learner}
-    --num_trees {inputs.num_iterations}
-    --num_leaves {inputs.num_leaves}
-    --min_data_in_leaf {inputs.min_data_in_leaf}
-    --learning_rate {inputs.learning_rate}
-    --max_bin {inputs.max_bin}
-    --feature_fraction {inputs.feature_fraction}
-    --export_model {outputs.model}
-    --model_filename {inputs.model_filename}
-    --verbose {inputs.verbose}
-    [--custom_properties {inputs.custom_properties}]
+code: "../../../"
+
+command: >-
+    python scripts/training/lightgbm_python/train.py
+    --train ${{inputs.train}}
+    --test ${{inputs.test}}
+    $[[--parser_config_file ${{inputs.parser_config_file}}]]
+    --construct ${{inputs.construct}}    
+    --header ${{inputs.header}}
+    --label_column ${{inputs.label_column}}
+    $[[--group_column ${{inputs.group_column}}]]
+    --device_type ${{inputs.device_type}}
+    --multinode_driver ${{inputs.multinode_driver}}
+    --objective ${{inputs.objective}}
+    --metric ${{inputs.metric}}
+    $[[--label_gain ${{inputs.label_gain}}]]
+    $[[--custom_params ${{inputs.custom_params}}]]
+    --boosting ${{inputs.boosting}}
+    --tree_learner ${{inputs.tree_learner}}
+    --num_trees ${{inputs.num_iterations}}
+    --num_leaves ${{inputs.num_leaves}}
+    --min_data_in_leaf ${{inputs.min_data_in_leaf}}
+    --learning_rate ${{inputs.learning_rate}}
+    --max_bin ${{inputs.max_bin}}
+    --feature_fraction ${{inputs.feature_fraction}}
+    --export_model ${{outputs.model}}
+    --model_filename ${{inputs.model_filename}}
+    --verbose ${{inputs.verbose}}
+    $[[--custom_properties ${{inputs.custom_properties}}]]
 
 environment:
-  docker:
-    build:
-      # file path is resolved after additional includes
-      dockerfile: file:./default.dockerfile
-  conda:
-    userManagedDependencies: true
-  os: Linux
+  name: lightgbm-docker
+  build:
+    path: ./
+    dockerfile_path: default.dockerfile
+  os_type: linux

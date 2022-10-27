@@ -103,14 +103,14 @@ inputs:
     optional: true
 
 outputs:
-  output_train:
-    type: path
+  output_train:  #AutoML's requirement is to use mltable 
+    type: mltable
   output_test:
-    type: path
+    type: mltable
   output_inference:
-    type: path
+    type: mltable
   external_header:
-    type: path
+    type: uri_folder
 
 code: "../../../"
 
@@ -125,8 +125,8 @@ command: >-
   --inferencing_partitions ${{inputs.inferencing_partitions}}
   --n_features ${{inputs.n_features}}
   --n_informative ${{inputs.n_informative}}
-  [--n_redundant ${{inputs.n_redundant}}]
-  [--random_state ${{inputs.random_state}}]
+  $[[--n_redundant ${{inputs.n_redundant}}]]
+  $[[--random_state ${{inputs.random_state}}]]
   --delimiter ${{inputs.delimiter}}
   --generate_header ${{inputs.header}}
   --output_train ${{outputs.output_train}}
@@ -134,9 +134,9 @@ command: >-
   --output_inference ${{outputs.output_inference}}
   --external_header ${{outputs.external_header}}
   --verbose ${{inputs.verbose}}
-  [--custom_properties '${{inputs.custom_properties}}']
-  [--docs_per_query ${{inputs.docs_per_query}}]
-  [--n_label_classes ${{inputs.n_label_classes}}]
+  $[[--custom_properties '${{inputs.custom_properties}}']]
+  $[[--docs_per_query ${{inputs.docs_per_query}}]]
+  $[[--n_label_classes ${{inputs.n_label_classes}}]]
 
 environment:
   image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
