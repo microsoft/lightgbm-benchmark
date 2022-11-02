@@ -32,10 +32,12 @@ from common.io import input_file_path
 class LightGBMONNXRTInferecingScript(RunnableScript):
     def __init__(self):
         framework = "onnx"
-        if "--run_parallel" in sys.argv:
-            framework += "_multithreaded"
-        if "--run_batch" in sys.argv:
+        if "--run_parallel" in sys.argv and strtobool(sys.argv[sys.argv.index("--run_parallel") + 1]):
+            framework += "_parallel"
+        if "--run_batch" in sys.argv and strtobool(sys.argv[sys.argv.index("--run_batch") + 1]):
             framework += "_batch"
+        if "--num_threads" in sys.argv:
+            framework += f"_threads_{sys.argv[sys.argv.index('--num_threads') + 1]}"
 
         super().__init__(
             task="score",
@@ -99,21 +101,21 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         group_params.add_argument(
             "--run_parallel",
             required=False,
-            default=False,
-            type=bool,
+            default="False",
+            type=strtobool,
             help="allows intra sample parallelism",
         )
         group_params.add_argument(
             "--run_batch",
             required=False,
-            default=False,
-            type=bool,
+            default="False",
+            type=strtobool,
             help="runs inference in a single batch",
         )
         group_params.add_argument(
             "--predict_disable_shape_check",
             required=False,
-            default=False,
+            default="False",
             type=strtobool,
             help="See LightGBM documentation",
         )
@@ -188,6 +190,7 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         if args.num_threads > 0:
             logger.info(f"Setting number of threads to {args.num_threads}")
             sess_options.intra_op_num_threads = args.num_threads
+            sess_options.inter_op_num_threads = args.num_threads
 
         if args.run_parallel:
             logger.info(f"Creating multithreaded inference session")

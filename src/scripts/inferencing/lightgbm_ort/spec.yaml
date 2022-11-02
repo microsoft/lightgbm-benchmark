@@ -1,6 +1,6 @@
 $schema: http://azureml/sdk-2-0/CommandComponent.json
 name: lightgbm_ort_score
-version: 0.0.3
+version: 0.0.6
 display_name: "LightGBM Inferencing (ONNX RT)"
 type: CommandComponent
 description: "LightGBM inferencing using the ONNX Runtime."
