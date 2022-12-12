@@ -103,7 +103,8 @@ class LightGBMRayPythonInferencingScript(RayScript):
         predictions_array = lightgbm_ray.predict(
             booster,
             inference_data,
-            ray_params=lightgbm_ray.RayParams(num_actors=args.num_threads)
+            ray_params=lightgbm_ray.RayParams(num_actors=args.num_threads),
+            predict_disable_shape_check=bool(args.predict_disable_shape_check),
         )
 
         timeit_loops = 10
@@ -111,7 +112,8 @@ class LightGBMRayPythonInferencingScript(RayScript):
             lambda: lightgbm_ray.predict(
                 booster,
                 inference_data,
-                ray_params=lightgbm_ray.RayParams(num_actors=args.num_threads)
+                ray_params=lightgbm_ray.RayParams(num_actors=args.num_threads),
+                predict_disable_shape_check=bool(args.predict_disable_shape_check),
             ),
             number=timeit_loops,
         )
