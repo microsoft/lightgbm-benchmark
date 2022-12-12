@@ -1,5 +1,4 @@
 FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
-LABEL lightgbmbenchmark.linux.cpu.ray.version="0.1.2/20220111.1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
@@ -30,4 +29,4 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
 
 # install lightgbm with mpi
 RUN pip install lightgbm==${lightgbm_version} \
-    pip install 'protobuf==3.20'
+    pip install 'protobuf==3.20.3'
