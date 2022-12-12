@@ -22,6 +22,6 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
                 'mpi4py==3.1.1' \
-                'ray==1.9.2' \
-                'protobuf==3.20' \
-                'lightgbm-ray==0.1.2'
+                'protobuf==3.20.3' \
+                'ray==2.1.0' \
+                'lightgbm-ray==0.1.8'
