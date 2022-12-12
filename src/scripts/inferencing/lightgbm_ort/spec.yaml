@@ -40,6 +40,9 @@ outputs:
     type: AnyDirectory
 
 command: >-
+  apt update -y &&
+  apt install numactl -y &&
+  numactl -m 0 -N 0 -- 
   python score.py
   --data {inputs.data}
   --model {inputs.model}
@@ -49,7 +52,7 @@ command: >-
   [--run_batch {inputs.run_batch}]
   --predict_disable_shape_check {inputs.predict_disable_shape_check}
   --verbose {inputs.verbose}
-  [--custom_properties {inputs.custom_properties}]
+  [--custom_properties "{inputs.custom_properties}"]
   --cluster_auto_setup True
 
 environment:
