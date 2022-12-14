@@ -6,9 +6,7 @@ LightGBM/Python inferencing script
 """
 import os
 import sys
-import argparse
 import logging
-import time
 import timeit
 import numpy as np
 from distutils.util import strtobool
@@ -155,34 +153,23 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         assert args.data_format == "CSV"
         with metrics_logger.log_time_block("time_data_loading"):
             # NOTE: this is bad, but allows for libsvm format (not just numpy)
-            inference_data = lightgbm.Dataset(
-                args.data, free_raw_data=False
-            ).construct()
-            inference_raw_data = inference_data.get_data()
-            if type(inference_raw_data) == str:
-                inference_raw_data = np.loadtxt(
-                    inference_raw_data, delimiter=","
-                ).astype(np.float32)[:, : inference_data.num_feature()]
+            # inference_data = lightgbm.Dataset(
+            #     args.data, free_raw_data=False
+            # ).construct()
+            # inference_raw_data = inference_data.get_data()
+            # if type(inference_raw_data) == str:
+            inference_raw_data = np.loadtxt(
+                args.data, delimiter=","
+            ).astype(np.float32)[:, : booster.num_feature()]
 
         logger.info(f"Converting model to ONNX")
         onnx_input_types = [
             (
                 "input",
-                FloatTensorType([1, inference_data.num_feature()]),
-            )
-        ]
-        onnx_batch_input_types = [
-            (
-                "input",
-                FloatTensorType(
-                    [inference_data.num_data(), inference_data.num_feature()]
-                ),
+                FloatTensorType([None, inference_raw_data.shape[1]]),
             )
         ]
         onnx_ml_model = convert_lightgbm(booster, initial_types=onnx_input_types)
-        onnx_ml_batch_model = convert_lightgbm(
-            booster, initial_types=onnx_batch_input_types
-        )
 
         logger.info(f"Creating inference session")
         sess_options = ort.SessionOptions()
@@ -206,14 +193,11 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         sessionml = ort.InferenceSession(
             onnx_ml_model.SerializeToString(), sess_options
         )
-        sessionml_batch = ort.InferenceSession(
-            onnx_ml_batch_model.SerializeToString(), sess_options
-        )
 
         # capture data shape as property
         metrics_logger.set_properties(
-            inference_data_length=inference_data.num_data(),
-            inference_data_width=inference_data.num_feature(),
+            inference_data_length=inference_raw_data.shape[0],
+            inference_data_width=inference_raw_data.shape[1],
         )
 
         logger.info(f"Running .predict()")
@@ -223,8 +207,9 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
             sessionml.run(
                 [sessionml.get_outputs()[0].name],
                 {sessionml.get_inputs()[0].name: inference_raw_data[0:1]},
-            )[0]
-        predictions_array = sessionml_batch.run(
+            )
+
+        predictions_array = sessionml.run(
             [sessionml.get_outputs()[0].name],
             {sessionml.get_inputs()[0].name: inference_raw_data},
         )[0]
@@ -235,9 +220,9 @@ class LightGBMONNXRTInferecingScript(RunnableScript):
         if args.run_batch:
             batch_length = len(inference_raw_data)
             prediction_time = timeit.timeit(
-                lambda: sessionml_batch.run(
-                    [sessionml_batch.get_outputs()[0].name],
-                    {sessionml_batch.get_inputs()[0].name: inference_raw_data},
+                lambda: sessionml.run(
+                    [sessionml.get_outputs()[0].name],
+                    {sessionml.get_inputs()[0].name: inference_raw_data},
                 ),
                 number=timeit_loops,
             )

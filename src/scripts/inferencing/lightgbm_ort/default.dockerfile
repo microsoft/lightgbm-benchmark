@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:20221129.v1
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
-ARG lightgbm_version="3.3.0"
+ARG lightgbm_version="3.3.3"
 
 # Create conda environment
 RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
@@ -12,20 +12,13 @@ RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
 ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 
 # Install pip dependencies
-RUN HOROVOD_WITH_TENSORFLOW=1 \
-    pip install 'pandas==1.5.2' \
-                'numpy==1.23.5' \
+RUN pip install 'numpy==1.23.5' \
                 'matplotlib==3.6.2' \
-                'scipy~=1.5.0' \
-                'scikit-learn~=0.24.1' \
-                'azureml-core==1.35.0' \
-                'azureml-defaults==1.35.0' \
-                'azureml-mlflow==1.35.0' \
-                'azureml-telemetry==1.35.0' \
-                'mpi4py==3.1.1' \
-                'onnxruntime==1.12.1' \
+                'psutil==5.9.4'\
+                'azureml-mlflow==1.48.0' \
+                'onnxruntime==1.13.1' \
                 'onnxmltools==1.11.1' \
-                'onnxconverter-common==1.12.2'
+                'onnxconverter-common==1.13.0'
 
 # install lightgbm with mpi
 RUN pip install lightgbm==${lightgbm_version} \
