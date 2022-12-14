@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/azureml/openmpi3.1.2-ubuntu18.04:20210615.v1
+FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:20221129.v1
 LABEL lightgbmbenchmark.linux.cpu.mpi.build.version="3.3.0-patch/20211109.1"
 
 # Those arguments will NOT be used by AzureML
@@ -54,7 +54,7 @@ ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
 # Create conda environment
 RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
-    python=3.8 pip=20.2.4
+    python=3.8 pip=22.2.2
 
 # Prepend path to AzureML conda environment
 ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH

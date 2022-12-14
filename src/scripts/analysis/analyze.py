@@ -1,5 +1,5 @@
 # Copyright (c) Microsoft Corporation.
-# Licensed under the MIT license. 
+# Licensed under the MIT license.
 
 """
 TreeLite/Python inferencing script
@@ -131,9 +131,10 @@ class AnalysisEngine():
 
         self.logger.info("Fetching Benchmark Runs")
         # NOTE: returns a pandas dataframe
-        self.benchmark_data = mlflow.search_runs(
-            filter_string=filter_string
-        )
+        self.benchmark_data = mlflow.search_runs(filter_string=filter_string)
+        self.benchmark_data = self.benchmark_data[
+            self.benchmark_data.status == "FINISHED"
+        ]
 
         # extract all model information if present
         if 'tags.benchmark_model' in self.benchmark_data.columns:
@@ -160,6 +161,15 @@ class AnalysisEngine():
 
     def report_inferencing(self, output_path):
         """ Uses fetched or load data to produce a reporting for inferencing tasks. """
+
+        # Drop rows which do not specify the time
+        self.benchmark_data = self.benchmark_data.dropna(
+            subset=[
+                "metrics.time_inferencing",
+                "dataset_samples",
+            ]
+        )
+
         # create variant readable id
         self.benchmark_data['variant_id'] = self.benchmark_data['tags.framework'] + "#" + self.benchmark_data['tags.variant_index']
 
@@ -190,7 +200,6 @@ class AnalysisEngine():
         variant_indices_sorted = [ variant_indices[k] for k in variant_indices_sorted_keys ]
 
         variants.columns = ['index', 'framework', 'version', 'build', 'cpu count', 'num threads', 'machine', 'system']
-        #variants = variants.transpose()
 
         # reduce time_inferencing to predict time per request, in micro seconds
         self.benchmark_data['avg_predict_time_usecs'] = self.benchmark_data['metrics.time_inferencing'].astype(float) / self.benchmark_data['dataset_samples'].astype(int) * 1000000
@@ -201,6 +210,13 @@ class AnalysisEngine():
             + self.benchmark_data['model_leaves'] + " leaves<br/>"
             + self.benchmark_data['model_columns'] + " cols"
         )
+
+        # Take last measurement per inferencing task config
+        self.benchmark_data = (
+            self.benchmark_data.sort_values("start_time")
+            .groupby(["inferencing task config", "variant_id"])
+            .last()
+        ).reset_index()
 
         # pivot metrics table
         metrics = self.benchmark_data.pivot(
@@ -216,32 +232,38 @@ class AnalysisEngine():
 
         for variant_id in variant_indices_sorted:
             percentile_metrics_values = (
-                self.benchmark_data.loc[self.benchmark_data['variant_id'] == variant_id][[
-                    'inferencing task config',
-                    'variant_id',
-                    'metrics.batch_time_inferencing_p50_usecs',
-                    'metrics.batch_time_inferencing_p90_usecs',
-                    'metrics.batch_time_inferencing_p99_usecs'
-                ]]
+                self.benchmark_data.loc[
+                    self.benchmark_data["variant_id"] == variant_id
+                ][
+                    [
+                        "inferencing task config",
+                        "variant_id",
+                        "metrics.batch_latency_p50_usecs",
+                        "metrics.batch_latency_p90_usecs",
+                        "metrics.batch_latency_p99_usecs",
+                    ]
+                ]
             ).dropna()
-            
+
             if len(percentile_metrics_values) == 0:
                 continue
 
-            percentile_metrics = (
-                percentile_metrics_values.pivot(
-                    index=['inferencing task config'],
-                    columns=['variant_id'],
-                    values=['metrics.batch_time_inferencing_p50_usecs', 'metrics.batch_time_inferencing_p90_usecs', 'metrics.batch_time_inferencing_p99_usecs']
-                )
+            percentile_metrics = percentile_metrics_values.pivot(
+                index=["inferencing task config"],
+                columns=["variant_id"],
+                values=[
+                    "metrics.batch_latency_p50_usecs",
+                    "metrics.batch_latency_p90_usecs",
+                    "metrics.batch_latency_p99_usecs",
+                ],
             )
-            percentile_metrics.columns = [ col[0].lstrip("metrics.batch_time_inferencing_") for col in percentile_metrics.columns ]
+            percentile_metrics.columns = [
+                col[0].lstrip("metrics.batch_latency_")
+                for col in percentile_metrics.columns
+            ]
 
             percentile_metrics_reports.append(
-                {
-                    'variant_id' : variant_id,
-                    'report' : percentile_metrics.to_markdown()
-                }
+                {"variant_id": variant_id, "report": percentile_metrics.to_markdown()}
             )
 
         # load the jinja template from local files
@@ -297,10 +319,10 @@ def run(args, unknown_args=[]):
                 experiment_id=args.experiment_id,
                 filter_string=f"tags.task = 'score' and tags.benchmark_name = '{args.benchmark_id}'"
             )
-        
+
         if args.data_save:
             analysis_engine.save_benchmark_data(args.data_save)
-        
+
         analysis_engine.report_inferencing(args.output)
 
     else:

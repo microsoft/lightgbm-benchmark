@@ -8,7 +8,7 @@ import os
 import sys
 import argparse
 import logging
-import time
+import timeit
 import numpy as np
 from distutils.util import strtobool
 import lightgbm
@@ -105,13 +105,21 @@ class LightGBMPythonInferecingScript(RunnableScript):
         )
 
         logger.info(f"Running .predict()")
-        batch_start_time = time.monotonic()
         predictions_array = booster.predict(
             data=inference_raw_data,
             num_threads=args.num_threads,
-            predict_disable_shape_check=bool(args.predict_disable_shape_check)
+            predict_disable_shape_check=bool(args.predict_disable_shape_check),
         )
-        prediction_time = (time.monotonic() - batch_start_time)
+        timeit_loops = 10
+        prediction_time = timeit.timeit(
+            lambda: booster.predict(
+                data=inference_raw_data,
+                num_threads=args.num_threads,
+                predict_disable_shape_check=bool(args.predict_disable_shape_check),
+            ),
+            number=timeit_loops,
+        )
+        prediction_time /= timeit_loops
         metrics_logger.log_metric("time_inferencing", prediction_time)
 
         # use helper to log latency with the right metric names

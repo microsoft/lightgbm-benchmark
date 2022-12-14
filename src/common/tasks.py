@@ -26,6 +26,9 @@ class inferencing_task:
 class inferencing_variants:
     framework: str = MISSING
     build: Optional[str] = None
+    threads: Optional[int] = 1
+    batch_exec: Optional[bool] = False
+    parallel_exec: Optional[bool] = False
 
 @dataclass
 class data_generation_task:

@@ -8,7 +8,7 @@ to execute:
 > python src/pipelines/azureml/lightgbm_inferencing.py --exp-config  conf/experiments/lightgbm-inferencing.yaml
 """
 # pylint: disable=no-member
-# NOTE: because it raises 'dict' has no 'outputs' member in dsl.pipeline construction
+# NOTE: because it raises "dict" has no "outputs" member in dsl.pipeline construction
 import os
 import sys
 import json
@@ -25,8 +25,8 @@ from azure.ml.component import dsl
 from azure.ml.component.environment import Docker
 
 # when running this script directly, needed to import common
-LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-SCRIPTS_SOURCES_ROOT = os.path.join(LIGHTGBM_REPO_ROOT, 'src')
+LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+SCRIPTS_SOURCES_ROOT = os.path.join(LIGHTGBM_REPO_ROOT, "src")
 
 if SCRIPTS_SOURCES_ROOT not in sys.path:
     logging.info(f"Adding {SCRIPTS_SOURCES_ROOT} to path")
@@ -67,6 +67,7 @@ class lightgbm_inferencing_config: # pylint: disable=invalid-name
 lightgbm_python_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_python", "spec.yaml"))
 lightgbm_c_api_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_c_api", "spec.yaml"))
 lightgbm_ray_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_ray", "spec.yaml"))
+lightgbm_ort_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "lightgbm_ort", "spec.yaml"))
 custom_win_cli_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "custom_win_cli", "spec.yaml"))
 treelite_compile_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "model_transformation", "treelite_compile", "spec.yaml"))
 treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "inferencing", "treelite_python", "spec.yaml"))
@@ -81,7 +82,7 @@ treelite_score_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_RO
 
 @dsl.pipeline(name=f"lightgbm_inferencing", # pythonic name
                 description=f"LightGBM inferencing on user defined dataset/model",
-                non_pipeline_parameters=['benchmark_custom_properties', 'config'])
+                non_pipeline_parameters=["benchmark_custom_properties", "config"])
 def inferencing_task_pipeline_function(benchmark_custom_properties,
                                        config,
                                        data,
@@ -106,9 +107,9 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
         custom_properties = benchmark_custom_properties.copy()
         custom_properties.update({
             # adding build settings (docker)
-            'framework_build' : variant.build or "default",
+            "framework_build" : variant.build or "default",
             # adding variant_index to spot which variant is the reference
-            'variant_index' : variant_index
+            "variant_index" : variant_index
         })
         # passing as json string that each module parses to digest as tags/properties
         custom_properties = json.dumps(custom_properties)
@@ -151,7 +152,7 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
                 data = data,
                 model = model,
                 verbose = False,
-                custom_properties = custom_properties.replace("\"","\\\"")
+                custom_properties = custom_properties.replace("\"", "\\\"")
             )
             inferencing_step.runsettings.configure(target=config.compute.windows_cpu)
 
@@ -172,9 +173,29 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
                 data = data,
                 model = model,
                 verbose = False,
-                custom_properties = custom_properties
+                custom_properties = custom_properties,
+                predict_disable_shape_check = predict_disable_shape_check,
             )
             inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
+
+        elif variant.framework == "lightgbm_ort":
+            # call module with all the right arguments
+            inferencing_step = lightgbm_ort_score_module(
+                data = data,
+                model = model,
+                verbose = False,
+                run_parallel = variant.parallel_exec,
+                run_batch = variant.batch_exec,
+                n_threads = variant.threads,
+                custom_properties = custom_properties.replace("\"", "\\\"")
+            )
+            inferencing_step.runsettings.configure(target=config.compute.linux_cpu)
+
+            if variant.parallel_exec:
+                variant_comment.append(f"parallel execution")
+            if variant.batch_exec:
+                variant_comment.append(f"batch execution")
+            variant_comment.append(f"num threads {variant.threads}")
 
         else:
             raise NotImplementedError(f"framework {variant.framework} not implemented (yet)")
@@ -196,7 +217,7 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
         # provide step readable display name
         inferencing_step.node_name = format_run_name(f"inferencing_{variant.framework}_{variant_index}")
 
-    # return {key: output}'
+    # return {key: output}
     return pipeline_outputs
 
 
@@ -205,7 +226,7 @@ def inferencing_task_pipeline_function(benchmark_custom_properties,
     non_pipeline_parameters=["workspace", "config"] # required to use config object
 )
 def inferencing_all_tasks(workspace, config):
-    """Pipeline's main building function.
+    """Pipeline"s main building function.
 
     Args:
         workspace (azureml.core.Workspace): the AzureML workspace
@@ -222,9 +243,9 @@ def inferencing_all_tasks(workspace, config):
 
         # create custom properties for this task
         benchmark_custom_properties = {
-            'benchmark_name' : config.lightgbm_inferencing_config.benchmark_name, 
-            'benchmark_dataset' : inferencing_task.data.name,
-            'benchmark_model' : inferencing_task.model.name,
+            "benchmark_name" : config.lightgbm_inferencing_config.benchmark_name, 
+            "benchmark_dataset" : inferencing_task.data.name,
+            "benchmark_model" : inferencing_task.model.name,
         }
 
         inferencing_task_subgraph_step = inferencing_task_pipeline_function(
