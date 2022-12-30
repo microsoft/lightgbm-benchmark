@@ -103,12 +103,12 @@ inputs:
     optional: true
 
 outputs:
-  output_train:  #AutoML's requirement is to use mltable 
-    type: mltable
+  output_train:
+    type: uri_folder
   output_test:
-    type: mltable
+    type: uri_folder
   output_inference:
-    type: mltable
+    type: uri_folder
   external_header:
     type: uri_folder
 

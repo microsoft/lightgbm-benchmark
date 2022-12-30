@@ -20,8 +20,8 @@ from omegaconf import OmegaConf, MISSING
 from typing import Optional, List
 
 # AzureML SDK 2.0
-from azure.ml import dsl
-from azure.ml.entities import load_component
+from azure.ai.ml import dsl
+from azure.ai.ml import load_component
 
 # when running this script directly, needed to import common
 LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -68,7 +68,7 @@ class data_generation_config: # pylint: disable=invalid-name
 # load those components from local yaml specifications
 # use COMPONENTS_ROOT as base folder
 
-generate_data_component = load_component(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
+generate_data_component = load_component(source=os.path.join(COMPONENTS_ROOT, "data_processing", "generate_data", "spec.yaml"))
 
 ### DATA GENERATION PIPELINE ###
 
