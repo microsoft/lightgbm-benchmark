@@ -5,34 +5,27 @@
 LightGBM sweep script using ray tune.
 """
 
-from common.raytune_param import RayTuneParameterParser
-from common.ray import RayScript
 from functools import partial
 from genericpath import exists
 import json
 import os
 import sys
-import lightgbm
 from distutils.util import strtobool
-import time
 
 import ray
 from ray import tune
-from ray.tune.integration.lightgbm import TuneReportCheckpointCallback
+from lightgbm_ray.tune import TuneReportCheckpointCallback
 from ray.tune.suggest import ConcurrencyLimiter
 from ray.tune.suggest.ax import AxSearch
 from ray.tune.suggest.bayesopt import BayesOptSearch
 from flaml import BlendSearch
-from ray.tune.schedulers import FIFOScheduler, PopulationBasedTraining
-from ray.tune.schedulers.hb_bohb import HyperBandForBOHB
-from ray.tune.suggest.bohb import TuneBOHB
+from ray.tune.schedulers import FIFOScheduler
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.schedulers import HyperBandScheduler
 from ray.tune.schedulers import MedianStoppingRule
 from ray.tune.suggest.basic_variant import BasicVariantGenerator
-from ray.tune.suggest.optuna import OptunaSearch
-from ray.tune import Callback
 
+import lightgbm_ray
 
 # set tune environment variable for forward compatibility
 # https://docs.ray.io/en/latest/tune/user-guide.html#tune-env-vars
@@ -49,7 +42,10 @@ if COMMON_ROOT not in sys.path:
 
 
 # useful imports from common
+from common.ray import RayScript
+from common.raytune_param import RayTuneParameterParser
 
+# TODO: refactor this in a common function shared.
 
 def process_raytune_parameters(args):
     """Parses config and spots sweepable paraneters
@@ -71,18 +67,15 @@ def process_raytune_parameters(args):
         'train',
         'construct',
         'disable_perf_metrics',
-        'ray_head_addr',
-        'ray_head_port',
-        'ray_redis_password',
-        'cluster_auto_setup',
         'search_alg',
         'scheduler',
         'mode',
         'num_samples',
         'time_budget',
         'max_concurrent_trials',
-        'cpus_per_trial',
+        'cpus_per_actor',
         'output_path',
+        'log_path',
         'metrics_driver'
     ]
     for key in non_lgbm_params:
@@ -122,21 +115,17 @@ def process_raytune_parameters(args):
     return tunable_params, fixed_params
 
 
-class LightGBMRayTuneScript(RayScript):
+class LightGBMRayTuneDistributedScript(RayScript):
 
     SEARCH_ALG_MAP = {"BasicVariantGenerator": BasicVariantGenerator,
                       "AxSearch": AxSearch,
                       "BayesOptSearch": BayesOptSearch,
-                      "BlendSearch": BlendSearch,
-                      "TuneBOHB": TuneBOHB,
-                      "OptunaSearch": OptunaSearch}
+                      "BlendSearch": BlendSearch}
 
     SCHEDULER_MAP = {"FIFOScheduler": FIFOScheduler,
                      'ASHAScheduler': ASHAScheduler,
                      'HyperBandScheduler': HyperBandScheduler,
-                     'MedianStoppingRule': MedianStoppingRule,
-                     'PopulationBasedTraining': PopulationBasedTraining,
-                     'HyperBandForBOHB': HyperBandForBOHB}
+                     'MedianStoppingRule': MedianStoppingRule}
 
     def __init__(self):
         super().__init__(
@@ -161,8 +150,12 @@ class LightGBMRayTuneScript(RayScript):
         group_i = parser.add_argument_group("Input Data")
         group_i.add_argument("--train",
                              required=True, type=str, help="Training data location (file or dir path)")
+        group_i.add_argument("--train_data_format",
+                             required=False, type=str, choices=['CSV', 'TSV', 'PARQUET', 'PETAFORM'], default='CSV', help="type of input train data (CSV, PARQUET, PETAFORM), default CSV")
         group_i.add_argument("--test",
                              required=True, type=str, help="Testing data location (file path)")
+        group_i.add_argument("--test_data_format",
+                             required=False, type=str, choices=['CSV', 'TSV', 'PARQUET', 'PETAFORM'], default='CSV', help="type of input test data (CSV, PARQUET, PETAFORM), default using same as train")
         group_i.add_argument("--construct",
                              required=False, default=True, type=strtobool, help="use lazy initialization during data loading phase")
         group_i.add_argument("--header", required=False,
@@ -175,6 +168,8 @@ class LightGBMRayTuneScript(RayScript):
         group_o = parser.add_argument_group("Outputs")
         group_o.add_argument("--output_path",
                              required=False, type=str, help="Export the best result as a csv file in this dir path.")
+        group_o.add_argument("--log_path", required=True,
+                             type=str, help="the path for ray tune log files.")
 
         # learner params
         group_lgbm = parser.add_argument_group("LightGBM learning parameters")
@@ -206,55 +201,40 @@ class LightGBMRayTuneScript(RayScript):
         group_raytune.add_argument(
             "--mode", required=True, type=str, choices=['min', 'max'])
         group_raytune.add_argument("--search_alg", required=False, type=str, default="BasicVariantGenerator",
-                                   choices=["BasicVariantGenerator", "AxSearch", "BayesOptSearch", "BlendSearch", "OptunaSearch", "TuneBOHB"])
+                                   choices=["BasicVariantGenerator", "AxSearch", "BayesOptSearch", "BlendSearch"])
         group_raytune.add_argument("--scheduler", required=False, default="FIFOScheduler", type=str, choices=[
-                                   "FIFOScheduler", 'ASHAScheduler', 'HyperBandScheduler', 'MedianStoppingRule', 'PopulationBasedTraining', "HyperBandForBOHB"])
+                                   "FIFOScheduler", 'ASHAScheduler', 'HyperBandScheduler', 'MedianStoppingRule'])
         group_raytune.add_argument(
             "--num_samples", required=False, default=-1, type=int)
         group_raytune.add_argument(
             "--time_budget", required=False, default=1800, type=int)
         group_raytune.add_argument(
-            "--cpus_per_trial", required=False, default=1, type=int)
+            "--cpus_per_actor", required=False, default=1, type=int)
         group_raytune.add_argument(
-            "--max_concurrent_trials", required=False, default=2, type=int)
+            "--max_concurrent_trials", required=False, default=0, type=int)
 
-        # ray tune parameters for certain optimizer or scheduler
-        group_raytune.add_argument(
-            "--low_num_iterations", required=False, default=None, type=int)
-        group_raytune.add_argument(
-            "--low_num_leaves", required=False, default=None, type=int)
-        group_raytune.add_argument(
-            "--low_min_data_in_leaf", required=False, default=None, type=int)
+        group_lgbm = parser.add_argument_group(
+            f"LightGBM/Ray runsettings [{__name__}:{cls.__name__}]")
+        group_lgbm.add_argument("--lightgbm_ray_actors", required=False, default=None,
+                                type=int, help="number of actors (default: count available nodes, or 1)")
+        group_lgbm.add_argument("--ray_data_distributed", required=False, default=True, type=strtobool,
+                                help="is data pre-partitioned (True) or should ray distribute it (False)")
 
         return parser
 
     # get the search algorithm
     # TODO: add arguments of scheduler for advanced usage.
     def get_search_alg(self, args):
-        if args.search_alg not in LightGBMRayTuneScript.SEARCH_ALG_MAP:
+        if args.search_alg not in LightGBMRayTuneDistributedScript.SEARCH_ALG_MAP:
             raise NotImplementedError(
                 f'The specified search algo {args.search_alg} is not supported yet.')
-        search_alg_func = LightGBMRayTuneScript.SEARCH_ALG_MAP[args.search_alg]
+        search_alg_func = LightGBMRayTuneDistributedScript.SEARCH_ALG_MAP[args.search_alg]
 
         if args.search_alg == "BasicVariantGenerator":
             search_alg = search_alg_func(
                 max_concurrent=args.max_concurrent_trials)
         else:
-            search_alg_args = None
-            if args.search_alg == "BlendSearch":
-                low_cost_draft = {"num_iterations": args.low_num_iterations,
-                                  "num_leaves": args.low_num_leaves, "min_data_in_leaf": args.low_min_data_in_leaf}
-                # remove the None value
-                low_cost_partial_config = {
-                    k: v for k, v in low_cost_draft.items() if v is not None}
-                search_alg_args = {
-                    "low_cost_partial_config": low_cost_partial_config}
-                print(
-                    f'The search_alg_args is {low_cost_partial_config} for {args.search_alg}')
-            if search_alg_args is not None:
-                search_alg = search_alg_func(**search_alg_args)
-            else:
-                search_alg = search_alg_func()
+            search_alg = search_alg_func()
             search_alg = ConcurrencyLimiter(
                 search_alg, max_concurrent=args.max_concurrent_trials)
 
@@ -263,11 +243,11 @@ class LightGBMRayTuneScript(RayScript):
     # get scheduler
     # TODO: add arguments of scheduler for advanced usage.
     def get_scheduler(self, args):
-        if args.scheduler not in LightGBMRayTuneScript.SCHEDULER_MAP:
+        if args.scheduler not in LightGBMRayTuneDistributedScript.SCHEDULER_MAP:
             raise Exception(
                 f'The specified scheduler {args.scheduler} is not supported yet.')
         else:
-            scheduler_func = LightGBMRayTuneScript.SCHEDULER_MAP[args.scheduler]
+            scheduler_func = LightGBMRayTuneDistributedScript.SCHEDULER_MAP[args.scheduler]
         return scheduler_func()
 
     def run(self, args, logger, metrics_logger, unknown_args):
@@ -278,9 +258,13 @@ class LightGBMRayTuneScript(RayScript):
             metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow
             unknown_args (list[str]): list of arguments not recognized during argparse
         """
-
         # parse args parameters, fixed parameters go to lgbm_params.
         tunable_params, fixed_params = process_raytune_parameters(args)
+
+        # log tunable metrics to show in the component
+        metrics_logger.log_parameters(
+            **tunable_params
+        )
 
         logger.info(f'The fixed_params: {fixed_params}')
         logger.info(f'The tunable_params: {tunable_params}')
@@ -293,34 +277,42 @@ class LightGBMRayTuneScript(RayScript):
 
         # I need a local copy of the function to make it available to ray tune training func.
         # TODO: find a better way for this.
-        def input_file_path(path):
-            """ Argparse type to resolve input path as single file from directory.
-            Given input path can be either a file, or a directory.
-            If it's a directory, this returns the path to the unique file it contains.
+        def get_all_files(path, fail_on_unknown_type=False):
+            """ Scans some input path and returns a list of files.
 
             Args:
-                path (str): either file or directory path
-
+                path (str): either a file, or directory path
+                fail_on_unknown_type (bool): fails if path is neither a file or a dir?
             Returns:
-                str: path to file, or to unique file in directory
+                List[str]: list of paths contained in path
             """
+            # check the existence of the path
+            if exists(path) == False:
+                raise Exception(f"The specified path {path} does not exist.")
+
+            # if input path is already a file, return as list
             if os.path.isfile(path):
-                logger.info(f"Found INPUT file {path}")
-                return path
+                print(f"Found INPUT file {path}")
+                return [path]
+
+            # if input path is a directory, list all files and return
             if os.path.isdir(path):
-                all_files = os.listdir(path)
+                print(f"Found INPUT directory {path}")
+                all_files = [os.path.join(path, entry)
+                             for entry in os.listdir(path)]
+                print(f"Found INPUT files {all_files}")
                 if not all_files:
                     raise Exception(
                         f"Could not find any file in specified input directory {path}")
-                if len(all_files) > 1:
-                    raise Exception(
-                        f"Found multiple files in input file path {path}, use input_directory_path type instead.")
-                logger.info(
-                    f"Found INPUT directory {path}, selecting unique file {all_files[0]}")
-                return os.path.join(path, all_files[0])
+                return all_files
 
-            logger.critical(
-                f"Provided INPUT path {path} is neither a directory or a file???")
+            if fail_on_unknown_type:
+                raise FileNotFoundError(
+                    f"Provided INPUT path {path} is neither a directory or a file???")
+            else:
+                print(
+                    f"Provided INPUT path {path} is neither a directory or a file???")
+
             return path
 
         # define training function
@@ -330,37 +322,105 @@ class LightGBMRayTuneScript(RayScript):
             fixed_params.update(config)
             # remove mode
             del fixed_params['mode']
-            # set the num_threads to the number of cores.
-            fixed_params['num_threads'] = os.cpu_count()
             print(f'The updated config parameters {fixed_params}')
 
-            # logging the train/test_data_path
-            print(f'The train_data_path is {train_data_path}')
-            print(f'The test_data_path is {test_data_path}')
+            ### DATA LOADING (train) ###
 
-            # retrive file from the directory path
-            train_file = input_file_path(train_data_path)
-            test_file = input_file_path(test_data_path)
+            print(f"Loading data for training")
+            train_paths = get_all_files(train_data_path)
 
-            train_data_exist = exists(train_data_path)
-            if train_data_exist == False:
-                raise Exception(
-                    f"The specified path {train_data_path} does not exist.")
+            # detect sharding strategy exceptions
+            if len(train_paths) != num_actors:
+                # NOTE: when this happens, data is read entirely on head node
+                # then ray distributes it to cluster nodes (distributed=False)
+                print(
+                    f"Found {len(train_paths)} training files != num_actors={num_actors} => forcing distributed=False")
+                args.ray_data_distributed = False
+            else:
+                # NOTE: in this situation, each node will read one shard of data which means 1 file
+                # https://github.com/ray-project/xgboost_ray/blob/master/xgboost_ray/matrix.py#L605
+                print(
+                    f"Found {len(train_paths)} training files == num_actors={num_actors} => using distributed from args.ray_data_distributed={args.ray_data_distributed}")
 
-            train_data = lightgbm.Dataset(train_file, params=fixed_params)
-            test_data = lightgbm.Dataset(test_file, params=fixed_params)
+            if args.train_data_format == 'TSV':
+                train_data = lightgbm_ray.RayDMatrix(
+                    train_paths,
+                    label=args.label_column,  # Will select this column as the label
+                    filetype=lightgbm_ray.RayFileType.CSV,
+                    distributed=args.ray_data_distributed,
+                    sharding=lightgbm_ray.RayShardingMode.INTERLEAVED,
+                    sep='\t'
+                )
+            else:
+                train_data_format = getattr(
+                    lightgbm_ray.RayFileType, args.train_data_format)
+                train_data = lightgbm_ray.RayDMatrix(
+                    train_paths,
+                    label=args.label_column,  # Will select this column as the label
+                    filetype=train_data_format,
+                    distributed=args.ray_data_distributed,
+                    sharding=lightgbm_ray.RayShardingMode.INTERLEAVED
+                )
 
-            gbm = lightgbm.train(
+            # ### DATA LOADING (validation) ###
+
+            print(f"Loading data for validation")
+            # validation_paths = list(sorted(glob.glob(os.path.join(test_data_path, "*"))))
+            validation_paths = get_all_files(test_data_path)
+            print(f"Found {len(validation_paths)} validation files")
+
+            # NOTE: it seems we need to have as many test sets as actors
+            # args.lightgbm_ray_actors or self.available_nodes
+            required_validation_sets = num_actors
+            if len(validation_paths) == 1 and required_validation_sets > 1:
+                print(
+                    f"Creating artificial {required_validation_sets} test sets")
+                validation_paths = [validation_paths[0]
+                                    for _ in range(required_validation_sets)]
+
+            # load the validation data into RayDMatrix
+            if args.test_data_format == 'TSV':
+                test_data = lightgbm_ray.RayDMatrix(
+                    validation_paths,
+                    label=args.label_column,  # Will select this column as the label
+                    filetype=lightgbm_ray.RayFileType.CSV,
+                    distributed=True,
+                    sep='\t'
+                )
+            else:
+                val_data_format = getattr(
+                    lightgbm_ray.RayFileType, args.test_data_format)
+                test_data = lightgbm_ray.RayDMatrix(
+                    validation_paths,
+                    label=args.label_column,  # Will select this column as the label
+                    filetype=val_data_format,
+                    distributed=True,
+                )
+
+            ### TRAINING ###
+
+            print(f"Training LightGBM with parameters: {fixed_params}")
+            evals_result = {}
+            additional_results = {}
+
+            lightgbm_ray.train(
                 fixed_params,
                 train_data,
+                # this is required, num_iterations in lgbm_params will be discarded anyway
+                num_boost_round=fixed_params['num_iterations'],
+                evals_result=evals_result,
+                additional_results=additional_results,
                 valid_sets=[test_data],
                 valid_names=[valid_name],
+                verbose_eval=True,
+                ray_params=ray_params,
                 callbacks=[
                     TuneReportCheckpointCallback(
                         {report_metric: report_metric}
                     ),
                 ],
             )
+        # TODO: log best trial metrics with time.
 
         # add must-have non-lgbm-specific arguments in the basic config.
         config = {"metric": args.metric,
@@ -369,9 +429,10 @@ class LightGBMRayTuneScript(RayScript):
         config.update(tunable_params)
 
         # logging the configs
-        print(f'The tune configs are: {config}')
+        logger.info(f'The tune configs are: {config}')
 
-        valid_name = 'eval'
+        valid_name = 'valid_0'
+        # TODO: use metric name like "node_0/valid_0.metric" to align with other components.
         report_metric = valid_name + '-' + args.metric
 
         # instantiate and setup the search agl
@@ -379,38 +440,21 @@ class LightGBMRayTuneScript(RayScript):
 
         scheduler = self.get_scheduler(args)
 
-        class LogBestMetricCallBack(Callback):
-            def on_trial_result(self, iteration, trials, trial, result, **info):
-                try:
-                    # get best child
-                    metric_op = 1. if args.mode == "max" else -1.
-                    best_metric = float("-inf")
-                    best_trial = None
-                    for t in trials:
-                        if not t.last_result:
-                            continue
-                        if report_metric not in t.last_result:
-                            continue
-                        if not best_metric or \
-                                t.last_result[report_metric] * metric_op > best_metric:
-                            best_metric = t.last_result[report_metric] * metric_op
-                            best_trial = t
-                    # get back the original best_trial
-                    best_metric *= metric_op
-                    # log the metrics for the best child.
-                    print(
-                        f"Current best trial @ {time.time()-start_time}: {best_trial.trial_id} with {report_metric}={best_metric}")
-                    metrics_logger.log_metric(
-                        "wall_clock_time", time.time()-start_time)
-                    metrics_logger.log_metric(
-                        "best_child_metrics", best_metric)
-                    metrics_logger.log_metric("Num_of_trials", len(trials))
-                except:
-                    pass
+        # distributed training setup
+        num_actors = args.lightgbm_ray_actors or self.available_nodes
+        num_cpus_per_actor = args.cpus_per_actor
 
-        logger.info(
-            f'The tune run settings: num_samples={args.num_samples}; time_buget_s={args.time_budget}; cpus_per_trial={args.cpus_per_trial}')
-        start_time = time.time()
+        ray_params = lightgbm_ray.RayParams(num_actors=num_actors,
+                                            cpus_per_actor=num_cpus_per_actor
+                                            )
+        # understand the resource placement stragety.
+        from ray.tune import PlacementGroupFactory
+        tune_resources = ray_params.get_tune_resources()
+        if isinstance(tune_resources, PlacementGroupFactory):
+            tune_resources._strategy = 'SPREAD'
+            print("bundles=", tune_resources._bundles, "strategy=", tune_resources._strategy)
+        else:
+            print("Not PlacementGroupFactory.")
 
         analysis = tune.run(
             partial(training_function,
@@ -424,10 +468,9 @@ class LightGBMRayTuneScript(RayScript):
             scheduler=scheduler,
             num_samples=args.num_samples,
             time_budget_s=args.time_budget,
-            resources_per_trial={"cpu": args.cpus_per_trial, "gpu": 0},
+            resources_per_trial=tune_resources,
             raise_on_failed_trial=False,
-            callbacks=[LogBestMetricCallBack()],
-            local_dir='./outputs',
+            local_dir ='./outputs',
             sync_config=tune.SyncConfig(syncer=None)  # Disable syncing
         )
 
@@ -443,12 +486,12 @@ def get_arg_parser(parser=None):
     """
     To ensure compatibility with shrike unit tests
     """
-    return LightGBMRayTuneScript.get_arg_parser(parser)
+    return LightGBMRayTuneDistributedScript.get_arg_parser(parser)
 
 
 def main(cli_args=None):
     """ To ensure compatibility with shrike unit tests """
-    LightGBMRayTuneScript.main(cli_args)
+    LightGBMRayTuneDistributedScript.main(cli_args)
 
 
 if __name__ == "__main__":

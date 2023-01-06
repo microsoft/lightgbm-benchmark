@@ -99,7 +99,7 @@ def apply_sweep_settings(step, sweep_settings_config):
             )
         elif sweep_settings_config.early_termination.policy_type == "truncation_selection":
             step.runsettings.sweep.early_termination.configure(
-                policy_type="bandit",
+                policy_type="truncation_selection",
                 truncation_percentage=sweep_settings_config.early_termination.truncation_percentage,
                 evaluation_interval=sweep_settings_config.early_termination.evaluation_interval,
                 delay_evaluation=sweep_settings_config.early_termination.delay_evaluation

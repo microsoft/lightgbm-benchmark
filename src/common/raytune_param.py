@@ -4,38 +4,25 @@
 """
 Parses Ray Tune parameters from text arguments (cli or yaml)
 """
-import re
 import argparse
 import logging
-from azureml.core import Workspace, Datastore, Dataset
-import ray
-from ray import tune
 from ray.tune import (
     uniform,
     quniform,
-    loguniform,
-    qloguniform,
-    randn,
-    qrandn,
     randint,
     qrandint,
-    lograndint,
-    qlograndint,
     choice,
 )
 
 
 class RayTuneParameterParser():
 
+    # TODO: allow more distributions
     DISTRIBUTIONS_MAP = {"choice": choice,
                          "uniform": uniform,
-                         # "loguniform": loguniform,
-                         # "normal": normal,
-                         # "lognormal": lognormal,
-                         # "quniform": quniform,
-                         # "qloguniform": qloguniform,
-                         # "qnormal": qnormal,
-                         # "qlognormal": qlognormal,
+                         "quniform": quniform,
+                         "randint": randint,
+                         "qrandint": qrandint,
                          }
 
     def __init__(self, tunable_parameters):

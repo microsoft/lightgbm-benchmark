@@ -1,0 +1,84 @@
+# to execute:
+# > python src/pipelines/azureml/lightgbm_training.py --exp-config conf/experiments/lightgbm_training/raytune_distributed.yaml
+
+defaults:
+  - aml: lightgbm-benchmark-eus2
+  - compute: lightgbm-benchmark-eus2
+
+### CUSTOM PARAMETERS ###
+
+experiment:
+  name: "dev_lightgbm_ray_tune"
+  description: "something interesting to say about this"
+
+lightgbm_training_config:
+  # name of your particular benchmark
+  benchmark_name: "lightgbm-ray-tune" # override this with a unique name
+
+  # list all the train/test pairs to train on
+  tasks:
+    - train:
+        name: "data-synthetic-headercsv-regression-10cols-100000samples-train"
+      test:
+        name: "data-synthetic-headercsv-regression-10cols-10000samples-test"
+      task_key: "dev_ray" # optional, user to register outputs
+
+  # NOTE: this example uses only 1 training (reference)
+  # see other config files for creating training variants
+  reference:
+    framework: lightgbm_ray_tune_distributed
+
+    # input parameters
+    data:
+      auto_partitioning: True # inserts partitioning to match expected number of partitions (if nodes*processes > 1)
+      pre_convert_to_binary: False # inserts convertion of train/test data into binary to speed up training (not compatible with auto_partitioning yet)
+      header: true # IMPORTANT
+      label_column: "0"
+      group_column: null
+      train_data_format: 'CSV'
+      test_data_format: 'CSV'
+
+    # lightgbm training parameters
+    training:
+      objective: "regression"
+      metric: "rmse"
+      boosting: "gbdt"
+      tree_learner: "data"
+      num_iterations: "choice([30,40,50,60])"
+      num_leaves: "31"
+      min_data_in_leaf: "20"
+      learning_rate: "0.1"
+      max_bin: "255"
+      feature_fraction: "1.0"
+
+      # compute parameters
+      device_type: "cpu"
+
+      # you can add anything under custom_params, it will be sent as a dictionary
+      # to the lightgbm training module to override its parameters (see lightgbm docs for list)
+      custom_params:
+          deterministic: True
+          use_two_round_loading: True
+
+    # compute parameters
+    runtime:
+      target: "linux-cpu-ds14v2" # optional: force target for this training job
+      nodes: 4
+      processes: 1
+
+    # model registration
+    # naming convention: "{register_model_prefix}-{task_key}-{num_iterations}trees-{num_leaves}leaves-{register_model_suffix}"
+    output:
+      register_model: False
+      #register_model_prefix: "model"
+      #register_model_suffix: null
+
+    raytune:
+      mode: "min"
+      search_alg: "BasicVariantGenerator"
+      scheduler: "FIFOScheduler"
+      num_samples: 5
+      time_budget: 1800
+      concurrent_trials: 2
+      lightgbm_ray_actors: 2
+      cpus_per_actor: 16
