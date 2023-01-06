@@ -18,9 +18,9 @@ lightgbm_training_config:
   # list all the train/test pairs to train on
   tasks:
     - train:
-        name: "data-synthetic-regression-100cols-100000samples-train"
+        path: "azureml:output_train_regression_dpv2:1"
       test:
-        name: "data-synthetic-regression-100cols-10000samples-test"
+        path: "azureml:output_test_regression_dpv2:1"
       task_key: "synthetic-regression-100cols" # optional, user to register outputs
 
   # NOTE: this example uses only 1 training (reference)

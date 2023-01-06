@@ -6,14 +6,7 @@ from typing import Any, Optional
 class data_input_spec:
     # NOTE: Union is not supported in Hydra/OmegaConf
     # specify either by dataset name and version
-    name: Optional[str] = None
-    version: Optional[str] = None
-    # or by uuid (non-registered)
-    uuid: Optional[str] = None
-    # or by datastore+path
-    datastore: Optional[str] = None
     path: Optional[str] = None
-    validate: bool = True
 
 @dataclass
 class inferencing_task:
@@ -102,7 +95,7 @@ class lightgbm_training_variant_parameters:
 
     # COMPUTE
     device_type: str = "cpu"
-    multinode_driver: str = "socket"
+    multinode_driver: str = "mpi"
     verbose: bool = False
 
 @dataclass

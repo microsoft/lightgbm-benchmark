@@ -18,9 +18,9 @@ from omegaconf import OmegaConf, MISSING
 from typing import Optional, Any, List
 
 # AzureML
-from azure.ml.component import Component
-from azure.ml.component import dsl
-from azure.ml.component.environment import Docker
+from azure.ai.ml.entities import Component
+from azure.ai.ml import load_component, dsl
+#from azure.ai.ml.entities.environment import Docker
 
 # when running this script directly, needed to import common
 LIGHTGBM_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
@@ -31,7 +31,7 @@ if SCRIPTS_SOURCES_ROOT not in sys.path:
     sys.path.append(str(SCRIPTS_SOURCES_ROOT))
 
 from common.tasks import training_task, training_variant
-from common.sweep import SweepParameterParser
+#from common.sweep import SweepParameterParser
 from common.aml import load_dataset_from_data_input_spec
 from common.aml import apply_sweep_settings
 from common.aml import format_run_name
@@ -73,18 +73,18 @@ class lightgbm_training_config: # pragma: no cover
 # use COMPONENTS_ROOT as base folder
 
 # lightgbm python api with socket (pip install lightgbm)
-lightgbm_basic_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
-lightgbm_basic_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
+lightgbm_basic_train_module = load_component(source=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "spec.yaml"))
+#lightgbm_basic_train_sweep_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_python", "sweep_spec.yaml"))
 
 # lightgbm ray api
-lightgbm_ray_train_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "lightgbm_ray", "spec.yaml"))
+#lightgbm_ray_train_module = load_component(source==os.path.join(COMPONENTS_ROOT, "training", "lightgbm_ray", "spec.yaml"))
 
 # preprocessing/utility modules
-partition_data_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
-lightgbm_data2bin_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
+#partition_data_module = load_component(source=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
+#lightgbm_data2bin_module = load_component(source=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
 
 # load ray tune module.
-lightgbm_ray_tune_module = Component.from_yaml(yaml_file=os.path.join(COMPONENTS_ROOT, "training", "ray_tune", "spec.yaml"))
+#lightgbm_ray_tune_module = load_component(source=os.path.join(COMPONENTS_ROOT, "training", "ray_tune", "spec.yaml"))
 
 ### PIPELINE SPECIFIC CODE ###
 
@@ -209,7 +209,7 @@ def lightgbm_training_pipeline_function(config,
                 label_column=variant_params.data.label_column,
                 group_column=variant_params.data.group_column,
                 max_bin=variant_params.training.max_bin,
-                custom_params=json.dumps(dict(variant_params.training.custom_params or {})),
+                custom_params=json.dumps(dict(variant_params.training.custom_params or {})).replace("\"", "\\\""),
                 verbose=variant_params.training.verbose
             )
             convert_data2bin_step.runsettings.configure(target=config.compute.linux_cpu)
@@ -256,10 +256,11 @@ def lightgbm_training_pipeline_function(config,
             'framework_build': variant_params.runtime.build,
         }
         variant_custom_properties.update(benchmark_custom_properties)
-        training_params['custom_properties'] = json.dumps(variant_custom_properties)
+        training_params['custom_properties'] = json.dumps(variant_custom_properties).replace("\"", "\\\"")
 
         # serialize custom_params to pass as argument
-        training_params['custom_params'] = json.dumps(dict(variant_params.training.custom_params or {}))
+        training_params['custom_params'] = json.dumps(dict(variant_params.training.custom_params or {})).replace("\"", "\\\"")
+        #.replace("\"", "\\\"")
 
         # some debug outputs to expose variant parameters
         print(f"*** lightgbm variant#{variant_index}: {training_params}")
@@ -345,11 +346,11 @@ def lightgbm_training_pipeline_function(config,
         ###############
 
         # optional: override docker (ex: to test custom builds)
-        if 'build' in variant_params.runtime and variant_params.runtime.build:
-            custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, variant_params.runtime.build))
-            lightgbm_train_step.runsettings.environment.configure(
-                docker=custom_docker
-            )
+        # if 'build' in variant_params.runtime and variant_params.runtime.build:
+        #     custom_docker = Docker(file=os.path.join(LIGHTGBM_REPO_ROOT, variant_params.runtime.build))
+        #     lightgbm_train_step.runsettings.environment.configure(
+        #         docker=custom_docker
+        #     )
 
         ##############
         ### OUTPUT ###
@@ -393,11 +394,11 @@ def lightgbm_training_pipeline_function(config,
     # return {key: output}'
     return {}
 
-# creating an overall pipeline using pipeline_function for each task given
-@dsl.pipeline(
-    name="training_all_tasks",
-    non_pipeline_parameters=['workspace', 'config']
-)
+# creating a new pipeline using pipeline_function for each task given
+# @dsl.pipeline(
+#     name="training_all_tasks",
+#     non_pipeline_parameters=['workspace', 'config']
+# )
 def training_all_tasks(workspace, config):
     # loop on all training tasks
     for training_task in config.lightgbm_training_config.tasks:
@@ -412,8 +413,8 @@ def training_all_tasks(workspace, config):
             'benchmark_task_key' : training_task.task_key
         }
 
-        # call pipeline_function as a subgraph here
-        training_task_subgraph_step = lightgbm_training_pipeline_function(
+        # Each training task is a new pipeline (since subgraph support has not reached GA)
+        training_task_pipeline_instance = lightgbm_training_pipeline_function(
             # NOTE: benchmark_custom_properties is not an actual pipeline input, just passed to the python code
             config=config,
             benchmark_custom_properties=benchmark_custom_properties,
@@ -422,16 +423,30 @@ def training_all_tasks(workspace, config):
         )
 
         # add some relevant comments on the subgraph
-        training_task_subgraph_step.comment = " -- ".join([
+        training_task_pipeline_instance.comment = " -- ".join([
             "LightGBM training pipeline",
             f"benchmark name: {config.lightgbm_training_config.benchmark_name}",
             f"benchmark task key: {training_task.task_key}"
         ])
 
+        training_task_pipeline_instance.settings.default_compute=config.compute.default_compute_target
 
-### MAIN BLOCK ###
+        #pipeline_instance.settings.continue_on_step_failure=True
+        experiment_description="\n".join([
+            "Training on all specified tasks (see yaml below).",
+            "```yaml""",
+            "data_generation_config:",
+            OmegaConf.to_yaml(config.lightgbm_training_config),
+            "```"
+        ])
 
-# Step 4: implement main block using helper functions
+        # validate/submit the pipeline (if run.submit=True)
+        pipeline_submit(
+            workspace,
+            config,
+            training_task_pipeline_instance,
+            experiment_description=experiment_description
+        )
 
 def main():
     # use parse helper function to get arguments from CLI
@@ -442,23 +457,3 @@ def main():
 
     # run the pipeline function with the given arguments
     pipeline_instance = training_all_tasks(workspace, config)
-
-    # generate a nice markdown description
-    experiment_description="\n".join([
-        "Training on all specified tasks (see yaml below).",
-        "```yaml""",
-        "data_generation_config:",
-        OmegaConf.to_yaml(config.lightgbm_training_config),
-        "```"
-    ])
-
-    # validate/submit the pipeline (if run.submit=True)
-    pipeline_submit(
-        workspace,
-        config,
-        pipeline_instance,
-        experiment_description=experiment_description
-    )
-
-if __name__ == "__main__":
-    main()

@@ -26,7 +26,7 @@ tags:
 inputs:
   # Inputs
   train:
-    type: mltable
+    type: uri_folder
     description: Directory to the training data
     optional: false
   test:
@@ -143,7 +143,7 @@ inputs:
     description: "Device for the tree learning, you can use GPU to achieve the faster learning (to use gpu/cuda you need a specific dockerfile)"
   multinode_driver:
     type: string
-    default: 'socket'
+    default: 'mpi'
     enum:
       - socket
       - mpi
@@ -190,7 +190,7 @@ command: >-
     --objective ${{inputs.objective}}
     --metric ${{inputs.metric}}
     $[[--label_gain ${{inputs.label_gain}}]]
-    $[[--custom_params ${{inputs.custom_params}}]]
+    $[[--custom_params "${{inputs.custom_params}}"]]
     --boosting ${{inputs.boosting}}
     --tree_learner ${{inputs.tree_learner}}
     --num_trees ${{inputs.num_iterations}}
@@ -202,7 +202,7 @@ command: >-
     --export_model ${{outputs.model}}
     --model_filename ${{inputs.model_filename}}
     --verbose ${{inputs.verbose}}
-    $[[--custom_properties ${{inputs.custom_properties}}]]
+    $[[--custom_properties "${{inputs.custom_properties}}"]]
 
 environment:
   name: lightgbm-docker
