@@ -457,3 +457,6 @@ def main():
 
     # run the pipeline function with the given arguments
     pipeline_instance = training_all_tasks(workspace, config)
+
+if __name__ == "__main__":
+    main()
