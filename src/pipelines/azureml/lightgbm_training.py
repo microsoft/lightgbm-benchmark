@@ -80,15 +80,14 @@ lightgbm_basic_train_module = load_component(source=os.path.join(COMPONENTS_ROOT
 #lightgbm_ray_train_module = load_component(source==os.path.join(COMPONENTS_ROOT, "training", "lightgbm_ray", "spec.yaml"))
 
 # preprocessing/utility modules
-#partition_data_module = load_component(source=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
+partition_data_module = load_component(source=os.path.join(COMPONENTS_ROOT, "data_processing", "partition_data", "spec.yaml"))
 #lightgbm_data2bin_module = load_component(source=os.path.join(COMPONENTS_ROOT, "data_processing", "lightgbm_data2bin", "spec.yaml"))
 
 # load ray tune module.
 #lightgbm_ray_tune_module = load_component(source=os.path.join(COMPONENTS_ROOT, "training", "ray_tune", "spec.yaml"))
 
 # load ray tune distributed module.
-lightgbm_ray_tune_distributed_module = Component.from_yaml(yaml_file=os.path.join(
-    COMPONENTS_ROOT, "training", "ray_tune_distributed", "spec.yaml"))
+#lightgbm_ray_tune_distributed_module =load_component(source=os.path.join(COMPONENTS_ROOT, "training", "ray_tune_distributed", "spec.yaml"))
 ### PIPELINE SPECIFIC CODE ###
 
 def process_sweep_parameters(params_dict, sweep_algorithm):
@@ -206,7 +205,7 @@ def lightgbm_training_pipeline_function(config,
                     header=variant_params.data.header,
                     verbose=variant_params.training.verbose
                 )
-                partition_data_step.runsettings.configure(target=config.compute.linux_cpu)
+                partition_data_step.runsettings.target = config.compute.linux_cpu
                 partitioned_train_data = partition_data_step.outputs.output_data
             else:
                 # for other modes, train data has to be one file
@@ -377,8 +376,14 @@ def lightgbm_training_pipeline_function(config,
             **training_params
         )
         # apply runsettings
-        lightgbm_train_step.runsettings.target=training_target
-        lightgbm_train_step.runsettings.resource_layout.node_count = variant_params.runtime.nodes
+        if hasattr(lightgbm_train_step,'resources'):
+            lightgbm_train_step.resources = {
+                'instance_count': variant_params.runtime.nodes
+            }
+        else:
+            logging.error("Unable to set instance count")
+        
+        lightgbm_train_step.compute = config.compute.linux_cpu        
         # This line is never used. It might run into the error saying "process_count_per_node' is not an expected key" 
         # lightgbm_train_step.runsettings.resource_layout.process_count_per_node = variant_params.runtime.processes
 
@@ -485,6 +490,28 @@ def training_all_tasks(workspace, config):
             "```"
         ])
 
+        # add pipeline tags
+        autotags = {}
+        reference_configs = config.lightgbm_training_config.reference
+        print(f"tags: {autotags}")
+        # add the information of the reference
+        if reference_configs.raytune:
+            autotags.update({
+                'search_algo': reference_configs.raytune.search_alg,
+                'scheduler': reference_configs.raytune.scheduler,
+                'concurrent_trials': str(reference_configs.raytune.concurrent_trials),
+                'time_minutes': str(reference_configs.raytune.time_budget/60),
+                'cluster_nodes': str(reference_configs.runtime.nodes),
+            })
+        if reference_configs.sweep:
+            autotags.update({
+                "search_algo": reference_configs.sweep.algorithm,
+                "truncate_percentage": str(reference_configs.sweep.early_termination.truncation_percentage),
+                "concurrent_trials": str(reference_configs.sweep.limits.max_concurrent_trials),
+                "time_minutes": str(reference_configs.sweep.limits.timeout_minutes),
+                'cluster_nodes': str(reference_configs.runtime.nodes * reference_configs.sweep.limits.max_concurrent_trials),
+            })
+
         # validate/submit the pipeline (if run.submit=True)
         pipeline_submit(
             workspace,
@@ -511,39 +538,6 @@ def main():
         OmegaConf.to_yaml(config.lightgbm_training_config),
         "```"
     ])
-
-    # add pipeline tags
-    autotags = {}
-    reference_configs = config.lightgbm_training_config.reference
-    print(f"tags: {autotags}")
-    # add the information of the reference
-    if reference_configs.raytune:
-        autotags.update({
-            'search_algo': reference_configs.raytune.search_alg,
-            'scheduler': reference_configs.raytune.scheduler,
-            'concurrent_trials': str(reference_configs.raytune.concurrent_trials),
-            'time_minutes': str(reference_configs.raytune.time_budget/60),
-            'cluster_nodes': str(reference_configs.runtime.nodes),
-        })
-    if reference_configs.sweep:
-        autotags.update({
-            "search_algo": reference_configs.sweep.algorithm,
-            "truncate_percentage": str(reference_configs.sweep.early_termination.truncation_percentage),
-            "concurrent_trials": str(reference_configs.sweep.limits.max_concurrent_trials),
-            "time_minutes": str(reference_configs.sweep.limits.timeout_minutes),
-            'cluster_nodes': str(reference_configs.runtime.nodes * reference_configs.sweep.limits.max_concurrent_trials),
-        })
-
-    print(f"tags: {autotags}")
-    # validate/submit the pipeline (if run.submit=True)
-    pipeline_submit(
-        workspace,
-        config,
-        pipeline_instance,
-        experiment_description=experiment_description,
-        tags=autotags
-    )
-
 
 if __name__ == "__main__":
     main()

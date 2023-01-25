@@ -1,17 +1,17 @@
-$schema: http://azureml/sdk-2-0/CommandComponent.json
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: partition_data
-version: 1.0.1
+version: 2.0.0
 display_name: "Partition Data"
-type: CommandComponent
+type: command
 description: Split one dataset into multiple files
 is_deterministic: true
 
 inputs:
   input_data:
-    type: AnyDirectory
+    type: uri_folder
     description: Directory of input data (flat text file)
   mode:
-    type: Enum
+    type: string
     description: How data is partition
     enum:
     - roundrobin
@@ -19,42 +19,41 @@ inputs:
     - append
     default: roundrobin
   number:
-    type: Integer
+    type: integer
     description: If roundrobin number of partition, if chunk number of records per
       partition
     min: 1
   header:
-    type: Boolean
+    type: boolean
     description : "Should we preserve firstline into each partition?"
     optional: True
 
   # generic benchmark parameters
   verbose:
-    type: Boolean
+    type: boolean
     optional: true
   custom_properties:
-    type: String
+    type: string
     description: additional custom tags for the job
     optional: true
 
 outputs:
   output_data:
-    type: AnyDirectory
+    type: uri_folder
     description: partitioned dataset
 
+code: "../../../"
+
 command: >-
-  python partition.py
-  --input {inputs.input_data}
-  --output {outputs.output_data}
-  --mode {inputs.mode}
-  --number {inputs.number}
-  [--header {inputs.header}]
-  [--verbose {inputs.verbose}]
-  [--custom_properties {inputs.custom_properties}]
+  python scripts/data_processing/partition_data/partition.py
+  --input ${{inputs.input_data}}
+  --output ${{outputs.output_data}}
+  --mode ${{inputs.mode}}
+  --number ${{inputs.number}}
+  $[[--header ${{inputs.header}}]]
+  $[[--verbose ${{inputs.verbose}}]]
+  $[[--custom_properties "${{inputs.custom_properties}}"]]
 
 environment:
-  docker:
-    image: mcr.microsoft.com/azureml/base:latest
-  conda:
-    conda_dependencies_file: conda_env.yml
-  os: Linux
+  image: mcr.microsoft.com/azureml/base:latest
+  conda_file: conda_env.yml
