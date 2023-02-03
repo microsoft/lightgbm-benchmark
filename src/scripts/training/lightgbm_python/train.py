@@ -64,6 +64,7 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
         group_i.add_argument("--label_column", required=False, default="0", type=str)
         group_i.add_argument("--group_column", required=False, default=None, type=str)
         group_i.add_argument("--parser_config_file", required=False, default=None, type=str, help="transfomr parser config location (file path)")
+        group_i.add_argument("--input_model", required=False, default=None, type=str, help="Model file for continous training(file path)")
 
         group_o = parser.add_argument_group(f"Outputs [{__name__}:{cls.__name__}]")
         group_o.add_argument("--export_model",
@@ -224,6 +225,19 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
         # register logger for lightgbm logs
         lightgbm.register_logger(logger)
 
+        input_model = input_file_path(args.input_model) if args.input_model else None
+        if input_model:
+            logger.info(f"Using input_model: {input_model} for continous training")
+            try:
+                input_model = lightgbm.Booster(model_file=input_model)
+                logger.info(f"Current iter# for input model: {input_model.current_iteration()}")
+                lgbm_params['free_raw_data'] = False
+                logger.info(f"Since Continous training is selected free_raw_data is set to False")
+                
+            except Exception as e:
+                logger.error(f"Failed to load input_model: {input_model}")
+                raise e
+
         logger.info(f"Loading data for training")
         with metrics_logger.log_time_block("time_data_loading", step=multinode_config.world_rank):
             # obtain the path to the train data for this node
@@ -239,7 +253,8 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
 
             # construct datasets
             if args.construct:
-                train_data = lightgbm.Dataset(train_data_path, params=lgbm_params).construct()
+                train_data = lightgbm.Dataset(train_data_path, params=lgbm_params, free_raw_data=lgbm_params.get('free_raw_data',True)
+                                             ).construct()
                 val_datasets = [
                     train_data.create_valid(test_data_path).construct() for test_data_path in test_data_paths
                 ]
@@ -247,7 +262,7 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
                 metrics_logger.log_metric(key="train_data.length", value=train_data.num_data(), step=multinode_config.world_rank)
                 metrics_logger.log_metric(key="train_data.width", value=train_data.num_feature(), step=multinode_config.world_rank)
             else:
-                train_data = lightgbm.Dataset(train_data_path, params=lgbm_params)
+                train_data = lightgbm.Dataset(train_data_path, params=lgbm_params, free_raw_data=lgbm_params.get('free_raw_data',True))
                 val_datasets = [
                     train_data.create_valid(test_data_path) for test_data_path in test_data_paths
                 ]
@@ -262,8 +277,12 @@ class LightGBMPythonMultiNodeTrainingScript(MultiNodeScript):
                 lgbm_params,
                 train_data,
                 valid_sets = val_datasets,
-                callbacks=[callbacks_handler.callback]
+                init_model = input_model, 
+                keep_training_booster = lgbm_params.get('keep_training_booster',False),
+                callbacks = [callbacks_handler.callback],
             )
+
+            logger.info(f"Current iter#: {booster.current_iteration()}")
 
         if args.export_model and multinode_config.main_node:
             logger.info(f"Writing model in {args.export_model}")
