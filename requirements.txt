@@ -23,6 +23,8 @@ azureml-train-core==1.36.0  # for azureml.train.hyperdrive
 azureml-dataset-runtime==1.36.0  # to register dataset
 hydra-core~=1.0.3
 typing_extensions==4.0.1 # for hydra
+numpy==1.20.3
+protobuf<=3.20.1
 
 # unit testing
 pytest==6.2.4
