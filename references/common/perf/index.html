@@ -1,0 +1,2159 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.4.2">
+    
+    
+      
+        <title>perf.py - LightGBM-Benchmark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.69437709.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#src.common.perf.PerformanceReportingThread" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="LightGBM-Benchmark" class="md-header__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LightGBM-Benchmark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              perf.py
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="LightGBM-Benchmark" class="md-nav__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    LightGBM-Benchmark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../lightgbm-benchmark-project/" class="md-nav__link">
+        About
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Contribute
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contribute" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Contribute
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribute/developer-guide/" class="md-nav__link">
+        Developer Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribute/architecture-guide/" class="md-nav__link">
+        Architecture Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../contribute/reporting-guide/" class="md-nav__link">
+        Reporting Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Run
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Run
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/install/" class="md-nav__link">
+        Install
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/manual-benchmark/" class="md-nav__link">
+        Run manually
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3">
+          Run in AzureML
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run in AzureML" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_3">
+          <span class="md-nav__icon md-icon"></span>
+          Run in AzureML
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/azure-setup/" class="md-nav__link">
+        Azure Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/local-setup/" class="md-nav__link">
+        Local Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_3" type="checkbox" id="__nav_4_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_3">
+          Benchmark Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Benchmark Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Benchmark Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/generate-synthetic-data/" class="md-nav__link">
+        Generate data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/benchmark-training/" class="md-nav__link">
+        Training
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/benchmark-inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_4" type="checkbox" id="__nav_4_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_4">
+          Custom Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Custom Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Custom Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/upload-your-data/" class="md-nav__link">
+        Upload your data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/train-on-your-data/" class="md-nav__link">
+        Train on your data
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../run/azureml/designer-ui/" class="md-nav__link">
+        Designer UI
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Results
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Results" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Results
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../results/inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../results/manual/" class="md-nav__link">
+        Manual
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Reference Docs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference Docs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reference Docs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          src/common/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/common/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          src/common/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aml/" class="md-nav__link">
+        aml.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../components/" class="md-nav__link">
+        components.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../io/" class="md-nav__link">
+        io.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lightgbm_utils/" class="md-nav__link">
+        lightgbm_utils.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        metrics.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          perf.py
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        perf.py
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread" class="md-nav__link">
+    PerformanceReportingThread
+  </a>
+  
+    <nav class="md-nav" aria-label="PerformanceReportingThread">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread.run" class="md-nav__link">
+    run()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread.finalize" class="md-nav__link">
+    finalize()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector" class="md-nav__link">
+    PerformanceMetricsCollector
+  </a>
+  
+    <nav class="md-nav" aria-label="PerformanceMetricsCollector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.start" class="md-nav__link">
+    start()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.finalize" class="md-nav__link">
+    finalize()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.append_perf_metrics" class="md-nav__link">
+    append_perf_metrics()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.common.perf.PerfReportPlotter" class="md-nav__link">
+    PerfReportPlotter
+  </a>
+  
+    <nav class="md-nav" aria-label="PerfReportPlotter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerfReportPlotter.save_to" class="md-nav__link">
+    save_to()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerfReportPlotter.add_perf_reports" class="md-nav__link">
+    add_perf_reports()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tasks/" class="md-nav__link">
+        tasks.py
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          src/scripts/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/scripts/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          src/scripts/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scripts/sample/sample/" class="md-nav__link">
+        sample/sample.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scripts/training/lightgbm_python/" class="md-nav__link">
+        training/lightgbm_python/
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread" class="md-nav__link">
+    PerformanceReportingThread
+  </a>
+  
+    <nav class="md-nav" aria-label="PerformanceReportingThread">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread.run" class="md-nav__link">
+    run()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceReportingThread.finalize" class="md-nav__link">
+    finalize()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector" class="md-nav__link">
+    PerformanceMetricsCollector
+  </a>
+  
+    <nav class="md-nav" aria-label="PerformanceMetricsCollector">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.start" class="md-nav__link">
+    start()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.finalize" class="md-nav__link">
+    finalize()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerformanceMetricsCollector.append_perf_metrics" class="md-nav__link">
+    append_perf_metrics()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.common.perf.PerfReportPlotter" class="md-nav__link">
+    PerfReportPlotter
+  </a>
+  
+    <nav class="md-nav" aria-label="PerfReportPlotter">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerfReportPlotter.save_to" class="md-nav__link">
+    save_to()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.common.perf.PerfReportPlotter.add_perf_reports" class="md-nav__link">
+    add_perf_reports()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/Microsoft/lightgbm-benchmark/edit/main/docs/references/common/perf.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+  <h1>perf.py</h1>
+
+<p>Each component in this repository is reporting performance metrics in MLFlow.</p>
+<p>The list of available metrics is detailed below:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Metric</th>
+<th align="left">Level</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><code>cpu_avg_utilization_over20_pct</code></td>
+<td align="left">One value per node</td>
+<td align="left">How much time every cpu of that node are utilized more than 20%, over the total job time.</td>
+</tr>
+<tr>
+<td align="left"><code>cpu_avg_utilization_over40_pct</code></td>
+<td align="left">One value per node</td>
+<td align="left">How much time are all cpus are utilized more than 40%, over the total job time.</td>
+</tr>
+<tr>
+<td align="left"><code>cpu_avg_utilization_over80_pct</code></td>
+<td align="left">One value per node</td>
+<td align="left">ow much time are all cpus are utilized more than 80%, over the total job time.</td>
+</tr>
+<tr>
+<td align="left"><code>cpu_avg_utilization_at100_pct</code></td>
+<td align="left">One value per node</td>
+<td align="left">How much time are all cpus fully utilized at 100%, over the total job time.</td>
+</tr>
+<tr>
+<td align="left"><code>cpu_avg_utilization_pct</code></td>
+<td align="left">One value per node</td>
+<td align="left">How much are every cpu utilized on average during the entire job.</td>
+</tr>
+<tr>
+<td align="left"><code>max_t_cpu_pct_per_cpu_avg</code></td>
+<td align="left">One value per node</td>
+<td align="left">Maximum of <strong>average cpu utilization</strong> over the entire job time.</td>
+</tr>
+<tr>
+<td align="left"><code>max_t_cpu_pct_per_cpu_max</code></td>
+<td align="left">One value per node</td>
+<td align="left">Maximum of <strong>maximum cpu utilization</strong> over the entire job time.</td>
+</tr>
+<tr>
+<td align="left"><code>max_t_cpu_pct_per_cpu_min</code></td>
+<td align="left">One value per node</td>
+<td align="left">Maximum of <strong>minimum cpu utilization</strong> over the entire job time.</td>
+</tr>
+<tr>
+<td align="left"><code>node_cpu_hours</code></td>
+<td align="left">One value per node</td>
+<td align="left"><code>time * #cpus</code></td>
+</tr>
+<tr>
+<td align="left"><code>node_unused_cpu_hours</code></td>
+<td align="left">One value per node</td>
+<td align="left"><code>time * #cpus * (1 - cpu_avg_utilization_pct)</code></td>
+</tr>
+<tr>
+<td align="left"><code>max_t_mem_percent</code></td>
+<td align="left">One value per node</td>
+<td align="left">Maximum of <strong>memory utilization</strong> over the entire job time.</td>
+</tr>
+<tr>
+<td align="left"><code>max_t_disk_usage_percent</code></td>
+<td align="left">One value per node</td>
+<td align="left">Maximum of <strong>disk usage</strong> over the entire job time.</td>
+</tr>
+<tr>
+<td align="left"><code>total_disk_io_read_mb</code></td>
+<td align="left">One value per node</td>
+<td align="left">Total disk <strong>data read</strong> in MB (max value at the end of job).</td>
+</tr>
+<tr>
+<td align="left"><code>total_disk_io_write_mb</code></td>
+<td align="left">One value per node</td>
+<td align="left">Total disk <strong>data write</strong> in MB (max value at the end of job).</td>
+</tr>
+<tr>
+<td align="left"><code>total_net_io_lo_sent_mb</code></td>
+<td align="left">One value per node</td>
+<td align="left">Total net data <strong>sent on loopback</strong> device (max value at the end of job).</td>
+</tr>
+<tr>
+<td align="left"><code>total_net_io_ext_sent_mb</code></td>
+<td align="left">One value per node</td>
+<td align="left">Total net data <strong>sent on external</strong> device (max value at the end of job).</td>
+</tr>
+<tr>
+<td align="left"><code>total_net_io_lo_recv_mb</code></td>
+<td align="left">One value per node</td>
+<td align="left">Total net data <strong>received on loopback</strong> device (max value at the end of job).</td>
+</tr>
+<tr>
+<td align="left"><code>total_net_io_ext_recv_mb</code></td>
+<td align="left">One value per node</td>
+<td align="left">Total net data <strong>received on external</strong> device (max value at the end of job).</td>
+</tr>
+</tbody>
+</table>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+  <div class="doc doc-contents first">
+  
+      <p>Helps with reporting performance metrics (cpu/mem utilization).
+Needs to be implemented in the rest of the code.</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 class="doc doc-heading" id="src.common.perf.PerformanceReportingThread">
+        <code>PerformanceReportingThread</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+      <p class="doc doc-class-bases">
+        Bases: <code>threading.<span title="threading.Thread">Thread</span></code></p>
+
+  
+      <p>Thread to report performance (cpu/mem/net)</p>
+
+
+        <details class="quote">
+          <summary>Source code in <code>src/common/perf.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos=" 16 "></span><span class="k">class</span> <span class="nc">PerformanceReportingThread</span><span class="p">(</span><span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 17 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Thread to report performance (cpu/mem/net)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 18 "></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 19 "></span>                 <span class="n">initial_time_increment</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 20 "></span>                 <span class="n">cpu_interval</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 21 "></span>                 <span class="n">callback_on_loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 22 "></span>                 <span class="n">callback_on_exit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 23 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+<span class="linenos" data-linenos=" 24 "></span>
+<span class="linenos" data-linenos=" 25 "></span><span class="sd">        Args:</span>
+<span class="linenos" data-linenos=" 26 "></span><span class="sd">            initial_time_increment (float): how much time to sleep between perf readings</span>
+<span class="linenos" data-linenos=" 27 "></span><span class="sd">            cpu_interval (float): interval to capture cpu utilization</span>
+<span class="linenos" data-linenos=" 28 "></span><span class="sd">            callback_on_loop (func): function to call when a perf reading is issued</span>
+<span class="linenos" data-linenos=" 29 "></span><span class="sd">            callback_on_exit (func): function to call when thread is finalized</span>
+<span class="linenos" data-linenos=" 30 "></span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 31 "></span>        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 32 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">killed</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># flag, set to True to kill from the inside</span>
+<span class="linenos" data-linenos=" 33 "></span>
+<span class="linenos" data-linenos=" 34 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 35 "></span>
+<span class="linenos" data-linenos=" 36 "></span>        <span class="c1"># time between perf reports</span>
+<span class="linenos" data-linenos=" 37 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">time_increment</span> <span class="o">=</span> <span class="n">initial_time_increment</span>
+<span class="linenos" data-linenos=" 38 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span> <span class="o">=</span> <span class="n">cpu_interval</span>
+<span class="linenos" data-linenos=" 39 "></span>
+<span class="linenos" data-linenos=" 40 "></span>        <span class="c1"># set callbacks</span>
+<span class="linenos" data-linenos=" 41 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_loop</span> <span class="o">=</span> <span class="n">callback_on_loop</span>
+<span class="linenos" data-linenos=" 42 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_exit</span> <span class="o">=</span> <span class="n">callback_on_exit</span>
+<span class="linenos" data-linenos=" 43 "></span>
+<span class="linenos" data-linenos=" 44 "></span>
+<span class="linenos" data-linenos=" 45 "></span>    <span class="c1">#####################</span>
+<span class="linenos" data-linenos=" 46 "></span>    <span class="c1">### RUN FUNCTIONS ###</span>
+<span class="linenos" data-linenos=" 47 "></span>    <span class="c1">#####################</span>
+<span class="linenos" data-linenos=" 48 "></span>
+<span class="linenos" data-linenos=" 49 "></span>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 50 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run function of the thread, while(True)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 51 "></span>        <span class="k">while</span> <span class="ow">not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">killed</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 52 "></span>            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_increment</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span><span class="p">:</span> <span class="c1"># cpu_percent.interval already consumes 1sec</span>
+<span class="linenos" data-linenos=" 53 "></span>                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_increment</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span><span class="p">)</span> <span class="c1"># will double every time report_store_max_length is reached</span>
+<span class="linenos" data-linenos=" 54 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">()</span>
+<span class="linenos" data-linenos=" 55 "></span>
+<span class="linenos" data-linenos=" 56 "></span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_exit</span><span class="p">:</span>
+<span class="linenos" data-linenos=" 57 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_exit</span><span class="p">()</span>
+<span class="linenos" data-linenos=" 58 "></span>
+<span class="linenos" data-linenos=" 59 "></span>    <span class="k">def</span> <span class="nf">_run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 60 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;What to run within the while(not(killed))&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 61 "></span>        <span class="n">perf_report</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos" data-linenos=" 62 "></span>
+<span class="linenos" data-linenos=" 63 "></span>        <span class="c1"># CPU UTILIZATION</span>
+<span class="linenos" data-linenos=" 64 "></span>        <span class="n">cpu_utilization</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_percent</span><span class="p">(</span><span class="n">interval</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span><span class="p">,</span> <span class="n">percpu</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># will take 1 sec to return</span>
+<span class="linenos" data-linenos=" 65 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;cpu_pct_per_cpu_avg&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cpu_utilization</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">cpu_utilization</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 66 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;cpu_pct_per_cpu_min&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">cpu_utilization</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 67 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;cpu_pct_per_cpu_max&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cpu_utilization</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 68 "></span>
+<span class="linenos" data-linenos=" 69 "></span>        <span class="c1"># MEM UTILIZATION</span>
+<span class="linenos" data-linenos=" 70 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;mem_percent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span><span class="o">.</span><span class="n">percent</span>
+<span class="linenos" data-linenos=" 71 "></span>
+<span class="linenos" data-linenos=" 72 "></span>        <span class="c1"># DISK UTILIZAITON</span>
+<span class="linenos" data-linenos=" 73 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;disk_usage_percent&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">disk_usage</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">percent</span>
+<span class="linenos" data-linenos=" 74 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;disk_io_read_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">psutil</span><span class="o">.</span><span class="n">disk_io_counters</span><span class="p">(</span><span class="n">perdisk</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">read_bytes</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
+<span class="linenos" data-linenos=" 75 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;disk_io_write_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">psutil</span><span class="o">.</span><span class="n">disk_io_counters</span><span class="p">(</span><span class="n">perdisk</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">write_bytes</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">))</span>
+<span class="linenos" data-linenos=" 76 "></span>
+<span class="linenos" data-linenos=" 77 "></span>        <span class="c1"># NET I/O SEND/RECV</span>
+<span class="linenos" data-linenos=" 78 "></span>        <span class="n">net_io_counters</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">net_io_counters</span><span class="p">(</span><span class="n">pernic</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 79 "></span>        <span class="n">net_io_lo_identifiers</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos" data-linenos=" 80 "></span>        <span class="n">net_io_ext_identifiers</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="linenos" data-linenos=" 81 "></span>
+<span class="linenos" data-linenos=" 82 "></span>        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">net_io_counters</span><span class="p">:</span>
+<span class="linenos" data-linenos=" 83 "></span>            <span class="k">if</span> <span class="s1">&#39;loopback&#39;</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+<span class="linenos" data-linenos=" 84 "></span>                <span class="n">net_io_lo_identifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 85 "></span>            <span class="k">elif</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;lo&#39;</span><span class="p">:</span>
+<span class="linenos" data-linenos=" 86 "></span>                <span class="n">net_io_lo_identifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 87 "></span>            <span class="k">else</span><span class="p">:</span>
+<span class="linenos" data-linenos=" 88 "></span>                <span class="n">net_io_ext_identifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 89 "></span>
+<span class="linenos" data-linenos=" 90 "></span>        <span class="n">lo_sent_mb</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 91 "></span>            <span class="p">[</span>
+<span class="linenos" data-linenos=" 92 "></span>                <span class="n">net_io_counters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">bytes_sent</span>
+<span class="linenos" data-linenos=" 93 "></span>                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">net_io_lo_identifiers</span>
+<span class="linenos" data-linenos=" 94 "></span>            <span class="p">]</span>
+<span class="linenos" data-linenos=" 95 "></span>        <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 96 "></span>
+<span class="linenos" data-linenos=" 97 "></span>        <span class="n">ext_sent_mb</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 98 "></span>            <span class="p">[</span>
+<span class="linenos" data-linenos=" 99 "></span>                <span class="n">net_io_counters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">bytes_sent</span>
+<span class="linenos" data-linenos="100 "></span>                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">net_io_ext_identifiers</span>
+<span class="linenos" data-linenos="101 "></span>            <span class="p">]</span>
+<span class="linenos" data-linenos="102 "></span>        <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+<span class="linenos" data-linenos="103 "></span>
+<span class="linenos" data-linenos="104 "></span>        <span class="n">lo_recv_mb</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+<span class="linenos" data-linenos="105 "></span>            <span class="p">[</span>
+<span class="linenos" data-linenos="106 "></span>                <span class="n">net_io_counters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">bytes_recv</span>
+<span class="linenos" data-linenos="107 "></span>                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">net_io_lo_identifiers</span>
+<span class="linenos" data-linenos="108 "></span>            <span class="p">]</span>
+<span class="linenos" data-linenos="109 "></span>        <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+<span class="linenos" data-linenos="110 "></span>
+<span class="linenos" data-linenos="111 "></span>        <span class="n">ext_recv_mb</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+<span class="linenos" data-linenos="112 "></span>            <span class="p">[</span>
+<span class="linenos" data-linenos="113 "></span>                <span class="n">net_io_counters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">bytes_recv</span>
+<span class="linenos" data-linenos="114 "></span>                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">net_io_ext_identifiers</span>
+<span class="linenos" data-linenos="115 "></span>            <span class="p">]</span>
+<span class="linenos" data-linenos="116 "></span>        <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">)</span>
+<span class="linenos" data-linenos="117 "></span>
+<span class="linenos" data-linenos="118 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;net_io_lo_sent_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lo_sent_mb</span>
+<span class="linenos" data-linenos="119 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;net_io_ext_sent_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ext_sent_mb</span>
+<span class="linenos" data-linenos="120 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;net_io_lo_recv_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lo_recv_mb</span>
+<span class="linenos" data-linenos="121 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;net_io_ext_recv_mb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ext_recv_mb</span>
+<span class="linenos" data-linenos="122 "></span>
+<span class="linenos" data-linenos="123 "></span>        <span class="c1"># add a timestamp</span>
+<span class="linenos" data-linenos="124 "></span>        <span class="n">perf_report</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="linenos" data-linenos="125 "></span>
+<span class="linenos" data-linenos="126 "></span>        <span class="c1"># END OF REPORT</span>
+<span class="linenos" data-linenos="127 "></span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_loop</span><span class="p">:</span>
+<span class="linenos" data-linenos="128 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_loop</span><span class="p">(</span><span class="n">perf_report</span><span class="p">)</span>
+<span class="linenos" data-linenos="129 "></span>
+<span class="linenos" data-linenos="130 "></span>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="131 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Ask the thread to finalize (clean)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="132 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">killed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos" data-linenos="133 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceReportingThread.__init__">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">initial_time_increment</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">cpu_interval</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">callback_on_loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback_on_exit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Constructor</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>initial_time_increment</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td><p>how much time to sleep between perf readings</p></td>
+          <td>
+                <code>1.0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>cpu_interval</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td><p>interval to capture cpu utilization</p></td>
+          <td>
+                <code>1.0</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>callback_on_loop</code></td>
+          <td>
+                <code>func</code>
+          </td>
+          <td><p>function to call when a perf reading is issued</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>callback_on_exit</code></td>
+          <td>
+                <code>func</code>
+          </td>
+          <td><p>function to call when thread is finalized</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="18 "></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+<span class="linenos" data-linenos="19 "></span>             <span class="n">initial_time_increment</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="20 "></span>             <span class="n">cpu_interval</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="21 "></span>             <span class="n">callback_on_loop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="linenos" data-linenos="22 "></span>             <span class="n">callback_on_exit</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos="23 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+<span class="linenos" data-linenos="24 "></span>
+<span class="linenos" data-linenos="25 "></span><span class="sd">    Args:</span>
+<span class="linenos" data-linenos="26 "></span><span class="sd">        initial_time_increment (float): how much time to sleep between perf readings</span>
+<span class="linenos" data-linenos="27 "></span><span class="sd">        cpu_interval (float): interval to capture cpu utilization</span>
+<span class="linenos" data-linenos="28 "></span><span class="sd">        callback_on_loop (func): function to call when a perf reading is issued</span>
+<span class="linenos" data-linenos="29 "></span><span class="sd">        callback_on_exit (func): function to call when thread is finalized</span>
+<span class="linenos" data-linenos="30 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="31 "></span>    <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+<span class="linenos" data-linenos="32 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">killed</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># flag, set to True to kill from the inside</span>
+<span class="linenos" data-linenos="33 "></span>
+<span class="linenos" data-linenos="34 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="linenos" data-linenos="35 "></span>
+<span class="linenos" data-linenos="36 "></span>    <span class="c1"># time between perf reports</span>
+<span class="linenos" data-linenos="37 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">time_increment</span> <span class="o">=</span> <span class="n">initial_time_increment</span>
+<span class="linenos" data-linenos="38 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span> <span class="o">=</span> <span class="n">cpu_interval</span>
+<span class="linenos" data-linenos="39 "></span>
+<span class="linenos" data-linenos="40 "></span>    <span class="c1"># set callbacks</span>
+<span class="linenos" data-linenos="41 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_loop</span> <span class="o">=</span> <span class="n">callback_on_loop</span>
+<span class="linenos" data-linenos="42 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_exit</span> <span class="o">=</span> <span class="n">callback_on_exit</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceReportingThread.run">
+<code class="highlight language-python"><span class="n">run</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Run function of the thread, while(True)</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="49 "></span><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="50 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Run function of the thread, while(True)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="51 "></span>    <span class="k">while</span> <span class="ow">not</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">killed</span><span class="p">):</span>
+<span class="linenos" data-linenos="52 "></span>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_increment</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span><span class="p">:</span> <span class="c1"># cpu_percent.interval already consumes 1sec</span>
+<span class="linenos" data-linenos="53 "></span>            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_increment</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_interval</span><span class="p">)</span> <span class="c1"># will double every time report_store_max_length is reached</span>
+<span class="linenos" data-linenos="54 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">()</span>
+<span class="linenos" data-linenos="55 "></span>
+<span class="linenos" data-linenos="56 "></span>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_exit</span><span class="p">:</span>
+<span class="linenos" data-linenos="57 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">callback_on_exit</span><span class="p">()</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceReportingThread.finalize">
+<code class="highlight language-python"><span class="n">finalize</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Ask the thread to finalize (clean)</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="130 "></span><span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="131 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Ask the thread to finalize (clean)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="132 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">killed</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos" data-linenos="133 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 class="doc doc-heading" id="src.common.perf.PerformanceMetricsCollector">
+        <code>PerformanceMetricsCollector</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Collects performance metrics from PerformanceReportingThread
+Limits all values to a maximum length</p>
+
+
+        <details class="quote">
+          <summary>Source code in <code>src/common/perf.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="136 "></span><span class="k">class</span> <span class="nc">PerformanceMetricsCollector</span><span class="p">():</span>
+<span class="linenos" data-linenos="137 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Collects performance metrics from PerformanceReportingThread</span>
+<span class="linenos" data-linenos="138 "></span><span class="sd">    Limits all values to a maximum length&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="139 "></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="linenos" data-linenos="140 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+<span class="linenos" data-linenos="141 "></span>
+<span class="linenos" data-linenos="142 "></span><span class="sd">        Args:</span>
+<span class="linenos" data-linenos="143 "></span><span class="sd">            max_length (int): maximum number of perf reports to keep</span>
+<span class="linenos" data-linenos="144 "></span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="145 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="linenos" data-linenos="146 "></span>
+<span class="linenos" data-linenos="147 "></span>        <span class="c1"># create a thread to generate reports regularly</span>
+<span class="linenos" data-linenos="148 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">report_thread</span> <span class="o">=</span> <span class="n">PerformanceReportingThread</span><span class="p">(</span>
+<span class="linenos" data-linenos="149 "></span>            <span class="n">initial_time_increment</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="150 "></span>            <span class="n">cpu_interval</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="151 "></span>            <span class="n">callback_on_loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">append_perf_metrics</span>
+<span class="linenos" data-linenos="152 "></span>        <span class="p">)</span>
+<span class="linenos" data-linenos="153 "></span>
+<span class="linenos" data-linenos="154 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># internal storage</span>
+<span class="linenos" data-linenos="155 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># frequency to skip reports from thread</span>
+<span class="linenos" data-linenos="156 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_counter</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># how many reports we had so far</span>
+<span class="linenos" data-linenos="157 "></span>
+<span class="linenos" data-linenos="158 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_length</span><span class="o">//</span><span class="mi">2</span> <span class="o">+</span> <span class="n">max_length</span><span class="o">%</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="c1"># has to be dividable by 2</span>
+<span class="linenos" data-linenos="159 "></span>
+<span class="linenos" data-linenos="160 "></span>
+<span class="linenos" data-linenos="161 "></span>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="162 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Start collector perf metrics (start internal thread)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="163 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting perf metric collector (max_length=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="164 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">report_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="linenos" data-linenos="165 "></span>
+<span class="linenos" data-linenos="166 "></span>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="167 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Stop collector perf metrics (stop internal thread)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="168 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Finalizing perf metric collector (length=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="169 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">report_thread</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+<span class="linenos" data-linenos="170 "></span>
+<span class="linenos" data-linenos="171 "></span>    <span class="k">def</span> <span class="nf">append_perf_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perf_metrics</span><span class="p">):</span>
+<span class="linenos" data-linenos="172 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a perf metric report to the internal storage&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="173 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos" data-linenos="174 "></span>
+<span class="linenos" data-linenos="175 "></span>        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_counter</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span><span class="p">):</span>
+<span class="linenos" data-linenos="176 "></span>            <span class="c1"># if we&#39;ve decided to skip this one</span>
+<span class="linenos" data-linenos="177 "></span>            <span class="k">return</span>
+<span class="linenos" data-linenos="178 "></span>
+<span class="linenos" data-linenos="179 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perf_metrics</span><span class="p">)</span>
+<span class="linenos" data-linenos="180 "></span>
+<span class="linenos" data-linenos="181 "></span>        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">:</span>
+<span class="linenos" data-linenos="182 "></span>            <span class="c1"># trim the report by half</span>
+<span class="linenos" data-linenos="183 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos" data-linenos="184 "></span>                <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+<span class="linenos" data-linenos="185 "></span>                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="linenos" data-linenos="186 "></span>            <span class="p">]</span>
+<span class="linenos" data-linenos="187 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span> <span class="o">*=</span> <span class="mi">2</span> <span class="c1"># we&#39;ll start accepting reports only 1 out of 2</span>
+<span class="linenos" data-linenos="188 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Perf report store reached max, increasing freq to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceMetricsCollector.__init__">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Constructor</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>max_length</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td><p>maximum number of perf reports to keep</p></td>
+          <td>
+                <code>1000</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="139 "></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="linenos" data-linenos="140 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Constructor</span>
+<span class="linenos" data-linenos="141 "></span>
+<span class="linenos" data-linenos="142 "></span><span class="sd">    Args:</span>
+<span class="linenos" data-linenos="143 "></span><span class="sd">        max_length (int): maximum number of perf reports to keep</span>
+<span class="linenos" data-linenos="144 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="145 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="linenos" data-linenos="146 "></span>
+<span class="linenos" data-linenos="147 "></span>    <span class="c1"># create a thread to generate reports regularly</span>
+<span class="linenos" data-linenos="148 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">report_thread</span> <span class="o">=</span> <span class="n">PerformanceReportingThread</span><span class="p">(</span>
+<span class="linenos" data-linenos="149 "></span>        <span class="n">initial_time_increment</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="150 "></span>        <span class="n">cpu_interval</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="151 "></span>        <span class="n">callback_on_loop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">append_perf_metrics</span>
+<span class="linenos" data-linenos="152 "></span>    <span class="p">)</span>
+<span class="linenos" data-linenos="153 "></span>
+<span class="linenos" data-linenos="154 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1"># internal storage</span>
+<span class="linenos" data-linenos="155 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># frequency to skip reports from thread</span>
+<span class="linenos" data-linenos="156 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_counter</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># how many reports we had so far</span>
+<span class="linenos" data-linenos="157 "></span>
+<span class="linenos" data-linenos="158 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_length</span><span class="o">//</span><span class="mi">2</span> <span class="o">+</span> <span class="n">max_length</span><span class="o">%</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span> <span class="c1"># has to be dividable by 2</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceMetricsCollector.start">
+<code class="highlight language-python"><span class="n">start</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Start collector perf metrics (start internal thread)</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="161 "></span><span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="162 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Start collector perf metrics (start internal thread)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="163 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting perf metric collector (max_length=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="164 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">report_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceMetricsCollector.finalize">
+<code class="highlight language-python"><span class="n">finalize</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Stop collector perf metrics (stop internal thread)</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="166 "></span><span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="167 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Stop collector perf metrics (stop internal thread)&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="168 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Finalizing perf metric collector (length=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="169 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">report_thread</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerformanceMetricsCollector.append_perf_metrics">
+<code class="highlight language-python"><span class="n">append_perf_metrics</span><span class="p">(</span><span class="n">perf_metrics</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Add a perf metric report to the internal storage</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="171 "></span><span class="k">def</span> <span class="nf">append_perf_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perf_metrics</span><span class="p">):</span>
+<span class="linenos" data-linenos="172 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a perf metric report to the internal storage&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="173 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="linenos" data-linenos="174 "></span>
+<span class="linenos" data-linenos="175 "></span>    <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_counter</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span><span class="p">):</span>
+<span class="linenos" data-linenos="176 "></span>        <span class="c1"># if we&#39;ve decided to skip this one</span>
+<span class="linenos" data-linenos="177 "></span>        <span class="k">return</span>
+<span class="linenos" data-linenos="178 "></span>
+<span class="linenos" data-linenos="179 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">perf_metrics</span><span class="p">)</span>
+<span class="linenos" data-linenos="180 "></span>
+<span class="linenos" data-linenos="181 "></span>    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">:</span>
+<span class="linenos" data-linenos="182 "></span>        <span class="c1"># trim the report by half</span>
+<span class="linenos" data-linenos="183 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span> <span class="o">=</span> <span class="p">[</span>
+<span class="linenos" data-linenos="184 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+<span class="linenos" data-linenos="185 "></span>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="linenos" data-linenos="186 "></span>        <span class="p">]</span>
+<span class="linenos" data-linenos="187 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span> <span class="o">*=</span> <span class="mi">2</span> <span class="c1"># we&#39;ll start accepting reports only 1 out of 2</span>
+<span class="linenos" data-linenos="188 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Perf report store reached max, increasing freq to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">perf_reports_freqs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 class="doc doc-heading" id="src.common.perf.PerfReportPlotter">
+        <code>PerfReportPlotter</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+
+  
+      <p>Once collected all perf reports from all nodes</p>
+
+
+        <details class="quote">
+          <summary>Source code in <code>src/common/perf.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="191 "></span><span class="k">class</span> <span class="nc">PerfReportPlotter</span><span class="p">():</span>
+<span class="linenos" data-linenos="192 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Once collected all perf reports from all nodes&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="193 "></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metrics_logger</span><span class="p">):</span>
+<span class="linenos" data-linenos="194 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="linenos" data-linenos="195 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span> <span class="o">=</span> <span class="n">metrics_logger</span>
+<span class="linenos" data-linenos="196 "></span>
+<span class="linenos" data-linenos="197 "></span>    <span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perf_report_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos="198 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Saves all reports into a json file&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="199 "></span>        <span class="c1"># if no file path provided, create a temp file</span>
+<span class="linenos" data-linenos="200 "></span>        <span class="k">if</span> <span class="n">perf_report_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos" data-linenos="201 "></span>            <span class="n">perf_report_file_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+<span class="linenos" data-linenos="202 "></span>
+<span class="linenos" data-linenos="203 "></span>        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">perf_report_file_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+<span class="linenos" data-linenos="204 "></span>            <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="s2">&quot;    &quot;</span><span class="p">))</span>
+<span class="linenos" data-linenos="205 "></span>
+<span class="linenos" data-linenos="206 "></span>        <span class="k">return</span> <span class="n">perf_report_file_path</span>
+<span class="linenos" data-linenos="207 "></span>
+<span class="linenos" data-linenos="208 "></span>    <span class="k">def</span> <span class="nf">add_perf_reports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perf_reports</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+<span class="linenos" data-linenos="209 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a set of reports from a given node&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="210 "></span>        <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">perf_reports</span>
+<span class="linenos" data-linenos="211 "></span>
+<span class="linenos" data-linenos="212 "></span>    <span class="k">def</span> <span class="nf">report_nodes_perf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="213 "></span>        <span class="c1"># Currently reporting one metric per node</span>
+<span class="linenos" data-linenos="214 "></span>        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">:</span>
+<span class="linenos" data-linenos="215 "></span>            <span class="c1"># CPU UTILIZATION</span>
+<span class="linenos" data-linenos="216 "></span>            <span class="n">cpu_avg_utilization</span> <span class="o">=</span> <span class="p">[</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;cpu_pct_per_cpu_avg&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]</span>
+<span class="linenos" data-linenos="217 "></span>
+<span class="linenos" data-linenos="218 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="219 "></span>                <span class="s2">&quot;max_t_(cpu_pct_per_cpu_avg)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="220 "></span>                <span class="nb">max</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">),</span>
+<span class="linenos" data-linenos="221 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="222 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="223 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="224 "></span>                <span class="s2">&quot;cpu_avg_utilization_pct&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="225 "></span>                <span class="nb">sum</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">),</span>
+<span class="linenos" data-linenos="226 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="227 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="228 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="229 "></span>                <span class="s2">&quot;cpu_avg_utilization_at100_pct&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="230 "></span>                <span class="nb">sum</span><span class="p">(</span> <span class="p">[</span> <span class="n">utilization</span> <span class="o">&gt;=</span> <span class="mf">100.0</span> <span class="k">for</span> <span class="n">utilization</span> <span class="ow">in</span> <span class="n">cpu_avg_utilization</span><span class="p">])</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="231 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="232 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="233 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="234 "></span>                <span class="s2">&quot;cpu_avg_utilization_over80_pct&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="235 "></span>                <span class="nb">sum</span><span class="p">(</span> <span class="p">[</span> <span class="n">utilization</span> <span class="o">&gt;=</span> <span class="mf">80.0</span> <span class="k">for</span> <span class="n">utilization</span> <span class="ow">in</span> <span class="n">cpu_avg_utilization</span><span class="p">])</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="236 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="237 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="238 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="239 "></span>                <span class="s2">&quot;cpu_avg_utilization_over40_pct&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="240 "></span>                <span class="nb">sum</span><span class="p">(</span> <span class="p">[</span> <span class="n">utilization</span> <span class="o">&gt;=</span> <span class="mf">40.0</span> <span class="k">for</span> <span class="n">utilization</span> <span class="ow">in</span> <span class="n">cpu_avg_utilization</span><span class="p">])</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="241 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="242 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="243 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="244 "></span>                <span class="s2">&quot;cpu_avg_utilization_over20_pct&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="245 "></span>                <span class="nb">sum</span><span class="p">(</span> <span class="p">[</span> <span class="n">utilization</span> <span class="o">&gt;=</span> <span class="mf">20.0</span> <span class="k">for</span> <span class="n">utilization</span> <span class="ow">in</span> <span class="n">cpu_avg_utilization</span><span class="p">])</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="246 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="247 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="248 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="249 "></span>                <span class="s2">&quot;max_t_(cpu_pct_per_cpu_min)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="250 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;cpu_pct_per_cpu_min&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="251 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="252 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="253 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="254 "></span>                <span class="s2">&quot;max_t_(cpu_pct_per_cpu_max)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="255 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;cpu_pct_per_cpu_max&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="256 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="257 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="258 "></span>
+<span class="linenos" data-linenos="259 "></span>            <span class="c1"># &quot;CPU HOURS&quot;</span>
+<span class="linenos" data-linenos="260 "></span>            <span class="n">job_internal_cpu_hours</span> <span class="o">=</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">])</span> <span class="o">*</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">/</span> <span class="mi">60</span> <span class="o">/</span> <span class="mi">60</span>
+<span class="linenos" data-linenos="261 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="262 "></span>                <span class="s2">&quot;node_cpu_hours&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="263 "></span>                <span class="n">job_internal_cpu_hours</span><span class="p">,</span>
+<span class="linenos" data-linenos="264 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="265 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="266 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="267 "></span>                <span class="s2">&quot;node_unused_cpu_hours&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="268 "></span>                <span class="n">job_internal_cpu_hours</span> <span class="o">*</span> <span class="p">(</span><span class="mf">100.0</span> <span class="o">-</span> <span class="nb">sum</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu_avg_utilization</span><span class="p">))</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">,</span>
+<span class="linenos" data-linenos="269 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="270 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="271 "></span>
+<span class="linenos" data-linenos="272 "></span>            <span class="c1"># MEM</span>
+<span class="linenos" data-linenos="273 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="274 "></span>                <span class="s2">&quot;max_t_(mem_percent)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="275 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;mem_percent&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="276 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="277 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="278 "></span>
+<span class="linenos" data-linenos="279 "></span>            <span class="c1"># DISK</span>
+<span class="linenos" data-linenos="280 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="281 "></span>                <span class="s2">&quot;max_t_disk_usage_percent&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="282 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;disk_usage_percent&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="283 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="284 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="285 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="286 "></span>                <span class="s2">&quot;total_disk_io_read_mb&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="287 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;disk_io_read_mb&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="288 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="289 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="290 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="291 "></span>                <span class="s2">&quot;total_disk_io_write_mb&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="292 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;disk_io_write_mb&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="293 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="294 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="295 "></span>
+<span class="linenos" data-linenos="296 "></span>            <span class="c1"># NET I/O</span>
+<span class="linenos" data-linenos="297 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="298 "></span>                <span class="s2">&quot;total_net_io_lo_sent_mb&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="299 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;net_io_lo_sent_mb&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="300 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="301 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="302 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="303 "></span>                <span class="s2">&quot;total_net_io_ext_sent_mb&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="304 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;net_io_ext_sent_mb&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="305 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="306 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="307 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="308 "></span>                <span class="s2">&quot;total_net_io_lo_recv_mb&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="309 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;net_io_lo_recv_mb&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="310 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="311 "></span>            <span class="p">)</span>
+<span class="linenos" data-linenos="312 "></span>            <span class="bp">self</span><span class="o">.</span><span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span>
+<span class="linenos" data-linenos="313 "></span>                <span class="s2">&quot;total_net_io_ext_recv_mb&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="314 "></span>                <span class="nb">max</span><span class="p">([</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;net_io_ext_recv_mb&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="p">]),</span>
+<span class="linenos" data-linenos="315 "></span>                <span class="n">step</span><span class="o">=</span><span class="n">node</span>
+<span class="linenos" data-linenos="316 "></span>            <span class="p">)</span>
+</code></pre></div>
+        </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerfReportPlotter.save_to">
+<code class="highlight language-python"><span class="n">save_to</span><span class="p">(</span><span class="n">perf_report_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Saves all reports into a json file</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="197 "></span><span class="k">def</span> <span class="nf">save_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perf_report_file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos="198 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Saves all reports into a json file&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="199 "></span>    <span class="c1"># if no file path provided, create a temp file</span>
+<span class="linenos" data-linenos="200 "></span>    <span class="k">if</span> <span class="n">perf_report_file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<span class="linenos" data-linenos="201 "></span>        <span class="n">perf_report_file_path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;.json&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+<span class="linenos" data-linenos="202 "></span>
+<span class="linenos" data-linenos="203 "></span>    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">perf_report_file_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_file</span><span class="p">:</span>
+<span class="linenos" data-linenos="204 "></span>        <span class="n">out_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="s2">&quot;    &quot;</span><span class="p">))</span>
+<span class="linenos" data-linenos="205 "></span>
+<span class="linenos" data-linenos="206 "></span>    <span class="k">return</span> <span class="n">perf_report_file_path</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.common.perf.PerfReportPlotter.add_perf_reports">
+<code class="highlight language-python"><span class="n">add_perf_reports</span><span class="p">(</span><span class="n">perf_reports</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Add a set of reports from a given node</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/common/perf.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="208 "></span><span class="k">def</span> <span class="nf">add_perf_reports</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">perf_reports</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+<span class="linenos" data-linenos="209 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a set of reports from a given node&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="210 "></span>    <span class="bp">self</span><span class="o">.</span><span class="n">all_reports</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">perf_reports</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../metrics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: metrics.py" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              metrics.py
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../tasks/" class="md-footer__link md-footer__link--next" aria-label="Next: tasks.py" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              tasks.py
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": [], "search": "../../../assets/javascripts/workers/search.ecf98df9.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.9c69f0bc.min.js"></script>
+      
+    
+  </body>
+</html>

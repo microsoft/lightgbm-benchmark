@@ -1,0 +1,1284 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.4.2">
+    
+    
+      
+        <title>About - LightGBM-Benchmark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.69437709.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.cbb835fc.min.css">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lightgbm-benchmark-project-goals-and-methodology" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="LightGBM-Benchmark" class="md-header__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LightGBM-Benchmark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              About
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="LightGBM-Benchmark" class="md-nav__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    LightGBM-Benchmark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          About
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        About
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-goals" class="md-nav__link">
+    Implementation Goals
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-benchmark" class="md-nav__link">
+    Running the benchmark
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-and-tasks" class="md-nav__link">
+    Data and tasks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-structure" class="md-nav__link">
+    Code Structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmarking-scenarios-and-reporting" class="md-nav__link">
+    Benchmarking scenarios and reporting
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phases-and-milestones" class="md-nav__link">
+    Phases and Milestones
+  </a>
+  
+    <nav class="md-nav" aria-label="Phases and Milestones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-foundations-phase" class="md-nav__link">
+    1. Foundations phase
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-standardization-phase" class="md-nav__link">
+    2. Standardization phase
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-expansion-phase" class="md-nav__link">
+    3. Expansion phase
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    Appendix
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-existing-benchmarks" class="md-nav__link">
+    Example existing benchmarks
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Contribute
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contribute" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Contribute
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/developer-guide/" class="md-nav__link">
+        Developer Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/architecture-guide/" class="md-nav__link">
+        Architecture Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contribute/reporting-guide/" class="md-nav__link">
+        Reporting Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Run
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Run
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/install/" class="md-nav__link">
+        Install
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/manual-benchmark/" class="md-nav__link">
+        Run manually
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3">
+          Run in AzureML
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run in AzureML" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_3">
+          <span class="md-nav__icon md-icon"></span>
+          Run in AzureML
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/azure-setup/" class="md-nav__link">
+        Azure Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/local-setup/" class="md-nav__link">
+        Local Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_3" type="checkbox" id="__nav_4_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_3">
+          Benchmark Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Benchmark Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Benchmark Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/generate-synthetic-data/" class="md-nav__link">
+        Generate data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/benchmark-training/" class="md-nav__link">
+        Training
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/benchmark-inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_4" type="checkbox" id="__nav_4_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_4">
+          Custom Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Custom Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Custom Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/upload-your-data/" class="md-nav__link">
+        Upload your data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/train-on-your-data/" class="md-nav__link">
+        Train on your data
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../run/azureml/designer-ui/" class="md-nav__link">
+        Designer UI
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Results
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Results" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Results
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../results/inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../results/manual/" class="md-nav__link">
+        Manual
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Reference Docs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference Docs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reference Docs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          src/common/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/common/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          src/common/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/aml/" class="md-nav__link">
+        aml.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/components/" class="md-nav__link">
+        components.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/io/" class="md-nav__link">
+        io.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/lightgbm_utils/" class="md-nav__link">
+        lightgbm_utils.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/metrics/" class="md-nav__link">
+        metrics.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/perf/" class="md-nav__link">
+        perf.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/common/tasks/" class="md-nav__link">
+        tasks.py
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          src/scripts/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/scripts/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          src/scripts/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/scripts/sample/sample/" class="md-nav__link">
+        sample/sample.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/scripts/training/lightgbm_python/" class="md-nav__link">
+        training/lightgbm_python/
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-goals" class="md-nav__link">
+    Implementation Goals
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-the-benchmark" class="md-nav__link">
+    Running the benchmark
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-and-tasks" class="md-nav__link">
+    Data and tasks
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-structure" class="md-nav__link">
+    Code Structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benchmarking-scenarios-and-reporting" class="md-nav__link">
+    Benchmarking scenarios and reporting
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phases-and-milestones" class="md-nav__link">
+    Phases and Milestones
+  </a>
+  
+    <nav class="md-nav" aria-label="Phases and Milestones">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-foundations-phase" class="md-nav__link">
+    1. Foundations phase
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-standardization-phase" class="md-nav__link">
+    2. Standardization phase
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-expansion-phase" class="md-nav__link">
+    3. Expansion phase
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix" class="md-nav__link">
+    Appendix
+  </a>
+  
+    <nav class="md-nav" aria-label="Appendix">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-existing-benchmarks" class="md-nav__link">
+    Example existing benchmarks
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/Microsoft/lightgbm-benchmark/edit/main/docs/lightgbm-benchmark-project.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="lightgbm-benchmark-project-goals-and-methodology">LightGBM benchmark project: goals and methodology</h1>
+<p>The LightGBM benchmark aims at providing tools and automation to compare implementations of lightgbm and other boosting-tree-based algorithms for both training and inferencing. The focus is on production use cases, and the evaluation on both model quality (validation metrics) and computing performance (training speed, compute hours, inferencing latency, etc). We'll focus on LightGBM first, and expand it to other learners as we go along.</p>
+<p>The goal is to support the community of developers of LightGBM by providing tools and a methodology for evaluating new releases of LightGBM on a standard and reproducible benchmark.</p>
+<h2 id="implementation-goals">Implementation Goals</h2>
+<p>In addition of the description above, the code provided in this repo follows three goals, in the decreasing order of priority:</p>
+<ol>
+<li>
+<p><strong>Automation of routines</strong> - The code should provide means to automate usual benchmark routines such as reporting metrics, orchestrating the benchmark on multiple data sources and multiple configurations, comparing/analyzing multiple runs, etc.</p>
+</li>
+<li>
+<p><strong>Reproducible and self-service</strong> - The benchmark code should allow users to reproduce the results on their end, or adapt it to another environment to run the full benchmark on their data.</p>
+</li>
+<li>
+<p><strong>Act as reference</strong> - The scripts provided in the benchmark could be used as reference / standard implementations in python for training and inferencing. The code should be readable, documented and unit tested. It should make the best and up-to-date use of the python libraries it proposes to evaluate.</p>
+</li>
+</ol>
+<h2 id="running-the-benchmark">Running the benchmark</h2>
+<p>We propose the benchmark to be available both for manual or orchestrated (cloud-based) run.</p>
+<ul>
+<li>
+<p><strong>Manual</strong> - Users can reproduce the benchmark results while running the code locally to a given VM.</p>
+</li>
+<li>
+<p><strong>Orchestrated</strong> - Users can run the benchmark in a cloud-based ML orchestration platform (ex: AzureML).</p>
+</li>
+</ul>
+<p>We also want to identify how to enable users to run the benchmark on custom lightgbm builds (either local or from a github branch), so that they can assess the performance of their changes, or use different compilation options.</p>
+<h2 id="data-and-tasks">Data and tasks</h2>
+<p>The users should be able to run the benchmark on multiple data sources. Not only we want to provide synthetic and public data benchmarks, but we also propose to make sure users can use the benchmark on their on data sets. This can be facilitated by using a cloud-based ML platform like AzureML.</p>
+<ul>
+<li>
+<p><strong>Synthetic Data</strong> - Generated fake data, in particular to test scalability, inferencing latency.</p>
+</li>
+<li>
+<p><strong>Public Data</strong> - Example public datasets used in the community and literature to benchmark the learners.</p>
+</li>
+<li>
+<p><strong>Production Data</strong> - Provide the ability for users to run the benchmark on their own data.</p>
+</li>
+</ul>
+<h2 id="code-structure">Code Structure</h2>
+<p>To allow for modularity and standardization, we propose to structure the benchmark into a collection of independent python scripts (specs in a separate document). Each script will have its own environment, inputs, outputs and parameters. All scripts will eventually draw from common helper classes to support implementation routines (reporting, argument parsing, etc).</p>
+<h2 id="benchmarking-scenarios-and-reporting">Benchmarking scenarios and reporting</h2>
+<p>The benchmark could be used in the following comparison scenarios:</p>
+<ul>
+<li><strong>Training framework comparison</strong> - Compare lightgbm versus other training (or inferencing) ML framework. This comparison will be mainly based on model quality, but also training computing performance. It will run those framework on typical public datasets.</li>
+<li><strong>Lightgbm performance and scalability</strong> - Compare lightgbm (stable or custom) to itself while changing compiling options, VMs and environments. This will likely use synthetic data or large public datasets. This is where allowing users to run on their own production data makes more sense.</li>
+<li><strong>Lightgbm "master" vs lightgbm "custom"</strong> - Compare any new implementation of lightgbm against the current stable release. This comparison will ensure model quality is equivalent, and will focus on compute performance.</li>
+</ul>
+<p>For each of those scenarios, we'll need to report both the variables subject to change (framework, lightgbm version, VMs, dependencies, etc) and the metrics produces during training or inferencing. A list of those variables and metrics is provided in the <a href="../contribute/reporting-guide/">Reporting Guide</a>.</p>
+<h2 id="phases-and-milestones">Phases and Milestones</h2>
+<p>We propose the following process to iterate on implementation.</p>
+<h3 id="1-foundations-phase">1. Foundations phase</h3>
+<p>In this first phase, we'll implement the foundations to allow the benchmark to grow later. We'll start with:
+- a couple minimal scripts for generating synthetic data, training lightgbm and inferencing
+- some common libraries around metrics reporting
+- a first benchmark pipeline in either AzureML SDK1.5 or SDK2.0 to run end-to-end and report metrics
+- enabling both manual and orchestrated runs of the benchmark
+- a build with a first set of unit tests
+- documentation of the goals, developer guide and common routines</p>
+<p><strong>Milestone</strong>: an end-to-end run of the benchmark both locally (VM) and in the cloud, reporting a minimal set of wall time metrics, running on synthetic data, producing numbers we manually report in the repo as markdown.</p>
+<h3 id="2-standardization-phase">2. Standardization phase</h3>
+<p>This phase will see the implementation of features to automate or speed-up typical user routines. In particular, we anticipate supporting the following use cases:
+- running the benchmark on custom lightgbm builds and/or branches
+- analyzing the benchmark results in a systematic script for crunching numbers and compile a readable report
+- a nice report format for comparing pairs of lightgbm implementations (ex: master vs branch), or multiple implementations against one.
+- systematic testing of every script in a consistent unit test methodology
+- identifying ways to standardize code to avoid duplication</p>
+<p><strong>Milestone</strong>: an end-to-end benchmark run producing report automatically, comparing pairs of variants of lightgbm (ex: stable vs custom build).</p>
+<h3 id="3-expansion-phase">3. Expansion phase</h3>
+<p>In this phase, we will expand the number of benchmark scripts and pipelines to cover the following:
+- implementation of multi-node lightgbm training and inferencing
+- implementation of xgboost, catboost, and others
+- implementation of more public datasets, data processors</p>
+<p><strong>Milestone</strong>: an end-to-end benchmark pipeline running on 3+ public datasets, comparing 3+ tree-based frameworks.</p>
+<h2 id="appendix">Appendix</h2>
+<h3 id="example-existing-benchmarks">Example existing benchmarks</h3>
+<ul>
+<li>https://github.com/catboost/benchmarks</li>
+<li>https://github.com/guolinke/boosting_tree_benchmarks</li>
+<li>https://sites.google.com/view/lauraepp/benchmarks/xgb-vs-lgb-feb-2017</li>
+<li>https://github.com/Laurae2/gbt_benchmarks</li>
+</ul>
+
+
+
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Home
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../contribute/developer-guide/" class="md-footer__link md-footer__link--next" aria-label="Next: Developer Guide" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Developer Guide
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.ecf98df9.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.9c69f0bc.min.js"></script>
+      
+    
+  </body>
+</html>

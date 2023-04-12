@@ -1,0 +1,1684 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.4.2">
+    
+    
+      
+        <title>sample/sample.py - LightGBM-Benchmark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.69437709.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#usage" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="LightGBM-Benchmark" class="md-header__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LightGBM-Benchmark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              sample/sample.py
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="LightGBM-Benchmark" class="md-nav__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    LightGBM-Benchmark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../lightgbm-benchmark-project/" class="md-nav__link">
+        About
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Contribute
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contribute" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Contribute
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contribute/developer-guide/" class="md-nav__link">
+        Developer Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contribute/architecture-guide/" class="md-nav__link">
+        Architecture Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contribute/reporting-guide/" class="md-nav__link">
+        Reporting Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Run
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Run
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/install/" class="md-nav__link">
+        Install
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/manual-benchmark/" class="md-nav__link">
+        Run manually
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3">
+          Run in AzureML
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run in AzureML" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_3">
+          <span class="md-nav__icon md-icon"></span>
+          Run in AzureML
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/azure-setup/" class="md-nav__link">
+        Azure Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/local-setup/" class="md-nav__link">
+        Local Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_3" type="checkbox" id="__nav_4_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_3">
+          Benchmark Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Benchmark Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Benchmark Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/generate-synthetic-data/" class="md-nav__link">
+        Generate data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/benchmark-training/" class="md-nav__link">
+        Training
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/benchmark-inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_4" type="checkbox" id="__nav_4_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_4">
+          Custom Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Custom Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Custom Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/upload-your-data/" class="md-nav__link">
+        Upload your data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/train-on-your-data/" class="md-nav__link">
+        Train on your data
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../run/azureml/designer-ui/" class="md-nav__link">
+        Designer UI
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Results
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Results" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Results
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../results/inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../results/manual/" class="md-nav__link">
+        Manual
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Reference Docs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference Docs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reference Docs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          src/common/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/common/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          src/common/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/aml/" class="md-nav__link">
+        aml.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/components/" class="md-nav__link">
+        components.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/io/" class="md-nav__link">
+        io.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/lightgbm_utils/" class="md-nav__link">
+        lightgbm_utils.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/metrics/" class="md-nav__link">
+        metrics.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/perf/" class="md-nav__link">
+        perf.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../common/tasks/" class="md-nav__link">
+        tasks.py
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          src/scripts/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/scripts/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          src/scripts/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          sample/sample.py
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        sample/sample.py
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript" class="md-nav__link">
+    SampleScript
+  </a>
+  
+    <nav class="md-nav" aria-label="SampleScript">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript.get_arg_parser" class="md-nav__link">
+    get_arg_parser()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript.run" class="md-nav__link">
+    run()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.get_arg_parser" class="md-nav__link">
+    get_arg_parser()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.main" class="md-nav__link">
+    main()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../training/lightgbm_python/" class="md-nav__link">
+        training/lightgbm_python/
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript" class="md-nav__link">
+    SampleScript
+  </a>
+  
+    <nav class="md-nav" aria-label="SampleScript">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript.__init__" class="md-nav__link">
+    __init__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript.get_arg_parser" class="md-nav__link">
+    get_arg_parser()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.SampleScript.run" class="md-nav__link">
+    run()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.get_arg_parser" class="md-nav__link">
+    get_arg_parser()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.scripts.sample.sample.main" class="md-nav__link">
+    main()
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/Microsoft/lightgbm-benchmark/edit/main/docs/references/scripts/sample/sample.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+  <h1>sample/sample.py</h1>
+
+<h2 id="usage">Usage</h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+  <div class="doc doc-contents first">
+  
+      <p>This script is a tutorial sample script to explain how all the benchmark
+scripts are structured and standardized using the <code>RunnableScript</code> helper class.</p>
+<p>We've numbered the steps you need to modify and adapt this sample script
+to your own needs.</p>
+<p>Follow each STEP below, and their associated TODO.</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 class="doc doc-heading" id="src.scripts.sample.sample.SampleScript">
+        <code>SampleScript</code>
+
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+      <p class="doc doc-class-bases">
+        Bases: <code><span title="common.components.RunnableScript">RunnableScript</span></code></p>
+
+  
+      <p>STEP 1 : Package your script as a class.</p>
+<p>This class inherits from RunnableScript, that factors
+duplicate code to achieve usual routines
+of every script in the lightgbm-benchmark repo.</p>
+<p>It has a standard main() function (see below)
+that you should not need to modify except for edge cases.</p>
+<p>See <code>src/common/components.py</code> for details on that class.</p>
+<p>TODO: name your class specifically for this script</p>
+
+
+        <details class="quote">
+          <summary>Source code in <code>src/scripts/sample/sample.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos=" 34 "></span><span class="k">class</span> <span class="nc">SampleScript</span><span class="p">(</span><span class="n">RunnableScript</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 35 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 36 "></span><span class="sd">    STEP 1 : Package your script as a class.</span>
+<span class="linenos" data-linenos=" 37 "></span>
+<span class="linenos" data-linenos=" 38 "></span><span class="sd">    This class inherits from RunnableScript, that factors</span>
+<span class="linenos" data-linenos=" 39 "></span><span class="sd">    duplicate code to achieve usual routines</span>
+<span class="linenos" data-linenos=" 40 "></span><span class="sd">    of every script in the lightgbm-benchmark repo.</span>
+<span class="linenos" data-linenos=" 41 "></span>
+<span class="linenos" data-linenos=" 42 "></span><span class="sd">    It has a standard main() function (see below)</span>
+<span class="linenos" data-linenos=" 43 "></span><span class="sd">    that you should not need to modify except for edge cases.</span>
+<span class="linenos" data-linenos=" 44 "></span>
+<span class="linenos" data-linenos=" 45 "></span><span class="sd">    See `src/common/components.py` for details on that class.</span>
+<span class="linenos" data-linenos=" 46 "></span>
+<span class="linenos" data-linenos=" 47 "></span><span class="sd">    TODO: name your class specifically for this script</span>
+<span class="linenos" data-linenos=" 48 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 49 "></span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 50 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 51 "></span><span class="sd">        STEP 3 : Define your benchmark &quot;task&quot; in the constructor.</span>
+<span class="linenos" data-linenos=" 52 "></span>
+<span class="linenos" data-linenos=" 53 "></span><span class="sd">        This Specific constructor for this SampleScript class. It has no arguments,</span>
+<span class="linenos" data-linenos=" 54 "></span><span class="sd">        as it will be called from the helper `main()` method.</span>
+<span class="linenos" data-linenos=" 55 "></span>
+<span class="linenos" data-linenos=" 56 "></span><span class="sd">        In your custom script class, you need to call the super constructor with the parameters below.</span>
+<span class="linenos" data-linenos=" 57 "></span>
+<span class="linenos" data-linenos=" 58 "></span><span class="sd">        TODO: pick your task (score, train, generate, compile, ...)</span>
+<span class="linenos" data-linenos=" 59 "></span><span class="sd">        TODO: name your framework and version</span>
+<span class="linenos" data-linenos=" 60 "></span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 61 "></span>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 62 "></span>            <span class="n">task</span><span class="o">=</span><span class="s2">&quot;sample_task&quot;</span><span class="p">,</span> <span class="c1"># str</span>
+<span class="linenos" data-linenos=" 63 "></span>            <span class="n">framework</span><span class="o">=</span><span class="s2">&quot;sample_framework&quot;</span><span class="p">,</span> <span class="c1"># str</span>
+<span class="linenos" data-linenos=" 64 "></span>            <span class="n">framework_version</span><span class="o">=</span><span class="s2">&quot;0.0.1&quot;</span> <span class="c1"># str</span>
+<span class="linenos" data-linenos=" 65 "></span>        <span class="p">)</span>
+<span class="linenos" data-linenos=" 66 "></span>
+<span class="linenos" data-linenos=" 67 "></span>    <span class="nd">@classmethod</span>
+<span class="linenos" data-linenos=" 68 "></span>    <span class="k">def</span> <span class="nf">get_arg_parser</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 69 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 70 "></span><span class="sd">        STEP 4 : Define your arguments</span>
+<span class="linenos" data-linenos=" 71 "></span>
+<span class="linenos" data-linenos=" 72 "></span><span class="sd">        This method will be called by the main() function</span>
+<span class="linenos" data-linenos=" 73 "></span><span class="sd">        to add your script custom arguments to argparse,</span>
+<span class="linenos" data-linenos=" 74 "></span><span class="sd">        on top of standard arguments of the benchmark.</span>
+<span class="linenos" data-linenos=" 75 "></span>
+<span class="linenos" data-linenos=" 76 "></span><span class="sd">        TODO: align this section with your requirements.</span>
+<span class="linenos" data-linenos=" 77 "></span>
+<span class="linenos" data-linenos=" 78 "></span><span class="sd">        Args:</span>
+<span class="linenos" data-linenos=" 79 "></span><span class="sd">            parser (argparse.ArgumentParser): an existing argument parser instance</span>
+<span class="linenos" data-linenos=" 80 "></span>
+<span class="linenos" data-linenos=" 81 "></span><span class="sd">        Returns:</span>
+<span class="linenos" data-linenos=" 82 "></span><span class="sd">            ArgumentParser: the argument parser instance</span>
+<span class="linenos" data-linenos=" 83 "></span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 84 "></span>        <span class="c1"># IMPORTANT: call this to add generic benchmark arguments</span>
+<span class="linenos" data-linenos=" 85 "></span>        <span class="n">parser</span> <span class="o">=</span> <span class="n">RunnableScript</span><span class="o">.</span><span class="n">get_arg_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 86 "></span>
+<span class="linenos" data-linenos=" 87 "></span>        <span class="c1"># add arguments that are specific to your script</span>
+<span class="linenos" data-linenos=" 88 "></span>        <span class="c1"># here&#39;s a couple examples</span>
+<span class="linenos" data-linenos=" 89 "></span>        <span class="n">group_i</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;I/O Arguments [</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 90 "></span>        <span class="n">group_i</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 91 "></span>            <span class="s2">&quot;--data&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 92 "></span>            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 93 "></span>            <span class="nb">type</span><span class="o">=</span><span class="n">input_file_path</span><span class="p">,</span>  <span class="c1"># use this helper type for a directory containing a single file</span>
+<span class="linenos" data-linenos=" 94 "></span>            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Some input location (directory containing a unique file)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 95 "></span>        <span class="p">)</span>
+<span class="linenos" data-linenos=" 96 "></span>        <span class="n">group_i</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 97 "></span>            <span class="s2">&quot;--model&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 98 "></span>            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 99 "></span>            <span class="nb">type</span><span class="o">=</span><span class="n">input_file_path</span><span class="p">,</span>  <span class="c1"># use this helper type for a directory containing a single file</span>
+<span class="linenos" data-linenos="100 "></span>            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Some input location (directory containing a unique file)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="101 "></span>        <span class="p">)</span>
+<span class="linenos" data-linenos="102 "></span>        <span class="n">group_i</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="linenos" data-linenos="103 "></span>            <span class="s2">&quot;--output&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="104 "></span>            <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos" data-linenos="105 "></span>            <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="linenos" data-linenos="106 "></span>            <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+<span class="linenos" data-linenos="107 "></span>            <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Some output location (directory)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="108 "></span>        <span class="p">)</span>
+<span class="linenos" data-linenos="109 "></span>
+<span class="linenos" data-linenos="110 "></span>        <span class="c1"># make sure to return parser</span>
+<span class="linenos" data-linenos="111 "></span>        <span class="k">return</span> <span class="n">parser</span>
+<span class="linenos" data-linenos="112 "></span>
+<span class="linenos" data-linenos="113 "></span>
+<span class="linenos" data-linenos="114 "></span>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">metrics_logger</span><span class="p">,</span> <span class="n">unknown_args</span><span class="p">):</span>
+<span class="linenos" data-linenos="115 "></span><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="116 "></span><span class="sd">        STEP 5 : Define your run function.</span>
+<span class="linenos" data-linenos="117 "></span>
+<span class="linenos" data-linenos="118 "></span><span class="sd">        This is the core function of your script.</span>
+<span class="linenos" data-linenos="119 "></span><span class="sd">        You are required to override this method with your own implementation.</span>
+<span class="linenos" data-linenos="120 "></span>
+<span class="linenos" data-linenos="121 "></span><span class="sd">        Args:</span>
+<span class="linenos" data-linenos="122 "></span><span class="sd">            args (argparse.namespace): command line arguments provided to script</span>
+<span class="linenos" data-linenos="123 "></span><span class="sd">            logger (logging.logger): a logger initialized for this script</span>
+<span class="linenos" data-linenos="124 "></span><span class="sd">            metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow</span>
+<span class="linenos" data-linenos="125 "></span><span class="sd">            unknown_args (list[str]): list of arguments not recognized during argparse</span>
+<span class="linenos" data-linenos="126 "></span><span class="sd">        &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="127 "></span>        <span class="c1"># make sure the output argument exists</span>
+<span class="linenos" data-linenos="128 "></span>        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos" data-linenos="129 "></span>
+<span class="linenos" data-linenos="130 "></span>        <span class="c1"># and create your own file inside the output</span>
+<span class="linenos" data-linenos="131 "></span>        <span class="n">args</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;predictions.txt&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="132 "></span>
+<span class="linenos" data-linenos="133 "></span>        <span class="c1"># CUSTOM CODE STARTS HERE</span>
+<span class="linenos" data-linenos="134 "></span>        <span class="c1"># below this line is user code</span>
+<span class="linenos" data-linenos="135 "></span>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading model from </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="136 "></span>        <span class="n">booster</span> <span class="o">=</span> <span class="n">lightgbm</span><span class="o">.</span><span class="n">Booster</span><span class="p">(</span><span class="n">model_file</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="linenos" data-linenos="137 "></span>
+<span class="linenos" data-linenos="138 "></span>        <span class="c1"># to log executing time of a code block, use log_time_block()</span>
+<span class="linenos" data-linenos="139 "></span>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading data for inferencing&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="140 "></span>        <span class="k">with</span> <span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_time_block</span><span class="p">(</span><span class="n">metric_name</span><span class="o">=</span><span class="s2">&quot;time_data_loading&quot;</span><span class="p">):</span>
+<span class="linenos" data-linenos="141 "></span>            <span class="n">inference_data</span> <span class="o">=</span> <span class="n">lightgbm</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">free_raw_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">construct</span><span class="p">()</span>
+<span class="linenos" data-linenos="142 "></span>            <span class="n">inference_raw_data</span> <span class="o">=</span> <span class="n">inference_data</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+<span class="linenos" data-linenos="143 "></span>
+<span class="linenos" data-linenos="144 "></span>        <span class="c1"># optional: add data shape as property</span>
+<span class="linenos" data-linenos="145 "></span>        <span class="n">metrics_logger</span><span class="o">.</span><span class="n">set_properties</span><span class="p">(</span>
+<span class="linenos" data-linenos="146 "></span>            <span class="n">inference_data_length</span><span class="o">=</span><span class="n">inference_data</span><span class="o">.</span><span class="n">num_data</span><span class="p">(),</span>
+<span class="linenos" data-linenos="147 "></span>            <span class="n">inference_data_width</span><span class="o">=</span><span class="n">inference_data</span><span class="o">.</span><span class="n">num_feature</span><span class="p">(),</span>
+<span class="linenos" data-linenos="148 "></span>        <span class="p">)</span>
+<span class="linenos" data-linenos="149 "></span>
+<span class="linenos" data-linenos="150 "></span>        <span class="c1"># to log executing time of a code block, use log_time_block()</span>
+<span class="linenos" data-linenos="151 "></span>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running .predict()&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="152 "></span>        <span class="k">with</span> <span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_time_block</span><span class="p">(</span><span class="n">metric_name</span><span class="o">=</span><span class="s2">&quot;time_inferencing&quot;</span><span class="p">):</span>
+<span class="linenos" data-linenos="153 "></span>            <span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">inference_raw_data</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.scripts.sample.sample.SampleScript.__init__">
+<code class="highlight language-python"><span class="fm">__init__</span><span class="p">()</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>STEP 3 : Define your benchmark "task" in the constructor.</p>
+<p>This Specific constructor for this SampleScript class. It has no arguments,
+as it will be called from the helper <code>main()</code> method.</p>
+<p>In your custom script class, you need to call the super constructor with the parameters below.</p>
+<p>TODO: pick your task (score, train, generate, compile, ...)
+TODO: name your framework and version</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/scripts/sample/sample.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="49 "></span><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="linenos" data-linenos="50 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="51 "></span><span class="sd">    STEP 3 : Define your benchmark &quot;task&quot; in the constructor.</span>
+<span class="linenos" data-linenos="52 "></span>
+<span class="linenos" data-linenos="53 "></span><span class="sd">    This Specific constructor for this SampleScript class. It has no arguments,</span>
+<span class="linenos" data-linenos="54 "></span><span class="sd">    as it will be called from the helper `main()` method.</span>
+<span class="linenos" data-linenos="55 "></span>
+<span class="linenos" data-linenos="56 "></span><span class="sd">    In your custom script class, you need to call the super constructor with the parameters below.</span>
+<span class="linenos" data-linenos="57 "></span>
+<span class="linenos" data-linenos="58 "></span><span class="sd">    TODO: pick your task (score, train, generate, compile, ...)</span>
+<span class="linenos" data-linenos="59 "></span><span class="sd">    TODO: name your framework and version</span>
+<span class="linenos" data-linenos="60 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="61 "></span>    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+<span class="linenos" data-linenos="62 "></span>        <span class="n">task</span><span class="o">=</span><span class="s2">&quot;sample_task&quot;</span><span class="p">,</span> <span class="c1"># str</span>
+<span class="linenos" data-linenos="63 "></span>        <span class="n">framework</span><span class="o">=</span><span class="s2">&quot;sample_framework&quot;</span><span class="p">,</span> <span class="c1"># str</span>
+<span class="linenos" data-linenos="64 "></span>        <span class="n">framework_version</span><span class="o">=</span><span class="s2">&quot;0.0.1&quot;</span> <span class="c1"># str</span>
+<span class="linenos" data-linenos="65 "></span>    <span class="p">)</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.scripts.sample.sample.SampleScript.get_arg_parser">
+<code class="highlight language-python"><span class="n">get_arg_parser</span><span class="p">(</span><span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+  
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>STEP 4 : Define your arguments</p>
+<p>This method will be called by the main() function
+to add your script custom arguments to argparse,
+on top of standard arguments of the benchmark.</p>
+<p>TODO: align this section with your requirements.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>parser</code></td>
+          <td>
+                <code>argparse.<span title="argparse.ArgumentParser">ArgumentParser</span></code>
+          </td>
+          <td><p>an existing argument parser instance</p></td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+<th>Name</th>        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+<td><code>ArgumentParser</code></td>          <td>
+          </td>
+          <td><p>the argument parser instance</p></td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/scripts/sample/sample.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos=" 67 "></span><span class="nd">@classmethod</span>
+<span class="linenos" data-linenos=" 68 "></span><span class="k">def</span> <span class="nf">get_arg_parser</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos=" 69 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 70 "></span><span class="sd">    STEP 4 : Define your arguments</span>
+<span class="linenos" data-linenos=" 71 "></span>
+<span class="linenos" data-linenos=" 72 "></span><span class="sd">    This method will be called by the main() function</span>
+<span class="linenos" data-linenos=" 73 "></span><span class="sd">    to add your script custom arguments to argparse,</span>
+<span class="linenos" data-linenos=" 74 "></span><span class="sd">    on top of standard arguments of the benchmark.</span>
+<span class="linenos" data-linenos=" 75 "></span>
+<span class="linenos" data-linenos=" 76 "></span><span class="sd">    TODO: align this section with your requirements.</span>
+<span class="linenos" data-linenos=" 77 "></span>
+<span class="linenos" data-linenos=" 78 "></span><span class="sd">    Args:</span>
+<span class="linenos" data-linenos=" 79 "></span><span class="sd">        parser (argparse.ArgumentParser): an existing argument parser instance</span>
+<span class="linenos" data-linenos=" 80 "></span>
+<span class="linenos" data-linenos=" 81 "></span><span class="sd">    Returns:</span>
+<span class="linenos" data-linenos=" 82 "></span><span class="sd">        ArgumentParser: the argument parser instance</span>
+<span class="linenos" data-linenos=" 83 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos=" 84 "></span>    <span class="c1"># IMPORTANT: call this to add generic benchmark arguments</span>
+<span class="linenos" data-linenos=" 85 "></span>    <span class="n">parser</span> <span class="o">=</span> <span class="n">RunnableScript</span><span class="o">.</span><span class="n">get_arg_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 86 "></span>
+<span class="linenos" data-linenos=" 87 "></span>    <span class="c1"># add arguments that are specific to your script</span>
+<span class="linenos" data-linenos=" 88 "></span>    <span class="c1"># here&#39;s a couple examples</span>
+<span class="linenos" data-linenos=" 89 "></span>    <span class="n">group_i</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;I/O Arguments [</span><span class="si">{</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos=" 90 "></span>    <span class="n">group_i</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 91 "></span>        <span class="s2">&quot;--data&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 92 "></span>        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 93 "></span>        <span class="nb">type</span><span class="o">=</span><span class="n">input_file_path</span><span class="p">,</span>  <span class="c1"># use this helper type for a directory containing a single file</span>
+<span class="linenos" data-linenos=" 94 "></span>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Some input location (directory containing a unique file)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 95 "></span>    <span class="p">)</span>
+<span class="linenos" data-linenos=" 96 "></span>    <span class="n">group_i</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="linenos" data-linenos=" 97 "></span>        <span class="s2">&quot;--model&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 98 "></span>        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos" data-linenos=" 99 "></span>        <span class="nb">type</span><span class="o">=</span><span class="n">input_file_path</span><span class="p">,</span>  <span class="c1"># use this helper type for a directory containing a single file</span>
+<span class="linenos" data-linenos="100 "></span>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Some input location (directory containing a unique file)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="101 "></span>    <span class="p">)</span>
+<span class="linenos" data-linenos="102 "></span>    <span class="n">group_i</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+<span class="linenos" data-linenos="103 "></span>        <span class="s2">&quot;--output&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="104 "></span>        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="linenos" data-linenos="105 "></span>        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="linenos" data-linenos="106 "></span>        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+<span class="linenos" data-linenos="107 "></span>        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Some output location (directory)&quot;</span><span class="p">,</span>
+<span class="linenos" data-linenos="108 "></span>    <span class="p">)</span>
+<span class="linenos" data-linenos="109 "></span>
+<span class="linenos" data-linenos="110 "></span>    <span class="c1"># make sure to return parser</span>
+<span class="linenos" data-linenos="111 "></span>    <span class="k">return</span> <span class="n">parser</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h3 class="doc doc-heading" id="src.scripts.sample.sample.SampleScript.run">
+<code class="highlight language-python"><span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">metrics_logger</span><span class="p">,</span> <span class="n">unknown_args</span><span class="p">)</span></code>
+
+</h3>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>STEP 5 : Define your run function.</p>
+<p>This is the core function of your script.
+You are required to override this method with your own implementation.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>args</code></td>
+          <td>
+                <code>argparse.<span title="argparse.namespace">namespace</span></code>
+          </td>
+          <td><p>command line arguments provided to script</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>logger</code></td>
+          <td>
+                <code>logging.<span title="logging.logger">logger</span></code>
+          </td>
+          <td><p>a logger initialized for this script</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>metrics_logger</code></td>
+          <td>
+                <code><span title="src.common">common</span>.<span title="src.common.metrics">metrics</span>.<span title="common.metrics.MetricLogger">MetricLogger</span></code>
+          </td>
+          <td><p>to report metrics for this script, already initialized for MLFlow</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>unknown_args</code></td>
+          <td>
+                <code>list[str]</code>
+          </td>
+          <td><p>list of arguments not recognized during argparse</p></td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+      <details class="quote">
+        <summary>Source code in <code>src/scripts/sample/sample.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="114 "></span><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">metrics_logger</span><span class="p">,</span> <span class="n">unknown_args</span><span class="p">):</span>
+<span class="linenos" data-linenos="115 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="116 "></span><span class="sd">    STEP 5 : Define your run function.</span>
+<span class="linenos" data-linenos="117 "></span>
+<span class="linenos" data-linenos="118 "></span><span class="sd">    This is the core function of your script.</span>
+<span class="linenos" data-linenos="119 "></span><span class="sd">    You are required to override this method with your own implementation.</span>
+<span class="linenos" data-linenos="120 "></span>
+<span class="linenos" data-linenos="121 "></span><span class="sd">    Args:</span>
+<span class="linenos" data-linenos="122 "></span><span class="sd">        args (argparse.namespace): command line arguments provided to script</span>
+<span class="linenos" data-linenos="123 "></span><span class="sd">        logger (logging.logger): a logger initialized for this script</span>
+<span class="linenos" data-linenos="124 "></span><span class="sd">        metrics_logger (common.metrics.MetricLogger): to report metrics for this script, already initialized for MLFlow</span>
+<span class="linenos" data-linenos="125 "></span><span class="sd">        unknown_args (list[str]): list of arguments not recognized during argparse</span>
+<span class="linenos" data-linenos="126 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="127 "></span>    <span class="c1"># make sure the output argument exists</span>
+<span class="linenos" data-linenos="128 "></span>    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="linenos" data-linenos="129 "></span>
+<span class="linenos" data-linenos="130 "></span>    <span class="c1"># and create your own file inside the output</span>
+<span class="linenos" data-linenos="131 "></span>    <span class="n">args</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;predictions.txt&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="132 "></span>
+<span class="linenos" data-linenos="133 "></span>    <span class="c1"># CUSTOM CODE STARTS HERE</span>
+<span class="linenos" data-linenos="134 "></span>    <span class="c1"># below this line is user code</span>
+<span class="linenos" data-linenos="135 "></span>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading model from </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="136 "></span>    <span class="n">booster</span> <span class="o">=</span> <span class="n">lightgbm</span><span class="o">.</span><span class="n">Booster</span><span class="p">(</span><span class="n">model_file</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="linenos" data-linenos="137 "></span>
+<span class="linenos" data-linenos="138 "></span>    <span class="c1"># to log executing time of a code block, use log_time_block()</span>
+<span class="linenos" data-linenos="139 "></span>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading data for inferencing&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="140 "></span>    <span class="k">with</span> <span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_time_block</span><span class="p">(</span><span class="n">metric_name</span><span class="o">=</span><span class="s2">&quot;time_data_loading&quot;</span><span class="p">):</span>
+<span class="linenos" data-linenos="141 "></span>        <span class="n">inference_data</span> <span class="o">=</span> <span class="n">lightgbm</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">free_raw_data</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">construct</span><span class="p">()</span>
+<span class="linenos" data-linenos="142 "></span>        <span class="n">inference_raw_data</span> <span class="o">=</span> <span class="n">inference_data</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+<span class="linenos" data-linenos="143 "></span>
+<span class="linenos" data-linenos="144 "></span>    <span class="c1"># optional: add data shape as property</span>
+<span class="linenos" data-linenos="145 "></span>    <span class="n">metrics_logger</span><span class="o">.</span><span class="n">set_properties</span><span class="p">(</span>
+<span class="linenos" data-linenos="146 "></span>        <span class="n">inference_data_length</span><span class="o">=</span><span class="n">inference_data</span><span class="o">.</span><span class="n">num_data</span><span class="p">(),</span>
+<span class="linenos" data-linenos="147 "></span>        <span class="n">inference_data_width</span><span class="o">=</span><span class="n">inference_data</span><span class="o">.</span><span class="n">num_feature</span><span class="p">(),</span>
+<span class="linenos" data-linenos="148 "></span>    <span class="p">)</span>
+<span class="linenos" data-linenos="149 "></span>
+<span class="linenos" data-linenos="150 "></span>    <span class="c1"># to log executing time of a code block, use log_time_block()</span>
+<span class="linenos" data-linenos="151 "></span>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running .predict()&quot;</span><span class="p">)</span>
+<span class="linenos" data-linenos="152 "></span>    <span class="k">with</span> <span class="n">metrics_logger</span><span class="o">.</span><span class="n">log_time_block</span><span class="p">(</span><span class="n">metric_name</span><span class="o">=</span><span class="s2">&quot;time_inferencing&quot;</span><span class="p">):</span>
+<span class="linenos" data-linenos="153 "></span>        <span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">inference_raw_data</span><span class="p">)</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 class="doc doc-heading" id="src.scripts.sample.sample.get_arg_parser">
+<code class="highlight language-python"><span class="n">get_arg_parser</span><span class="p">(</span><span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>STEP 2: main function block</p>
+<p>The section below (get_arg_parser(), main() and main block) should go unchanged,
+except for the name of your class.</p>
+<p>Those are standard functions we enforce in order to get some unit tests
+on the module (arguments parsing mainly).</p>
+<p>To ensure compatibility with shrike unit tests</p>
+<p>TODO: just replace SampleScript to the name of your class</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/scripts/sample/sample.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="158 "></span><span class="k">def</span> <span class="nf">get_arg_parser</span><span class="p">(</span><span class="n">parser</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos="159 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="160 "></span><span class="sd">    STEP 2: main function block</span>
+<span class="linenos" data-linenos="161 "></span>
+<span class="linenos" data-linenos="162 "></span><span class="sd">    The section below (get_arg_parser(), main() and main block) should go unchanged,</span>
+<span class="linenos" data-linenos="163 "></span><span class="sd">    except for the name of your class.</span>
+<span class="linenos" data-linenos="164 "></span>
+<span class="linenos" data-linenos="165 "></span><span class="sd">    Those are standard functions we enforce in order to get some unit tests</span>
+<span class="linenos" data-linenos="166 "></span><span class="sd">    on the module (arguments parsing mainly).</span>
+<span class="linenos" data-linenos="167 "></span>
+<span class="linenos" data-linenos="168 "></span><span class="sd">    To ensure compatibility with shrike unit tests</span>
+<span class="linenos" data-linenos="169 "></span>
+<span class="linenos" data-linenos="170 "></span><span class="sd">    TODO: just replace SampleScript to the name of your class</span>
+<span class="linenos" data-linenos="171 "></span><span class="sd">    &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="172 "></span>    <span class="k">return</span> <span class="n">SampleScript</span><span class="o">.</span><span class="n">get_arg_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 class="doc doc-heading" id="src.scripts.sample.sample.main">
+<code class="highlight language-python"><span class="n">main</span><span class="p">(</span><span class="n">cli_args</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>To ensure compatibility with shrike unit tests</p>
+
+      <details class="quote">
+        <summary>Source code in <code>src/scripts/sample/sample.py</code></summary>
+        <div class="highlight"><pre><span></span><code><span class="linenos" data-linenos="174 "></span><span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">cli_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="linenos" data-linenos="175 "></span><span class="w">    </span><span class="sd">&quot;&quot;&quot; To ensure compatibility with shrike unit tests &quot;&quot;&quot;</span>
+<span class="linenos" data-linenos="176 "></span>    <span class="n">SampleScript</span><span class="o">.</span><span class="n">main</span><span class="p">(</span><span class="n">cli_args</span><span class="p">)</span>
+</code></pre></div>
+      </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../../common/tasks/" class="md-footer__link md-footer__link--prev" aria-label="Previous: tasks.py" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              tasks.py
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../../training/lightgbm_python/" class="md-footer__link md-footer__link--next" aria-label="Next: training/lightgbm_python/" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              training/lightgbm_python/
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": [], "search": "../../../../assets/javascripts/workers/search.ecf98df9.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.9c69f0bc.min.js"></script>
+      
+    
+  </body>
+</html>

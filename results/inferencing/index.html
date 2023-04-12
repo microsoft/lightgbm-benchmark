@@ -1,0 +1,1694 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.4.2">
+    
+    
+      
+        <title>Inferencing - LightGBM-Benchmark</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.69437709.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.cbb835fc.min.css">
+        
+      
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="none" data-md-color-accent="none">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#lightgbm-inferencing-benchmark" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LightGBM-Benchmark" class="md-header__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LightGBM-Benchmark
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Inferencing
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LightGBM-Benchmark" class="md-nav__button md-logo" aria-label="LightGBM-Benchmark" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    LightGBM-Benchmark
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Microsoft/lightgbm-benchmark" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.1.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lightgbm-benchmark-project/" class="md-nav__link">
+        About
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3">
+          Contribute
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Contribute" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Contribute
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/developer-guide/" class="md-nav__link">
+        Developer Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/architecture-guide/" class="md-nav__link">
+        Architecture Guide
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contribute/reporting-guide/" class="md-nav__link">
+        Reporting Guide
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4" type="checkbox" id="__nav_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4">
+          Run
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run" data-md-level="1">
+        <label class="md-nav__title" for="__nav_4">
+          <span class="md-nav__icon md-icon"></span>
+          Run
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/install/" class="md-nav__link">
+        Install
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/manual-benchmark/" class="md-nav__link">
+        Run manually
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3" type="checkbox" id="__nav_4_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3">
+          Run in AzureML
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Run in AzureML" data-md-level="2">
+        <label class="md-nav__title" for="__nav_4_3">
+          <span class="md-nav__icon md-icon"></span>
+          Run in AzureML
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/azure-setup/" class="md-nav__link">
+        Azure Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/local-setup/" class="md-nav__link">
+        Local Setup
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_3" type="checkbox" id="__nav_4_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_3">
+          Benchmark Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Benchmark Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Benchmark Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/generate-synthetic-data/" class="md-nav__link">
+        Generate data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/benchmark-training/" class="md-nav__link">
+        Training
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/benchmark-inferencing/" class="md-nav__link">
+        Inferencing
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_4_3_4" type="checkbox" id="__nav_4_3_4" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_4_3_4">
+          Custom Pipelines
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Custom Pipelines" data-md-level="3">
+        <label class="md-nav__title" for="__nav_4_3_4">
+          <span class="md-nav__icon md-icon"></span>
+          Custom Pipelines
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/upload-your-data/" class="md-nav__link">
+        Upload your data
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/train-on-your-data/" class="md-nav__link">
+        Train on your data
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../run/azureml/designer-ui/" class="md-nav__link">
+        Designer UI
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_5" type="checkbox" id="__nav_5" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_5">
+          Results
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Results" data-md-level="1">
+        <label class="md-nav__title" for="__nav_5">
+          <span class="md-nav__icon md-icon"></span>
+          Results
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Inferencing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Inferencing
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variants" class="md-nav__link">
+    Variants
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metric-time_inferencing-per-prediction-usecs" class="md-nav__link">
+    Metric time_inferencing per prediction (usecs)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#percentile-metrics-for-each-variant" class="md-nav__link">
+    Percentile metrics for each variant
+  </a>
+  
+    <nav class="md-nav" aria-label="Percentile metrics for each variant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm1" class="md-nav__link">
+    lightgbm#1
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm2" class="md-nav__link">
+    lightgbm#2
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm3" class="md-nav__link">
+    lightgbm#3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm4" class="md-nav__link">
+    lightgbm#4
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../manual/" class="md-nav__link">
+        Manual
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6" type="checkbox" id="__nav_6" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6">
+          Reference Docs
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Reference Docs" data-md-level="1">
+        <label class="md-nav__title" for="__nav_6">
+          <span class="md-nav__icon md-icon"></span>
+          Reference Docs
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_1" type="checkbox" id="__nav_6_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_1">
+          src/common/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/common/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_1">
+          <span class="md-nav__icon md-icon"></span>
+          src/common/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/aml/" class="md-nav__link">
+        aml.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/components/" class="md-nav__link">
+        components.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/io/" class="md-nav__link">
+        io.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/lightgbm_utils/" class="md-nav__link">
+        lightgbm_utils.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/metrics/" class="md-nav__link">
+        metrics.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/perf/" class="md-nav__link">
+        perf.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/common/tasks/" class="md-nav__link">
+        tasks.py
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_6_2" type="checkbox" id="__nav_6_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_6_2">
+          src/scripts/
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="src/scripts/" data-md-level="2">
+        <label class="md-nav__title" for="__nav_6_2">
+          <span class="md-nav__icon md-icon"></span>
+          src/scripts/
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/scripts/sample/sample/" class="md-nav__link">
+        sample/sample.py
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/scripts/training/lightgbm_python/" class="md-nav__link">
+        training/lightgbm_python/
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#variants" class="md-nav__link">
+    Variants
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metric-time_inferencing-per-prediction-usecs" class="md-nav__link">
+    Metric time_inferencing per prediction (usecs)
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#percentile-metrics-for-each-variant" class="md-nav__link">
+    Percentile metrics for each variant
+  </a>
+  
+    <nav class="md-nav" aria-label="Percentile metrics for each variant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm1" class="md-nav__link">
+    lightgbm#1
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm2" class="md-nav__link">
+    lightgbm#2
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm3" class="md-nav__link">
+    lightgbm#3
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lightgbm4" class="md-nav__link">
+    lightgbm#4
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+  <a href="https://github.com/Microsoft/lightgbm-benchmark/edit/main/docs/results/inferencing.md" title="Edit this page" class="md-content__button md-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
+  </a>
+
+
+
+<h1 id="lightgbm-inferencing-benchmark">LightGBM Inferencing Benchmark</h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The report below has been automatically generated with results from the <a href="https://github.com/microsoft/lightgbm-benchmark">lightgbm-benchmark repo</a>.  </p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>This is work in progress, to check out current work items check the <a href="https://github.com/microsoft/lightgbm-benchmark/issues?q=is%3Aissue+is%3Aopen+label%3Ainferencing-benchmark">project open inferencing issues</a>. In particular, <strong>do not trust these numbers yet</strong> until we've removed this header!</p>
+</div>
+<h2 id="variants">Variants</h2>
+<table>
+<thead>
+<tr>
+<th align="left">variant_id</th>
+<th align="right">index</th>
+<th align="left">framework</th>
+<th align="left">version</th>
+<th align="left">build</th>
+<th align="right">cpu count</th>
+<th align="right">num threads</th>
+<th align="left">machine</th>
+<th align="left">system</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">lightgbm#0</td>
+<td align="right">0</td>
+<td align="left">lightgbm</td>
+<td align="left">PYTHON_API.3.3.0</td>
+<td align="left">default</td>
+<td align="right">16</td>
+<td align="right">1</td>
+<td align="left">x86_64</td>
+<td align="left">Linux</td>
+</tr>
+<tr>
+<td align="left">lightgbm#1</td>
+<td align="right">1</td>
+<td align="left">lightgbm</td>
+<td align="left">C_API.3.3.0</td>
+<td align="left">default</td>
+<td align="right">16</td>
+<td align="right">1</td>
+<td align="left">x86_64</td>
+<td align="left">Linux</td>
+</tr>
+<tr>
+<td align="left">lightgbm#2</td>
+<td align="right">2</td>
+<td align="left">lightgbm</td>
+<td align="left">C_API.3.3.0</td>
+<td align="left">docker/lightgbm-custom/v330_patch_cpu_mpi_build.dockerfile</td>
+<td align="right">16</td>
+<td align="right">1</td>
+<td align="left">x86_64</td>
+<td align="left">Linux</td>
+</tr>
+<tr>
+<td align="left">lightgbm#3</td>
+<td align="right">3</td>
+<td align="left">lightgbm</td>
+<td align="left">C_API.3.2.1</td>
+<td align="left">docker/lightgbm-v3.2.1/linux_cpu_mpi_build.dockerfile</td>
+<td align="right">16</td>
+<td align="right">1</td>
+<td align="left">x86_64</td>
+<td align="left">Linux</td>
+</tr>
+<tr>
+<td align="left">lightgbm#4</td>
+<td align="right">4</td>
+<td align="left">lightgbm</td>
+<td align="left">C_API.3.2.1</td>
+<td align="left">docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile</td>
+<td align="right">16</td>
+<td align="right">1</td>
+<td align="left">x86_64</td>
+<td align="left">Linux</td>
+</tr>
+<tr>
+<td align="left">treelite_python#5</td>
+<td align="right">5</td>
+<td align="left">treelite_python</td>
+<td align="left">1.3.0</td>
+<td align="left">default</td>
+<td align="right">16</td>
+<td align="right">1</td>
+<td align="left">x86_64</td>
+<td align="left">Linux</td>
+</tr>
+</tbody>
+</table>
+<h2 id="metric-time_inferencing-per-prediction-usecs">Metric time_inferencing per prediction (usecs)</h2>
+<table>
+<thead>
+<tr>
+<th align="left">inferencing task config</th>
+<th align="right">lightgbm#0</th>
+<th align="right">lightgbm#1</th>
+<th align="right">lightgbm#2</th>
+<th align="right">lightgbm#3</th>
+<th align="right">lightgbm#4</th>
+<th align="right">treelite_python#5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">6.71442</td>
+<td align="right">1.27191</td>
+<td align="right">1.88084</td>
+<td align="right">1.97014</td>
+<td align="right">1.50457</td>
+<td align="right">0.299835</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">10.0109</td>
+<td align="right">1.87281</td>
+<td align="right">1.89273</td>
+<td align="right">1.51227</td>
+<td align="right">1.93901</td>
+<td align="right">0.465536</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">37.308</td>
+<td align="right">4.32708</td>
+<td align="right">4.70362</td>
+<td align="right">7.06888</td>
+<td align="right">4.72284</td>
+<td align="right">2.08173</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">18.8272</td>
+<td align="right">12.7087</td>
+<td align="right">14.9646</td>
+<td align="right">10.8278</td>
+<td align="right">16.6011</td>
+<td align="right">5.27241</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">23.524</td>
+<td align="right">9.6317</td>
+<td align="right">11.2825</td>
+<td align="right">15.0675</td>
+<td align="right">13.3228</td>
+<td align="right">7.3904</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">45.8476</td>
+<td align="right">14.3042</td>
+<td align="right">18.5159</td>
+<td align="right">15.6538</td>
+<td align="right">14.9914</td>
+<td align="right">7.93605</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">113.854</td>
+<td align="right">95.4644</td>
+<td align="right">104.575</td>
+<td align="right">93.1975</td>
+<td align="right">107.137</td>
+<td align="right">28.5369</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">173.506</td>
+<td align="right">136.601</td>
+<td align="right">137.953</td>
+<td align="right">137.349</td>
+<td align="right">165.446</td>
+<td align="right">96.1941</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">178.49</td>
+<td align="right">143.14</td>
+<td align="right">143.734</td>
+<td align="right">146.814</td>
+<td align="right">149.186</td>
+<td align="right">98.9669</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">395.046</td>
+<td align="right">394.296</td>
+<td align="right">425.493</td>
+<td align="right">326.193</td>
+<td align="right">443.607</td>
+<td align="right">251.199</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">467.79</td>
+<td align="right">459.998</td>
+<td align="right">535.714</td>
+<td align="right">537.431</td>
+<td align="right">450.346</td>
+<td align="right">295.183</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">645.185</td>
+<td align="right">580.791</td>
+<td align="right">574.005</td>
+<td align="right">643.234</td>
+<td align="right">591.006</td>
+<td align="right">442.544</td>
+</tr>
+</tbody>
+</table>
+<h2 id="percentile-metrics-for-each-variant">Percentile metrics for each variant</h2>
+<p>Some variants above report percentile metrics. Those are reported by computing inferencing latency per request batch (currently, batch size = 1, and number of threads = 1). Not all variants provide those (work in progress).</p>
+<h3 id="lightgbm1">lightgbm#1</h3>
+<table>
+<thead>
+<tr>
+<th align="left">inferencing task config</th>
+<th align="right">p50_usecs</th>
+<th align="right">p90_usecs</th>
+<th align="right">p99_usecs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">1.3</td>
+<td align="right">1.5</td>
+<td align="right">1.6</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">1.8</td>
+<td align="right">2</td>
+<td align="right">3.1</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">4.201</td>
+<td align="right">4.5</td>
+<td align="right">5.6</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">12.6</td>
+<td align="right">13.8</td>
+<td align="right">19.1</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">9.501</td>
+<td align="right">10</td>
+<td align="right">12.802</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">14.301</td>
+<td align="right">15.601</td>
+<td align="right">25.001</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">95.1015</td>
+<td align="right">98.801</td>
+<td align="right">108.803</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">131.001</td>
+<td align="right">145.6</td>
+<td align="right">215.101</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">142.601</td>
+<td align="right">145.202</td>
+<td align="right">157.302</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">383.404</td>
+<td align="right">430.905</td>
+<td align="right">584.61</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">448.404</td>
+<td align="right">504.305</td>
+<td align="right">633.407</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">557.003</td>
+<td align="right">640.203</td>
+<td align="right">836.145</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lightgbm2">lightgbm#2</h3>
+<table>
+<thead>
+<tr>
+<th align="left">inferencing task config</th>
+<th align="right">p50_usecs</th>
+<th align="right">p90_usecs</th>
+<th align="right">p99_usecs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">1.8</td>
+<td align="right">2.1</td>
+<td align="right">2.601</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">1.9</td>
+<td align="right">2</td>
+<td align="right">2.10001</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">4.7</td>
+<td align="right">4.901</td>
+<td align="right">5.4</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">13.7</td>
+<td align="right">15.4</td>
+<td align="right">37.204</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">10.8</td>
+<td align="right">12.901</td>
+<td align="right">17.301</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">17.7</td>
+<td align="right">19.001</td>
+<td align="right">31.4</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">104.003</td>
+<td align="right">108.703</td>
+<td align="right">122.603</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">132.501</td>
+<td align="right">149.701</td>
+<td align="right">221.015</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">138.702</td>
+<td align="right">160.802</td>
+<td align="right">219.107</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">425.024</td>
+<td align="right">463.626</td>
+<td align="right">496.927</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">508.705</td>
+<td align="right">588.917</td>
+<td align="right">946.39</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">550.905</td>
+<td align="right">624.606</td>
+<td align="right">810.269</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lightgbm3">lightgbm#3</h3>
+<table>
+<thead>
+<tr>
+<th align="left">inferencing task config</th>
+<th align="right">p50_usecs</th>
+<th align="right">p90_usecs</th>
+<th align="right">p99_usecs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">1.8</td>
+<td align="right">2.3</td>
+<td align="right">3.1</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">1.5</td>
+<td align="right">1.6</td>
+<td align="right">1.9</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">6.3</td>
+<td align="right">7.2</td>
+<td align="right">23.901</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">10.8</td>
+<td align="right">11.6</td>
+<td align="right">12.6</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">14.3</td>
+<td align="right">15.7</td>
+<td align="right">29.903</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">15.1</td>
+<td align="right">16.2</td>
+<td align="right">27.201</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">85.301</td>
+<td align="right">109.901</td>
+<td align="right">168.301</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">132.401</td>
+<td align="right">149.601</td>
+<td align="right">201.402</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">146.202</td>
+<td align="right">148.903</td>
+<td align="right">161.503</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">312.703</td>
+<td align="right">354.715</td>
+<td align="right">505.311</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">537.638</td>
+<td align="right">582.651</td>
+<td align="right">608.343</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">641.307</td>
+<td align="right">654.907</td>
+<td align="right">667.409</td>
+</tr>
+</tbody>
+</table>
+<h3 id="lightgbm4">lightgbm#4</h3>
+<table>
+<thead>
+<tr>
+<th align="left">inferencing task config</th>
+<th align="right">p50_usecs</th>
+<th align="right">p90_usecs</th>
+<th align="right">p99_usecs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">1.3</td>
+<td align="right">1.7</td>
+<td align="right">2.7</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">1.8</td>
+<td align="right">2.2</td>
+<td align="right">2.6</td>
+</tr>
+<tr>
+<td align="left">10 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">4.7</td>
+<td align="right">4.9</td>
+<td align="right">5.3</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">15.7</td>
+<td align="right">17.2</td>
+<td align="right">34.9</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">12.201</td>
+<td align="right">13.501</td>
+<td align="right">48.706</td>
+</tr>
+<tr>
+<td align="left">100 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">14.901</td>
+<td align="right">16.101</td>
+<td align="right">24.701</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">97.301</td>
+<td align="right">136.401</td>
+<td align="right">201.902</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">164.901</td>
+<td align="right">170.101</td>
+<td align="right">182.801</td>
+</tr>
+<tr>
+<td align="left">1000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">148.403</td>
+<td align="right">151.003</td>
+<td align="right">166.205</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>10 cols</td>
+<td align="right">439.327</td>
+<td align="right">492.54</td>
+<td align="right">602.444</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>100 cols</td>
+<td align="right">439.432</td>
+<td align="right">490.245</td>
+<td align="right">605.846</td>
+</tr>
+<tr>
+<td align="left">5000 trees<br/>31 leaves<br/>1000 cols</td>
+<td align="right">571.902</td>
+<td align="right">640.112</td>
+<td align="right">827.614</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+              
+            </article>
+            
+          </div>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+    <nav class="md-footer__inner md-grid" aria-label="Footer" >
+      
+        
+        <a href="../../run/azureml/designer-ui/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Designer UI" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Designer UI
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../manual/" class="md-footer__link md-footer__link--next" aria-label="Next: Manual" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Manual
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.ecf98df9.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.9c69f0bc.min.js"></script>
+      
+    
+  </body>
+</html>
