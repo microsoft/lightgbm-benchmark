@@ -21,11 +21,11 @@ data_generation_config:
   # DATA
   tasks:
     - task: "regression"
-      train_samples: 10000
+      train_samples: 100000
       test_samples: 10000
       inferencing_samples: 10000
-      n_features: 100
-      n_informative: 100
+      n_features: 10
+      n_informative: 10
     - task: "lambdarank"
       train_samples: 100
       test_samples: 100
@@ -43,5 +43,5 @@ data_generation_config:
       n_informative: 13
       n_label_classes: 3
 
-  register_outputs: true
+  register_outputs: false
   register_outputs_prefix: "data-synthetic" # "{prefix}-{task}-{n_features}cols-{samples}samples-{train|test|inference}"
