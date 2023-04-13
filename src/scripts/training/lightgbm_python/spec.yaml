@@ -34,6 +34,10 @@ inputs:
     type: AnyDirectory
     description: directory to the transform parser config
     optional: true
+  input_model:
+    type: AnyDirectory
+    description: directory to the model file to be used for continous training
+    optional: true    
   construct:
     type: Boolean
     description: "Use lazy intialization during data loading phase (both train and test datasets)"
@@ -178,6 +182,7 @@ launcher:
     --train {inputs.train}
     --test {inputs.test}
     [--parser_config_file {inputs.parser_config_file}]
+    [--input_model {inputs.input_model}]
     --construct {inputs.construct}
     --header {inputs.header}
     --label_column {inputs.label_column}
