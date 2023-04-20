@@ -5,15 +5,15 @@ ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
 # Create conda environment
 RUN conda create -p $AZUREML_CONDA_ENVIRONMENT_PATH \
-    python=3.8 pip=20.2.4
+    python=3.8 pip=22.2.2
 
 # Prepend path to AzureML conda environment
 ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 
 # Install pip dependencies
 RUN HOROVOD_WITH_TENSORFLOW=1 \
-    pip install 'pandas>=1.1,<1.2' \
-                'numpy>=1.10,<1.20' \
+    pip install 'pandas==1.5.2' \
+                'numpy==1.23.5' \
                 'matplotlib==3.4.3' \
                 'scipy~=1.5.0' \
                 'scikit-learn~=0.24.1' \
@@ -22,5 +22,6 @@ RUN HOROVOD_WITH_TENSORFLOW=1 \
                 'azureml-mlflow==1.35.0' \
                 'azureml-telemetry==1.35.0' \
                 'mpi4py==3.1.1' \
-                'ray==1.9.2' \
-                'lightgbm-ray==0.1.2'
+                'protobuf==3.20.3' \
+                'ray==2.1.0' \
+                'lightgbm-ray==0.1.8'
