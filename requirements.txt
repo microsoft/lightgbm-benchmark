@@ -1,5 +1,5 @@
 # benchmark common code
-mlflow==1.23.1
+mlflow==2.3.1
 omegaconf~=2.1
 mpi4py==3.1.1
 matplotlib==3.4.3
