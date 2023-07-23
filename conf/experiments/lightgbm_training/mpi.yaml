@@ -62,7 +62,7 @@ lightgbm_training_config:
     # compute parameters
     runtime:
       #target: null # optional: force target for this training job
-      build: "docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile"
+      build: "docker/lightgbm-v3.3.3/linux_cpu_mpi_pip.dockerfile"
       nodes: 2
       processes: 1
 

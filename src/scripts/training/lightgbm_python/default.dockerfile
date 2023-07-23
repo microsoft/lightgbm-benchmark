@@ -1,5 +1,5 @@
 FROM mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:20220516.v1
-LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.1/20211210.1"
+LABEL lightgbmbenchmark.linux.cpu.mpi.pip.version="3.3.3/20221020.1"
 
 # https://github.com/microsoft/lightgbm-transform/blob/main/docs/Installation-Guide.rst
 # Install CMake, gcc, g++, boost.
@@ -24,8 +24,8 @@ RUN mkdir build && cd build && cmake -DBOND_ENABLE_GRPC=FALSE .. && make -j4 && 
 # Those arguments will NOT be used by AzureML
 # they are here just to allow for lightgbm-benchmark build to actually check
 # dockerfiles in a PR against their actual branch
-ARG lightgbm_version="3.3.1"
-ARG lightgbm_transform_version="3.3.1.post1"
+ARG lightgbm_version="3.3.3"
+ARG lightgbm_transform_version="3.3.2.post1"
 
 ENV AZUREML_CONDA_ENVIRONMENT_PATH /azureml-envs/lightgbm
 
@@ -39,16 +39,16 @@ ENV PATH $AZUREML_CONDA_ENVIRONMENT_PATH/bin:$PATH
 # Install pip dependencies
 RUN HOROVOD_WITH_TENSORFLOW=1 \
     pip install 'pandas>=1.1,<1.2' \
-                'numpy>=1.10,<1.20' \
-                'matplotlib==3.4.3' \
-                'scipy~=1.5.0' \
-                'scikit-learn~=0.24.1' \
-                'azureml-core==1.35.0' \
-                'azureml-defaults==1.35.0' \
-                'azureml-mlflow==1.35.0' \
-                'azureml-telemetry==1.35.0' \
-                'mpi4py==3.1.1' \
-                'omegaconf'
+    'numpy>=1.10,<1.20' \
+    'matplotlib==3.4.3' \
+    'scipy~=1.5.0' \
+    'scikit-learn~=0.24.1' \
+    'azureml-core==1.35.0' \
+    'azureml-defaults==1.35.0' \
+    'azureml-mlflow==1.35.0' \
+    'azureml-telemetry==1.35.0' \
+    'mpi4py==3.1.1' \
+    'omegaconf'
 
 # install lightgbm with mpi
 RUN pip install --upgrade pip setuptools wheel && \

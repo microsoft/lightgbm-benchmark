@@ -101,7 +101,7 @@ lightgbm_training_config:
     training:
       device_type: "gpu"
     runtime:
-      build: "docker/lightgbm-v3.3.0/linux_gpu_pip.dockerfile"
+      build: "docker/lightgbm-v3.3.3/linux_gpu_pip.dockerfile"
 ```
 
 When running the pipeline, it will automatically run on the gpu cluster you've named in your `compute/custom.yaml` file.

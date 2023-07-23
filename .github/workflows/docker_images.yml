@@ -32,8 +32,8 @@ jobs:
           - docker/lightgbm-v3.2.1/linux_cuda_build.dockerfile
           - docker/lightgbm-v3.2.1/linux_gpu_build.dockerfile
           - docker/lightgbm-v3.2.1/linux_gpu_pip.dockerfile
-          - docker/lightgbm-v3.3.0/linux_cpu_mpi_build.dockerfile
-          - docker/lightgbm-v3.3.0/linux_cpu_mpi_pip.dockerfile
+          - docker/lightgbm-v3.3.3/linux_cpu_mpi_build.dockerfile
+          - docker/lightgbm-v3.3.3/linux_cpu_mpi_pip.dockerfile
           - docker/lightgbm-custom/v321_patch_cpu_mpi_build.dockerfile
           - src/scripts/training/lightgbm_python/default.dockerfile
           - src/scripts/inferencing/lightgbm_python/default.dockerfile
@@ -73,7 +73,7 @@ jobs:
       matrix:
         dockerfile:
           - docker/lightgbm-v3.2.1/windows_cpu_pip.dockerfile
-          - docker/lightgbm-v3.3.0/windows_cpu_pip.dockerfile
+          - docker/lightgbm-v3.3.3/windows_cpu_pip.dockerfile
 
     steps:
     - uses: actions/checkout@v2
